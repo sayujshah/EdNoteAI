@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 
 // Configure AWS S3 client
 const s3Client = new S3Client({
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const invokeCommand = new InvokeCommand({
       FunctionName: transcriptionLambdaFunctionName,
       InvocationType: 'Event', // Use 'Event' for asynchronous invocation
-      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName }),
+      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: videoId }),
     });
 
     await lambdaClient.send(invokeCommand);

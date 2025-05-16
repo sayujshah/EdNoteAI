@@ -1,21 +1,32 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../lib/supabase';
+// import { supabase } from '../../../../lib/supabase'; // Client-side client (might not be needed)
+import createClient from '../../../../lib/supabase/server'; // Import server-side client
 
 // API route for managing a specific lesson by ID
 
 // PUT /api/lessons/{id} - Update a lesson
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  // Get authenticated user
+  const supabaseServer = await createClient(); // Add await
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  console.log('Updating lesson', params.id, 'for user:', user.id);
+
   // TODO: Get user ID from authenticated session and verify ownership
-  const userId = 'placeholder-user-id'; // Replace with actual user ID
+  // const userId = 'placeholder-user-id'; // Replace with actual user ID
   const lessonId = params.id;
 
-  const updates = await request.json();
+  const updates: any = await request.json(); // Add type annotation for updates
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer // Use server-side client
     .from('lessons')
     .update(updates)
     .eq('id', lessonId)
-    .eq('user_id', userId) // Ensure user owns the lesson
+    .eq('user_id', user.id) // Ensure user owns the lesson - Use actual user ID
     .select();
 
   if (error) {
@@ -32,15 +43,23 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 // DELETE /api/lessons/{id} - Delete a lesson
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  // TODO: Get user ID from authenticated session and verify ownership
-  const userId = 'placeholder-user-id'; // Replace with actual user ID
+  // Get authenticated user
+  const supabaseServer = await createClient(); // Add await
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  console.log('Deleting lesson', params.id, 'for user:', user.id);
+
   const lessonId = params.id;
 
-  const { error } = await supabase
+  const { error } = await supabaseServer // Use server-side client
     .from('lessons')
     .delete()
     .eq('id', lessonId)
-    .eq('user_id', userId); // Ensure user owns the lesson
+    .eq('user_id', user.id); // Ensure user owns the lesson - Use actual user ID
 
   if (error) {
     console.error('Error deleting lesson:', error);

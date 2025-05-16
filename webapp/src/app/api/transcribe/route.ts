@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '../../../lib/supabase';
+// import { supabase } from '../../lib/supabase'; // Client-side client (might not be needed in API route)
+import createClient from '../../../lib/supabase/server'; // Import server-side client
 
 // Configure AWS S3 client
 const s3Client = new S3Client({
@@ -27,19 +28,28 @@ const lambdaClient = new LambdaClient({
 const transcriptionLambdaFunctionName = process.env.AWS_TRANSCRIPTION_LAMBDA_FUNCTION_NAME!;
 
 export async function POST(request: Request) {
-  console.log('Received transcription request');
+  // Get authenticated user
+  const supabaseServer = await createClient(); // Add await
+  const { data: { user } } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
+  }
+
+  console.log('Received transcription request for user:', user.id);
+
+  const { searchParams } = new URL(request.url);
+  const videoId = searchParams.get('videoId');
+  // const userId = searchParams.get('userId'); // No longer needed from query params
+
+  if (!videoId) { // userId is now from auth
+    return NextResponse.json({ status: 'error', message: 'Missing videoId' }, { status: 400 });
+  }
+
   const audioStream = request.body;
 
   if (!audioStream) {
     return NextResponse.json({ status: 'error', message: 'No audio stream received' }, { status: 400 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const videoId = searchParams.get('videoId');
-  const userId = searchParams.get('userId');
-
-  if (!videoId || !userId) {
-    return NextResponse.json({ status: 'error', message: 'Missing videoId or userId' }, { status: 400 });
   }
 
   const fileKey = `audio/${uuidv4()}.webm`; // Generate a unique file key
@@ -58,17 +68,19 @@ export async function POST(request: Request) {
     const invokeCommand = new InvokeCommand({
       FunctionName: transcriptionLambdaFunctionName,
       InvocationType: 'Event', // Use 'Event' for asynchronous invocation
-      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: videoId }),
+      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: videoId, userId: user.id }), // Pass actual userId
     });
 
     await lambdaClient.send(invokeCommand);
     console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`);
 
     // Save initial transcription request status to Supabase
-    const { data, error } = await supabase
+    // Save initial transcription request status to Supabase
+    const { data, error } = await supabaseServer
       .from('videos')
       .update({ transcription_status: 'in_progress', s3_audio_key: fileKey })
-      .eq('id', videoId); // Assuming videoId is available
+      .eq('id', videoId)
+      .eq('user_id', user.id); // Ensure video belongs to the user
 
     if (error) {
       console.error('Error saving transcription status to Supabase:', error);

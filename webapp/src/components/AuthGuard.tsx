@@ -13,9 +13,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // If no user and not on the login page, redirect to login
-      if (!user && pathname !== '/login') {
+      // If no user and not on a public page, redirect to login
+      const publicPaths = ['/', '/login']; // Define public paths
+      if (!user && !publicPaths.includes(pathname)) {
         router.push('/login');
+      } else if (user && pathname === '/login') {
+        // Redirect authenticated users away from login page
+        router.push('/'); // Redirect to home or dashboard after login
       } else {
         setLoading(false);
       }
@@ -25,11 +29,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session && pathname !== '/login') {
+      const publicPaths = ['/', '/login']; // Define public paths
+      if (!session && !publicPaths.includes(pathname)) {
         router.push('/login');
       } else if (session && pathname === '/login') {
         // Redirect authenticated users away from login page
-        router.push('/');
+        router.push('/'); // Redirect to home or dashboard after login
       } else {
         setLoading(false);
       }

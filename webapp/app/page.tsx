@@ -267,6 +267,115 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
+                  Testimonials
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">What Our Users Say</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
+                  Join thousands of students and educators who have transformed their learning experience
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-3">
+              <div className="rounded-lg border bg-background p-6 shadow-sm">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-5 w-5 text-primary"
+                      >
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground">
+                    "EdNoteAI has completely changed how I study for my medical exams. I upload lecture recordings and
+                    get perfect notes in minutes."
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-muted" />
+                    <div>
+                      <p className="text-sm font-medium">Sarah K.</p>
+                      <p className="text-xs text-muted-foreground">Medical Student</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg border bg-background p-6 shadow-sm">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-5 w-5 text-primary"
+                      >
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground">
+                    "As a professor, I use EdNoteAI to provide my students with comprehensive notes from my lectures. It
+                    saves me hours of work."
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-muted" />
+                    <div>
+                      <p className="text-sm font-medium">Prof. James R.</p>
+                      <p className="text-xs text-muted-foreground">University Educator</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg border bg-background p-6 shadow-sm">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-5 w-5 text-primary"
+                      >
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-muted-foreground">
+                    "I use EdNoteAI for all my online courses. The notes are so well-structured that I've improved my
+                    grades by 15% this semester."
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-10 w-10 rounded-full bg-muted" />
+                    <div>
+                      <p className="text-sm font-medium">Michael T.</p>
+                      <p className="text-xs text-muted-foreground">Online Learner</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Pricing Section */}
         <section id="pricing" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">

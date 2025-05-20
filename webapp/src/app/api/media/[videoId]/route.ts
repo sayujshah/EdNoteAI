@@ -13,7 +13,7 @@ const s3Client = new S3Client({
 
 // API route for managing a specific video by ID
 
-// GET /api/videos/{videoId} - Retrieve a single video and its transcript
+// GET /api/videos/{videoId} - Retrieve a single video and its transcript and notes
 export async function GET(request: Request, { params }: { params: { videoId: string } }) {
   // Get authenticated user
   const supabaseServer = await createClient();
@@ -23,19 +23,20 @@ export async function GET(request: Request, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('Fetching video', params.videoId, 'for user:', user.id);
+  // Await params before accessing videoId
+  const { videoId } = await params;
 
-  const videoId = params.videoId;
+  console.log('Fetching video', videoId, 'for user:', user.id);
 
-  // Fetch the video and its associated transcript
+  // Fetch the video, its associated transcript, and notes nested under transcript
   const { data: videoData, error: videoError } = await supabaseServer
     .from('videos')
-    .select('*, transcripts(*), lessons(user_id)') // Select the video, transcript, and related lesson's user_id
+    .select('*, transcripts(*, notes(*)), lessons(user_id)') // Corrected select to fetch notes nested under transcripts
     .eq('id', videoId)
     .single(); // Assuming one video per ID
 
   if (videoError) {
-    console.error('Error fetching video and transcript:', videoError);
+    console.error('Error fetching video, transcript, and notes:', videoError);
     return NextResponse.json({ error: videoError.message }, { status: 500 });
   }
 
@@ -56,7 +57,8 @@ export async function PUT(request: Request, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const videoId = params.videoId;
+  // Await params before accessing videoId
+  const { videoId } = await params;
   const { url } = await request.json(); // Assuming only URL is updatable for now
 
   console.log('Updating video', videoId, 'for user:', user.id);
@@ -100,7 +102,8 @@ export async function DELETE(request: Request, { params }: { params: { videoId: 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const videoId = params.videoId;
+  // Await params before accessing videoId
+  const { videoId } = await params;
 
   console.log('Deleting video', videoId, 'for user:', user.id);
 

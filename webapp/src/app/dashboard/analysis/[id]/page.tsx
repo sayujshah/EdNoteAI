@@ -1,21 +1,122 @@
 "use client";
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
+import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
+
+// Define types for media data, transcription, and notes
+interface Media {
+  id: string;
+  file_url: string;
+  transcripts?: Transcription[]; // Transcription is now nested under Media
+  transcription_status: string; // Add transcription status to Media type
+  // Add other media properties if needed
+}
+
+interface Transcription {
+  id: string;
+  text: string;
+  notes?: Note[]; // Notes are now nested under Transcription
+  // Add other transcription properties if needed (e.g., timestamps)
+}
+
+interface Note {
+  id: string;
+  content: any; // Segmented content (structured JSON)
+  markdown_content?: string; // Markdown notes
+  // Add other note properties if needed
+}
+
+// Initialize Supabase client for Realtime
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 
 export default function AnalysisPage() {
-  const { id } = useParams()
+  const { id } = useParams() as { id: string };
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(100)
+  const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  const [media, setMedia] = useState<Media | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Function to fetch media data
+  const fetchData = async () => {
+    console.log("Fetching media data..."); // Added logging
+    setLoading(true);
+    setError(null);
+    try {
+      const mediaResponse = await fetch(`/api/media/${id}`);
+      if (!mediaResponse.ok) {
+        const errorData = await mediaResponse.json();
+        throw new Error(errorData.message || 'Failed to fetch media data');
+      }
+      const mediaData: Media = await mediaResponse.json();
+      setMedia(mediaData);
+      console.log("Media data fetched:", mediaData); // Added logging
+
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Fetch media data on component mount and set up Realtime subscription
+  useEffect(() => {
+    if (id) {
+      fetchData(); // Initial data fetch
+
+      console.log(`Attempting to subscribe to Realtime channel for media ID: ${id}`); // Added logging
+      // Set up Realtime subscription
+      const channel = supabase
+        .channel(`media_status_changes_${id}`) // Unique channel name for this media item
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE', // Listen for UPDATE events
+            schema: 'public',
+            table: 'videos', // Listen for changes in the videos table
+            filter: `id=eq.${id}`, // Filter for the specific media item ID
+          },
+          (payload) => {
+            console.log('Realtime update received:', payload); // Added logging
+            // Check if the transcription status has changed to 'completed'
+            if (payload.new.transcription_status === 'completed') {
+               console.log('Media status updated to completed, refetching data.'); // Added logging
+               fetchData(); // Refetch data when status is completed
+            } else {
+                console.log('Realtime update received, but status is not completed:', payload.new.transcription_status); // Added logging
+            }
+          }
+        )
+        .subscribe((status) => {
+            console.log(`Realtime subscription status for channel media_status_changes_${id}: ${status}`); // Added logging
+        }); // Subscribe to the channel
+
+      // Clean up subscription on component unmount
+      return () => {
+        console.log(`Removing Realtime channel media_status_changes_${id}`); // Added logging
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [id]); // Rerun effect if id changes
+
 
   // Format time in MM:SS format
   const formatTime = (time: number) => {
@@ -86,6 +187,31 @@ export default function AnalysisPage() {
     }
   }
 
+  // Helper to get the first transcription text (assuming one transcript per video for now)
+  const getTranscriptionText = () => {
+    if (media?.transcripts && media.transcripts.length > 0) {
+      return media.transcripts[0].text;
+    }
+    return null;
+  };
+
+  // Helper to get the markdown content from the first note (assuming one note per transcript for now)
+  const getMarkdownContent = () => {
+    if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
+      return media.transcripts[0].notes[0].markdown_content;
+    }
+    return null;
+  };
+
+  // Helper to get the segmented content from the first note (assuming one note per transcript for now)
+   const getSegmentedContent = () => {
+     if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
+       return media.transcripts[0].notes[0].content;
+     }
+     return null;
+   };
+
+
   return (
     <div className="flex h-screen flex-col">
       <header className="flex h-16 items-center justify-between border-b px-6">
@@ -114,15 +240,23 @@ export default function AnalysisPage() {
         {/* Left panel - Media player */}
         <div className="flex w-1/2 flex-col border-r">
           <div className="relative flex-1 bg-black">
-            <video
-              ref={videoRef}
-              className="h-full w-full object-contain"
-              src="/placeholder.mp4"
-              poster="/placeholder.svg?height=720&width=1280"
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-            />
-            <div className="absolute bottom-4 left-4 text-white bg-black/50 px-2 py-1 rounded text-sm">Audio File</div>
+            {loading ? (
+              <div className="flex items-center justify-center h-full text-white">Loading media...</div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full text-red-500">Error loading media: {error}</div>
+            ) : media?.file_url ? (
+              <video
+                ref={videoRef}
+                className="h-full w-full object-contain"
+                src={media.file_url} // Use actual file URL
+                poster="/placeholder.svg?height=720&width=1280" // Keep placeholder poster for now
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+              />
+            ) : (
+               <div className="flex items-center justify-center h-full text-white">No media file available.</div>
+            )}
+            <div className="absolute bottom-4 left-4 text-white bg-black/50 px-2 py-1 rounded text-sm">Audio/Video File</div>
           </div>
 
           <div className="border-t bg-muted/30 p-4">
@@ -130,10 +264,10 @@ export default function AnalysisPage() {
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
-            <Slider value={[currentTime]} max={duration} step={0.1} onValueChange={handleSeek} className="mb-4" />
+            <Slider value={[currentTime]} max={duration} step={0.1} onValueChange={handleSeek} className="mb-4" disabled={!media?.file_url} />
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleMute}>
+                <Button variant="ghost" size="icon" onClick={toggleMute} disabled={!media?.file_url}>
                   {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                 </Button>
                 <Slider
@@ -142,16 +276,17 @@ export default function AnalysisPage() {
                   step={0.01}
                   onValueChange={handleVolumeChange}
                   className="w-24"
+                  disabled={!media?.file_url}
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={skipBackward}>
+                <Button variant="ghost" size="icon" onClick={skipBackward} disabled={!media?.file_url}>
                   <SkipBack className="h-5 w-5" />
                 </Button>
-                <Button variant="default" size="icon" className="h-10 w-10 rounded-full" onClick={togglePlay}>
+                <Button variant="default" size="icon" className="h-10 w-10 rounded-full" onClick={togglePlay} disabled={!media?.file_url}>
                   {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={skipForward}>
+                <Button variant="ghost" size="icon" onClick={skipForward} disabled={!media?.file_url}>
                   <SkipForward className="h-5 w-5" />
                 </Button>
               </div>
@@ -161,15 +296,16 @@ export default function AnalysisPage() {
 
           <div className="border-t p-4">
             <h2 className="mb-2 text-lg font-semibold">Transcription</h2>
-            <div className="rounded-lg bg-muted/30 p-4 text-sm">
-              <p>
-                This is a placeholder transcription. In a real application, this would contain the full text
-                transcription of the uploaded media file.
-              </p>
-              <p className="mt-2">
-                The transcription would be time-synced with the media, allowing users to click on any part of the text
-                to jump to that point in the audio or video.
-              </p>
+            <div className="rounded-lg bg-muted/30 p-4 text-sm overflow-y-auto max-h-[200px]">
+              {loading ? (
+                <p>Loading transcription...</p>
+              ) : error ? (
+                <p className="text-red-500">Error loading transcription: {error}</p>
+              ) : getTranscriptionText() ? (
+                <p>{getTranscriptionText()}</p> // Display actual transcription
+              ) : (
+                <p>Transcription not available yet.</p> // Placeholder if no transcription
+              )}
             </div>
           </div>
         </div>
@@ -187,110 +323,76 @@ export default function AnalysisPage() {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold">Academic Notes</h2>
 
-                <div className="space-y-4">
-                  <p>
-                    These are placeholder notes. In a real application, this would contain AI-generated academic-style
-                    notes based on the content of the uploaded media.
-                  </p>
+                {loading ? (
+                   <p>Loading notes...</p>
+                 ) : error ? (
+                   <p className="text-red-500">Error loading notes: {error}</p>
+                 ) : getMarkdownContent() ? (
+                   <ReactMarkdown>{getMarkdownContent()}</ReactMarkdown> // Render markdown content
+                 ) : getSegmentedContent() ? (
+                    <div className="space-y-4">
+                      <p>Notes loaded (rendering raw segmented content for now):</p>
+                      <pre>{JSON.stringify(getSegmentedContent(), null, 2)}</pre> {/* Fallback to raw segmented content */}
+                    </div>
+                 ) : (
+                   <div className="space-y-4">
+                     <p>Notes not available yet.</p>
+                     <p className="mt-2 text-sm text-muted-foreground">
+                       Notes will appear here after processing is complete.
+                     </p>
+                   </div>
+                 )}
 
-                  <h3 className="text-xl font-semibold">Introduction to the Topic</h3>
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam
-                    ultricies, nunc nisl aliquet nunc, quis aliquam nisl nisl eu nisl. Nullam euismod, nisl eget aliquam
-                    ultricies, nunc nisl aliquet nunc, quis aliquam nisl nisl eu nisl.
-                  </p>
-
-                  <h3 className="text-xl font-semibold">Key Concepts</h3>
-                  <ul className="ml-6 list-disc space-y-2">
-                    <li>
-                      <strong>Concept 1:</strong> Explanation of the first key concept from the media content.
-                    </li>
-                    <li>
-                      <strong>Concept 2:</strong> Explanation of the second key concept with additional context and
-                      examples.
-                    </li>
-                    <li>
-                      <strong>Concept 3:</strong> Detailed breakdown of the third concept and its relationship to the
-                      overall topic.
-                    </li>
-                  </ul>
-
-                  <h3 className="text-xl font-semibold">Analysis</h3>
-                  <p>
-                    In-depth analysis of the content would appear here, connecting different ideas and providing
-                    academic context. This would include references to relevant theories, methodologies, or frameworks
-                    mentioned in the media.
-                  </p>
-
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                    <h4 className="font-medium text-primary">Important Highlight</h4>
-                    <p className="mt-1 text-sm">
-                      A particularly significant point from the content would be highlighted here for emphasis and easy
-                      reference.
-                    </p>
-                  </div>
-
-                  <h3 className="text-xl font-semibold">Conclusion</h3>
-                  <p>
-                    Summary of the main points and their significance in the broader context of the subject matter. This
-                    would include potential applications or implications of the content.
-                  </p>
-                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="summary" className="focus-visible:outline-none focus-visible:ring-0">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Executive Summary</h2>
-                <p>
-                  This is a placeholder summary. In a real application, this would contain a concise overview of the
-                  entire content, highlighting the most important points and conclusions.
-                </p>
-                <p>
-                  The summary would be designed to give the user a quick understanding of the content without having to
-                  go through the entire transcription or notes.
-                </p>
+                 {loading ? (
+                    <p>Loading summary...</p>
+                  ) : error ? (
+                    <p className="text-red-500">Error loading summary: {error}</p>
+                  ) : getMarkdownContent() ? ( // Assuming summary is part of markdown content or can be extracted
+                    // TODO: Extract summary from markdown or segmented content if needed
+                    <p>Summary will be displayed here from markdown or segmented content.</p>
+                  ) : getSegmentedContent()?.summary ? ( // Fallback to segmented content summary if available
+                    <p>{getSegmentedContent().summary}</p>
+                  ) : (
+                    <p>Summary not available yet.</p>
+                  )}
               </div>
             </TabsContent>
 
             <TabsContent value="keypoints" className="focus-visible:outline-none focus-visible:ring-0">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Key Points</h2>
-                <ul className="space-y-4">
-                  <li className="flex gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                      1
-                    </div>
-                    <div>
-                      <p className="font-medium">First key point from the content</p>
-                      <p className="text-sm text-muted-foreground">
-                        Additional context and explanation for the first key point.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                      2
-                    </div>
-                    <div>
-                      <p className="font-medium">Second key point from the content</p>
-                      <p className="text-sm text-muted-foreground">
-                        Additional context and explanation for the second key point.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                      3
-                    </div>
-                    <div>
-                      <p className="font-medium">Third key point from the content</p>
-                      <p className="text-sm text-muted-foreground">
-                        Additional context and explanation for the third key point.
-                      </p>
-                    </div>
-                  </li>
-                </ul>
+                 {loading ? (
+                    <p>Loading key points...</p>
+                  ) : error ? (
+                    <p className="text-red-500">Error loading key points: {error}</p>
+                  ) : getMarkdownContent() ? ( // Assuming key points are part of markdown content or can be extracted
+                     // TODO: Extract key points from markdown or segmented content if needed
+                     <p>Key points will be displayed here from markdown or segmented content.</p>
+                  ) : getSegmentedContent()?.segments ? ( // Fallback to segmented content key points if available
+                    <ul className="space-y-4">
+                      {getSegmentedContent().segments.map((segment: any, segmentIndex: number) => (
+                         segment.key_points && segment.key_points.map((kp: string, kpIndex: number) => (
+                            <li key={`${segmentIndex}-${kpIndex}`} className="flex gap-3">
+                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                                {kpIndex + 1}
+                              </div>
+                              <div>
+                                <p className="font-medium">{kp}</p>
+                                {/* No description in this structure, just the key point text */}
+                              </div>
+                            </li>
+                         ))
+                      )).flat()} {/* Flatten the array of arrays */}
+                    </ul>
+                  ) : (
+                    <p>Key points not available yet.</p>
+                  )}
               </div>
             </TabsContent>
           </Tabs>

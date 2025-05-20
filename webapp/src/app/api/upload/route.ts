@@ -81,6 +81,7 @@ export async function POST(request: Request) {
 
     const newVideoId = videoData.id; // Get the ID of the newly created video
 
+    console.log(`Attempting to trigger Lambda function: ${transcriptionLambdaFunctionName}`); // Added logging
     // Trigger the transcription Lambda function
     const invokeCommand = new InvokeCommand({
       FunctionName: transcriptionLambdaFunctionName,
@@ -89,9 +90,10 @@ export async function POST(request: Request) {
     });
 
     await lambdaClient.send(invokeCommand);
-    console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`);
+    console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`); // Added logging
 
-    return NextResponse.json({ status: 'processing', fileKey });
+    // Include the newVideoId in the successful response
+    return NextResponse.json({ status: 'processing', fileKey, mediaId: newVideoId });
 
   } catch (error) {
     console.error('Error handling file upload:', error);

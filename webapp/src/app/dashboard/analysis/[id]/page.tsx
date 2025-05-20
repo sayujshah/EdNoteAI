@@ -7,30 +7,28 @@ import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
-import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
-import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
+import ReactMarkdown from 'react-markdown';
+import { createBrowserClient } from '@supabase/ssr';
+import remarkGfm from 'remark-gfm'
 
 // Define types for media data, transcription, and notes
 interface Media {
   id: string;
   file_url: string;
-  transcripts?: Transcription[]; // Transcription is now nested under Media
-  transcription_status: string; // Add transcription status to Media type
-  // Add other media properties if needed
+  transcripts?: Transcription[];
+  transcription_status: string;
 }
 
 interface Transcription {
   id: string;
   text: string;
-  notes?: Note[]; // Notes are now nested under Transcription
-  // Add other transcription properties if needed (e.g., timestamps)
+  notes?: Note[];
 }
 
 interface Note {
   id: string;
-  content: any; // Segmented content (structured JSON)
-  markdown_content?: string; // Markdown notes
-  // Add other note properties if needed
+  content: any;
+  markdown_content?: string;
 }
 
 // Initialize Supabase client for Realtime
@@ -39,8 +37,9 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-
 export default function AnalysisPage() {
+  // Add this line to the top of your component if you need to install remark-gfm
+  // npm install remark-gfm --save
   const { id } = useParams() as { id: string };
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -52,10 +51,15 @@ export default function AnalysisPage() {
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Added state variables to store extracted content
+  const [markdownNotes, setMarkdownNotes] = useState<string | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [keyPoints, setKeyPoints] = useState<{title: string; description?: string}[]>([]);
 
   // Function to fetch media data
   const fetchData = async () => {
-    console.log("Fetching media data..."); // Added logging
+    console.log("Fetching media data...");
     setLoading(true);
     setError(null);
     try {
@@ -66,8 +70,11 @@ export default function AnalysisPage() {
       }
       const mediaData: Media = await mediaResponse.json();
       setMedia(mediaData);
-      console.log("Media data fetched:", mediaData); // Added logging
-
+      console.log("Media data fetched:", mediaData);
+      
+      // Process and extract content once media data is loaded
+      processMediaContent(mediaData);
+      
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching data:', err);
@@ -76,47 +83,139 @@ export default function AnalysisPage() {
     }
   };
 
+  // Process and extract content from media data once media data is loaded
+  const processMediaContent = (mediaData: Media) => {
+    console.log("Processing media content...");
+    
+    // Extract markdown content
+    let mdContent = getMarkdownContent(mediaData);
+    console.log("Extracted markdown content:", mdContent);
+    
+    // If no markdown content directly available, try to use raw text as markdown
+    if (!mdContent && mediaData?.transcripts && mediaData.transcripts.length > 0 && 
+        mediaData.transcripts[0].notes && mediaData.transcripts[0].notes.length > 0) {
+      const note = mediaData.transcripts[0].notes[0];
+      
+      // Check if there's text in the note that might be markdown but not properly identified
+      if (typeof note.content === 'string' && 
+          (note.content.includes('#') || note.content.includes('-') || note.content.includes('*'))) {
+        mdContent = note.content;
+        console.log("Using note content as markdown:", mdContent);
+      }
+    }
+    
+    // Update state with the markdown content
+    setMarkdownNotes(mdContent);
+    
+    // Process segmented content if available
+    const segContent = getSegmentedContent(mediaData);
+    if (segContent) {
+      console.log("Processing segmented content:", segContent);
+      
+      // Extract summary from segmented content
+      if (segContent.summary) {
+        setSummary(segContent.summary);
+      }
+      
+      // Extract and format key points
+      if (segContent.segments) {
+        const formattedKeyPoints = segContent.segments
+          .flatMap((segment: any) => 
+            segment.key_points 
+              ? segment.key_points.map((kp: string) => ({ title: kp }))
+              : []
+          );
+        setKeyPoints(formattedKeyPoints);
+      }
+      
+      // If there's no markdown content but we have segmented content,
+      // generate markdown from segmented content
+      if (!mdContent) {
+        const generatedMarkdown = generateMarkdownFromSegments(segContent);
+        console.log("Generated markdown from segments:", generatedMarkdown);
+        setMarkdownNotes(generatedMarkdown);
+      }
+    }
+  };
+  
+  // Function to generate markdown from segmented content
+  const generateMarkdownFromSegments = (segmentedContent: any): string => {
+    if (!segmentedContent || !segmentedContent.segments) return '';
+    
+    let markdown = '';
+    
+    // Add title and summary if available
+    if (segmentedContent.title) {
+      markdown += `# ${segmentedContent.title}\n\n`;
+    }
+    
+    if (segmentedContent.summary) {
+      markdown += `## Summary\n\n${segmentedContent.summary}\n\n`;
+    }
+    
+    // Process each segment
+    segmentedContent.segments.forEach((segment: any, index: number) => {
+      if (segment.title) {
+        markdown += `## ${segment.title}\n\n`;
+      } else {
+        markdown += `## Section ${index + 1}\n\n`;
+      }
+      
+      if (segment.content) {
+        markdown += `${segment.content}\n\n`;
+      }
+      
+      // Add key points if available
+      if (segment.key_points && segment.key_points.length > 0) {
+        markdown += `### Key Points\n\n`;
+        segment.key_points.forEach((kp: string) => {
+          markdown += `- ${kp}\n`;
+        });
+        markdown += '\n';
+      }
+    });
+    
+    return markdown;
+  };
 
   // Fetch media data on component mount and set up Realtime subscription
   useEffect(() => {
     if (id) {
       fetchData(); // Initial data fetch
 
-      console.log(`Attempting to subscribe to Realtime channel for media ID: ${id}`); // Added logging
+      console.log(`Attempting to subscribe to Realtime channel for media ID: ${id}`);
       // Set up Realtime subscription
       const channel = supabase
-        .channel(`media_status_changes_${id}`) // Unique channel name for this media item
+        .channel(`media_status_changes_${id}`)
         .on(
           'postgres_changes',
           {
-            event: 'UPDATE', // Listen for UPDATE events
+            event: 'UPDATE',
             schema: 'public',
-            table: 'videos', // Listen for changes in the videos table
-            filter: `id=eq.${id}`, // Filter for the specific media item ID
+            table: 'videos',
+            filter: `id=eq.${id}`,
           },
           (payload) => {
-            console.log('Realtime update received:', payload); // Added logging
-            // Check if the transcription status has changed to 'completed'
+            console.log('Realtime update received:', payload);
             if (payload.new.transcription_status === 'completed') {
-               console.log('Media status updated to completed, refetching data.'); // Added logging
-               fetchData(); // Refetch data when status is completed
+               console.log('Media status updated to completed, refetching data.');
+               fetchData();
             } else {
-                console.log('Realtime update received, but status is not completed:', payload.new.transcription_status); // Added logging
+                console.log('Realtime update received, but status is not completed:', payload.new.transcription_status);
             }
           }
         )
         .subscribe((status) => {
-            console.log(`Realtime subscription status for channel media_status_changes_${id}: ${status}`); // Added logging
-        }); // Subscribe to the channel
+            console.log(`Realtime subscription status for channel media_status_changes_${id}: ${status}`);
+        });
 
       // Clean up subscription on component unmount
       return () => {
-        console.log(`Removing Realtime channel media_status_changes_${id}`); // Added logging
+        console.log(`Removing Realtime channel media_status_changes_${id}`);
         supabase.removeChannel(channel);
       };
     }
-  }, [id]); // Rerun effect if id changes
-
+  }, [id]);
 
   // Format time in MM:SS format
   const formatTime = (time: number) => {
@@ -125,6 +224,7 @@ export default function AnalysisPage() {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`
   }
 
+  // Video player functions
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -187,30 +287,64 @@ export default function AnalysisPage() {
     }
   }
 
-  // Helper to get the first transcription text (assuming one transcript per video for now)
-  const getTranscriptionText = () => {
-    if (media?.transcripts && media.transcripts.length > 0) {
-      return media.transcripts[0].text;
+  // Helper to get the first transcription text
+  const getTranscriptionText = (mediaData: Media | null = media) => {
+    if (mediaData?.transcripts && mediaData.transcripts.length > 0) {
+      return mediaData.transcripts[0].text;
     }
     return null;
   };
 
-  // Helper to get the markdown content from the first note (assuming one note per transcript for now)
-  const getMarkdownContent = () => {
-    if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
-      return media.transcripts[0].notes[0].markdown_content;
+  // Helper to get the markdown content from the first note
+  const getMarkdownContent = (mediaData: Media | null = media) => {
+    if (mediaData?.transcripts && mediaData.transcripts.length > 0 && 
+        mediaData.transcripts[0].notes && mediaData.transcripts[0].notes.length > 0) {
+      // Return the markdown content, making sure it's properly escaped and formatted
+      const content = mediaData.transcripts[0].notes[0].markdown_content;
+      return content ? content.trim() : null;
     }
     return null;
   };
 
-  // Helper to get the segmented content from the first note (assuming one note per transcript for now)
-   const getSegmentedContent = () => {
-     if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
-       return media.transcripts[0].notes[0].content;
-     }
-     return null;
-   };
+  // Helper to get the segmented content from the first note
+  const getSegmentedContent = (mediaData: Media | null = media) => {
+    if (mediaData?.transcripts && mediaData.transcripts.length > 0 && 
+        mediaData.transcripts[0].notes && mediaData.transcripts[0].notes.length > 0) {
+      return mediaData.transcripts[0].notes[0].content;
+    }
+    return null;
+  };
 
+  // Determine processing status message
+  const getProcessingStatusMessage = () => {
+    if (!media) return "Processing not started.";
+    
+    switch (media.transcription_status) {
+      case 'pending':
+        return "Transcription is pending...";
+      case 'processing':
+        return "Transcription in progress...";
+      case 'completed':
+        return media.transcripts && media.transcripts.length > 0 ? 
+          (media.transcripts[0].notes && media.transcripts[0].notes.length > 0 ? 
+            "Processing complete." : 
+            "Transcription complete, generating notes...") :
+          "Transcription complete, but no notes generated yet.";
+      case 'error':
+        return "Error occurred during processing.";
+      default:
+        return "Unknown processing status.";
+    }
+  };
+
+  // Render loading component
+  const renderLoading = () => (
+    <div className="space-y-2">
+      <div className="h-4 w-full bg-muted animate-pulse rounded"></div>
+      <div className="h-4 w-3/4 bg-muted animate-pulse rounded"></div>
+      <div className="h-4 w-5/6 bg-muted animate-pulse rounded"></div>
+    </div>
+  );
 
   return (
     <div className="flex h-screen flex-col">
@@ -248,8 +382,8 @@ export default function AnalysisPage() {
               <video
                 ref={videoRef}
                 className="h-full w-full object-contain"
-                src={media.file_url} // Use actual file URL
-                poster="/placeholder.svg?height=720&width=1280" // Keep placeholder poster for now
+                src={media.file_url}
+                poster="/placeholder.svg?height=720&width=1280"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
               />
@@ -302,9 +436,12 @@ export default function AnalysisPage() {
               ) : error ? (
                 <p className="text-red-500">Error loading transcription: {error}</p>
               ) : getTranscriptionText() ? (
-                <p>{getTranscriptionText()}</p> // Display actual transcription
+                <p>{getTranscriptionText()}</p>
               ) : (
-                <p>Transcription not available yet.</p> // Placeholder if no transcription
+                <div>
+                  <p>Transcription not available yet.</p>
+                  <p className="text-xs text-muted-foreground mt-2">{getProcessingStatusMessage()}</p>
+                </div>
               )}
             </div>
           </div>
@@ -313,86 +450,43 @@ export default function AnalysisPage() {
         {/* Right panel - Notes */}
         <div className="w-1/2 overflow-y-auto p-6">
           <Tabs defaultValue="notes">
-            <TabsList className="mb-6">
-              <TabsTrigger value="notes">AI Notes</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="keypoints">Key Points</TabsTrigger>
-            </TabsList>
 
             <TabsContent value="notes" className="focus-visible:outline-none focus-visible:ring-0">
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Academic Notes</h2>
+                <h2 className="text-2xl font-bold">Generated Notes</h2>
 
                 {loading ? (
-                   <p>Loading notes...</p>
-                 ) : error ? (
-                   <p className="text-red-500">Error loading notes: {error}</p>
-                 ) : getMarkdownContent() ? (
-                   <ReactMarkdown>{getMarkdownContent()}</ReactMarkdown> // Render markdown content
-                 ) : getSegmentedContent() ? (
-                    <div className="space-y-4">
-                      <p>Notes loaded (rendering raw segmented content for now):</p>
-                      <pre>{JSON.stringify(getSegmentedContent(), null, 2)}</pre> {/* Fallback to raw segmented content */}
-                    </div>
-                 ) : (
-                   <div className="space-y-4">
-                     <p>Notes not available yet.</p>
-                     <p className="mt-2 text-sm text-muted-foreground">
-                       Notes will appear here after processing is complete.
-                     </p>
-                   </div>
-                 )}
-
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary" className="focus-visible:outline-none focus-visible:ring-0">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Executive Summary</h2>
-                 {loading ? (
-                    <p>Loading summary...</p>
-                  ) : error ? (
-                    <p className="text-red-500">Error loading summary: {error}</p>
-                  ) : getMarkdownContent() ? ( // Assuming summary is part of markdown content or can be extracted
-                    // TODO: Extract summary from markdown or segmented content if needed
-                    <p>Summary will be displayed here from markdown or segmented content.</p>
-                  ) : getSegmentedContent()?.summary ? ( // Fallback to segmented content summary if available
-                    <p>{getSegmentedContent().summary}</p>
-                  ) : (
-                    <p>Summary not available yet.</p>
-                  )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="keypoints" className="focus-visible:outline-none focus-visible:ring-0">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Key Points</h2>
-                 {loading ? (
-                    <p>Loading key points...</p>
-                  ) : error ? (
-                    <p className="text-red-500">Error loading key points: {error}</p>
-                  ) : getMarkdownContent() ? ( // Assuming key points are part of markdown content or can be extracted
-                     // TODO: Extract key points from markdown or segmented content if needed
-                     <p>Key points will be displayed here from markdown or segmented content.</p>
-                  ) : getSegmentedContent()?.segments ? ( // Fallback to segmented content key points if available
-                    <ul className="space-y-4">
-                      {getSegmentedContent().segments.map((segment: any, segmentIndex: number) => (
-                         segment.key_points && segment.key_points.map((kp: string, kpIndex: number) => (
-                            <li key={`${segmentIndex}-${kpIndex}`} className="flex gap-3">
-                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                                {kpIndex + 1}
-                              </div>
-                              <div>
-                                <p className="font-medium">{kp}</p>
-                                {/* No description in this structure, just the key point text */}
-                              </div>
-                            </li>
-                         ))
-                      )).flat()} {/* Flatten the array of arrays */}
-                    </ul>
-                  ) : (
-                    <p>Key points not available yet.</p>
-                  )}
+                  renderLoading()
+                ) : error ? (
+                  <p className="text-red-500">Error loading notes: {error}</p>
+                ) : markdownNotes ? (
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-2xl font-bold mt-6 mb-4" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-xl font-bold mt-5 mb-3" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-4" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-4" {...props} />,
+                        li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                        p: ({node, ...props}) => <p className="mb-4" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                        em: ({node, ...props}) => <em className="italic" {...props} />,
+                        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4" {...props} />
+                      }}
+                    >
+                      {markdownNotes}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p>Notes not available yet.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {getProcessingStatusMessage()}
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

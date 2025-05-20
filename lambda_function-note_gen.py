@@ -154,7 +154,7 @@ def lambda_handler(event, context):
             # Check if a note already exists for this transcript_id using maybe_single()
             existing_note_response = supabase.table('notes').select('id').eq('transcript_id', transcript_id).maybe_single().execute()
 
-            if existing_note_response.data:
+            if existing_note_response:
                 # Update existing note
                 note_id = existing_note_response.data['id']
                 print(f"Note already exists for transcript {transcript_id}, updating note ID: {note_id}")
@@ -163,9 +163,6 @@ def lambda_handler(event, context):
                     'markdown_content': markdown_content # Save markdown content
                 }).eq('id', note_id).execute()
 
-                if update_response.error:
-                    print(f"Error updating note {note_id}: {update_response.error}")
-                    update_video_status(video_id, 'note_generation_failed', f'Error updating note: {update_response.error}')
             else:
                 # Insert new note
                 print(f"No existing note for transcript {transcript_id}, inserting new note.")
@@ -175,12 +172,7 @@ def lambda_handler(event, context):
                     'content': segmented_content_data, # Save segmented content (structured JSON)
                     'markdown_content': markdown_content # Save markdown content
                 }).execute()
-
-                if insert_response.error:
-                    print(f"Error inserting new note: {insert_response.error}")
-                    update_video_status(video_id, 'note_generation_failed', f'Error inserting note: {insert_response.error}')
-
-
+                
             # Update video status to indicate notes are generated
             update_video_status(video_id, 'completed') # Assuming 'completed' means notes are ready
             print(f"Updated video {video_id} status to 'completed'.")

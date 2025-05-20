@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'; // Import useParams to get route pa
 import Link from 'next/link'; // Import Link for navigation
 import FileUpload from '../../../components/FileUpload'; // Import FileUpload component
 import AuthGuard from '../../../components/AuthGuard'; // Import AuthGuard - Adjust path
+import { Progress } from '../../../components/ui/progress'; // Import Progress component
 
 interface Lesson {
   id: string;
@@ -46,8 +47,8 @@ export default function LessonDetailPage() {
 
       // Fetch videos for this lesson (assuming an API route for videos exists or can be adapted)
       // Let's assume a new API route /api/videos or modify /api/lessons to include videos
-      // For now, let's assume we can fetch videos by lessonId from a /api/videos route
-      const videosResponse = await fetch(`/api/videos?lessonId=${lessonId}`); // TODO: Create /api/videos route
+      // Fetch videos by lessonId from the /api/media route
+      const videosResponse = await fetch(`/api/media?lessonId=${lessonId}`); // Fetch videos from the new /api/media route
       if (!videosResponse.ok) {
         const errorData = await videosResponse.json();
         throw new Error(errorData.error || 'Failed to fetch videos');
@@ -70,6 +71,18 @@ export default function LessonDetailPage() {
     }
   }, [lessonId]); // Rerun effect when lessonId changes
 
+  // Poll for video status updates (optional, for real-time feel)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (videos.some(video => video.transcription_status !== 'notes_generated' && video.transcription_status !== 'failed' && video.transcription_status !== 'transcribed_only')) {
+        fetchData(); // Refetch data if any video is still processing
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval); // Clean up interval on component unmount
+  }, [videos]); // Rerun effect when videos state changes
+
+
   if (loading) return <p>Loading lesson details...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
   if (!lesson) return <p>Lesson not found.</p>;
@@ -79,16 +92,37 @@ export default function LessonDetailPage() {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Lesson: {lesson.title}</h1>
 
-        <h2 className="text-xl font-bold mb-3">Videos</h2>
+        <h2 className="text-xl font-bold mb-3">Media Items</h2> {/* Updated Heading */}
 
-        {videos.length === 0 && <p>No videos found for this lesson.</p>}
+        {/* Overall Progress Indicator */}
+        {videos.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Overall Lesson Progress</h3>
+            <Progress value={(videos.filter(video => video.transcription_status === 'notes_generated').length / videos.length) * 100} />
+            <p className="text-sm text-gray-600 mt-1">{videos.filter(video => video.transcription_status === 'notes_generated').length} of {videos.length} media items processed</p>
+          </div>
+        )}
+
+        {videos.length === 0 && <p>No media items found for this lesson.</p>} {/* Updated text */}
 
         {videos.length > 0 && (
           <ul>
             {videos.map((video) => (
               <li key={video.id} className="border rounded p-3 mb-2 flex justify-between items-center">
-                <span>Video ID: {video.id} - Status: {video.transcription_status}</span>
-                {/* TODO: Add link to transcription/note-taking page for this video */}
+                <Link href={`/media/${video.id}`} className="text-blue-600 hover:underline flex-grow mr-4"> {/* Added Link and flex-grow */}
+                  <span>Media ID: {video.id} - Status: {video.transcription_status}</span> {/* Updated text */}
+                </Link>
+                {/* Progress Bar */}
+                <div className="w-32 mr-4"> {/* Container for progress bar */}
+                  <Progress value={
+                    video.transcription_status === 'pending' ? 0 :
+                    video.transcription_status === 'transcribing' ? 25 : // Adjusted progress values
+                    video.transcription_status === 'note_generating' ? 75 :
+                    video.transcription_status === 'notes_generated' ? 100 :
+                    video.transcription_status === 'transcribed_only' ? 60 : // Added status
+                    video.transcription_status === 'failed' ? 0 : 0 // Added status and default
+                  } />
+                </div>
                 {/* TODO: Add delete button for videos */}
               </li>
             ))}

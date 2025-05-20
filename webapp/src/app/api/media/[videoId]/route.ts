@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 import createClient from '../../../../lib/supabase/server'; // Import server-side client
+import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3'; // Import DeleteObjectCommand and S3Client
+
+// Initialize AWS S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 // API route for managing a specific video by ID
 
@@ -107,22 +117,45 @@ export async function DELETE(request: Request, { params }: { params: { videoId: 
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 
-  // TODO: Delete associated transcript and notes first (if they exist)
-  // This might require separate API calls or database cascade rules
+  // Delete associated transcript and notes first (if they exist)
+  // Assuming transcript and notes are linked via video_id and cascade delete is not set up
+  const { error: deleteTranscriptError } = await supabaseServer
+    .from('transcripts')
+    .delete()
+    .eq('video_id', videoId);
+
+  if (deleteTranscriptError) {
+    console.error('Error deleting associated transcript:', deleteTranscriptError);
+    // Continue with video deletion but log the error
+  }
+
+  // TODO: If a separate AI notes table is created, delete from there too
 
   // Delete the video record from Supabase
-  const { error: deleteError } = await supabaseServer
+  const { error: deleteVideoError } = await supabaseServer
     .from('videos')
     .delete()
     .eq('id', videoId);
 
-  if (deleteError) {
-    console.error('Error deleting video record:', deleteError);
-    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  if (deleteVideoError) {
+    console.error('Error deleting video record:', deleteVideoError);
+    return NextResponse.json({ error: deleteVideoError.message }, { status: 500 });
   }
 
-  // TODO: Delete the S3 audio file using the s3_audio_key
-  // This requires AWS SDK S3 DeleteObjectCommand
+  // Delete the S3 audio file using the s3_audio_key
+  if (videoData.s3_audio_key) {
+    try {
+      const deleteObjectCommand = new DeleteObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET_NAME!,
+        Key: videoData.s3_audio_key,
+      });
+      await s3Client.send(deleteObjectCommand);
+      console.log(`Deleted S3 object: ${videoData.s3_audio_key}`);
+    } catch (s3Error) {
+      console.error('Error deleting S3 object:', s3Error);
+      // Continue with the response but log the error
+    }
+  }
 
   return NextResponse.json({ status: 'success', message: 'Video deleted successfully' });
 }

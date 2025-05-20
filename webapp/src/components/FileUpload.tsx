@@ -23,7 +23,9 @@ export default function FileUpload({ lessonId }: FileUploadProps) {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (event: React.MouseEvent<HTMLButtonElement>) => { // Accept event
+    event.preventDefault(); // Prevent default button behavior (page refresh)
+
     if (!selectedFile || !lessonId) return;
 
     setUploading(true);
@@ -67,6 +69,7 @@ export default function FileUpload({ lessonId }: FileUploadProps) {
         className="mb-2"
       />
       <button
+        type="button" // Explicitly set type to button to prevent form submission
         onClick={handleUpload}
         disabled={!selectedFile || uploading}
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"

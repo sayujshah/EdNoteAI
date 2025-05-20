@@ -6,7 +6,7 @@ export default async function createClient() {
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // Use ANON_KEY for client-side and SSR user interactions
     {
       cookies: {
         get(name: string) {

@@ -1,8 +1,12 @@
+'use client';
+
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, BookOpen, Clock, FileText, Upload, Zap } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { FileUploadModal } from "@/components/file-upload-modal"
 
 export default function LandingPage() {
   return (
@@ -51,9 +55,7 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button size="lg" className="gap-1">
-                    Try for Free <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <TryForFreeButton />
                   <Button size="lg" variant="outline">
                     See How It Works
                   </Button>
@@ -572,5 +574,19 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+function TryForFreeButton() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  return (
+    <>
+      <Button size="lg" className="gap-1" onClick={() => setIsModalOpen(true)}>
+        Try for Free <ArrowRight className="h-4 w-4" />
+      </Button>
+
+      {isModalOpen && <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
+    </>
   )
 }

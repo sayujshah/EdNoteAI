@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const uploadCommand = new PutObjectCommand({
       Bucket: s3BucketName,
       Key: fileKey,
-      Body: file.stream() as any, // Get the file as a stream
+      Body: Buffer.from(await file.arrayBuffer()), // Convert stream to Buffer for S3 upload
     });
 
     await s3Client.send(uploadCommand);
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     // Create a new video record in Supabase
     const { data: videoData, error: videoError } = await supabaseServer
       .from('videos')
-      .insert([{ lesson_id: lessonId, user_id: user.id, url: fileKey, transcription_status: 'pending', s3_audio_key: fileKey }]) // Save initial status and S3 key
+      .insert([{ lesson_id: lessonId, url: fileKey, transcription_status: 'pending', s3_audio_key: fileKey }]) // Save initial status and S3 key
       .select('id') // Select the ID of the newly created video
       .single();
 

@@ -4,7 +4,10 @@ import createClient from '../../../../../lib/supabase/server'; // Import server-
 // API route for exporting video notes/transcripts by video ID
 
 // GET /api/videos/{videoId}/export?format={format} - Export notes/transcript
-export async function GET(request: Request, { params }: { params: { videoId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ videoId: string }> }) {
+  // Await the params
+  const { videoId } = await params;
+
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -13,7 +16,6 @@ export async function GET(request: Request, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const videoId = params.videoId;
   const { searchParams } = new URL(request.url);
   const format = searchParams.get('format'); // Get the requested format
 

@@ -5,7 +5,7 @@ import createClient from '../../../../lib/supabase/server'; // Import server-sid
 // API route for managing a specific lesson by ID
 
 // PUT /api/lessons/{id} - Update a lesson
-export async function PUT(request: Request, { params }: Readonly<{ params: { id: string } }>) {
+export async function PUT(request: Request, { params }: Readonly<{ params: { [key: string]: string | string[] } }>) {
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();

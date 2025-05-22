@@ -17,7 +17,9 @@ const awsRegion = process.env.AWS_REGION!; // Get AWS region for S3 URL construc
 // API route for managing a specific video by ID
 
 // GET /api/videos/{videoId} - Retrieve a single video and its transcript and notes
-export async function GET(request: Request, { params }: { params: { videoId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ videoId: string }> }) {
+  // Await params before accessing videoId
+  const { videoId } = await params;
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -25,9 +27,6 @@ export async function GET(request: Request, { params }: { params: { videoId: str
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
-  // Await params before accessing videoId
-  const { videoId } = await params;
 
   console.log('Fetching video', videoId, 'for user:', user.id);
 
@@ -68,6 +67,9 @@ export async function GET(request: Request, { params }: { params: { videoId: str
 
 // PUT /api/videos/{videoId} - Update video details
 export async function PUT(request: Request, { params }: { params: { videoId: string } }) {
+  
+  // Await params before accessing videoId
+  const { videoId } = await params;
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -76,8 +78,6 @@ export async function PUT(request: Request, { params }: { params: { videoId: str
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Await params before accessing videoId
-  const { videoId } = await params;
   const { url } = await request.json(); // Assuming only URL is updatable for now
 
   console.log('Updating video', videoId, 'for user:', user.id);
@@ -113,6 +113,8 @@ export async function PUT(request: Request, { params }: { params: { videoId: str
 
 // DELETE /api/videos/{videoId} - Delete a video
 export async function DELETE(request: Request, { params }: { params: { videoId: string } }) {
+  // Await params before accessing videoId
+  const { videoId } = await params;
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -121,8 +123,6 @@ export async function DELETE(request: Request, { params }: { params: { videoId: 
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Await params before accessing videoId
-  const { videoId } = await params;
 
   console.log('Deleting video', videoId, 'for user:', user.id);
 

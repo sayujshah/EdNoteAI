@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '../../lib/supabase'; // Import supabase client
-import { v4 as uuidv4 } from 'uuid'; // Import uuid for generating IDs
 import AuthGuard from '../../components/AuthGuard'; // Import AuthGuard - Corrected path
 
 export default function Home() {
-  const [status, setStatus] = useState('Idle');
+  const [status, setStatus] = useState('Extension integration disabled');
   const [transcription, setTranscription] = useState(''); // State for transcription
-  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null); // State to hold the current video ID
 
   // Function to fetch transcription from Supabase
   const fetchTranscription = async (videoId: string) => {
@@ -25,90 +23,15 @@ export default function Home() {
     return data?.content || '';
   };
 
-  // Effect to poll for transcription updates
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-    if (currentVideoId && status === 'Capturing...') {
-      intervalId = setInterval(async () => {
-        const latestTranscription = await fetchTranscription(currentVideoId);
-        if (latestTranscription) {
-          setTranscription(latestTranscription);
-          // Stop polling if transcription is complete (optional, depending on how completion is tracked)
-          // For now, just update the transcription
-        }
-      }, 5000); // Poll every 5 seconds
-    } else if (intervalId) {
-      clearInterval(intervalId);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [currentVideoId, status]); // Rerun effect when videoId or status changes
-
-  const startCapture = async () => {
-    // Generate a new video ID (will associate with a lesson later)
-    const newVideoId = uuidv4();
-    setCurrentVideoId(newVideoId);
-
-    setStatus('Starting capture...');
-    try {
-      // Pass videoId and userId to the extension
-      const response = await chrome.runtime.sendMessage('jbginpeohajmpfgpimbakcabhafakmki', {
-        action: 'startCapture',
-        videoId: newVideoId,
-        userId: 'placeholder-user-id', // TODO: Replace with actual user ID - implement actual auth later
-      }); // TODO: Replace with actual extension ID
-      console.log('Start capture response:', response);
-      setStatus(response.status === 'captureStarted' ? 'Capturing...' : 'Failed to start capture');
-    } catch (error) {
-      console.error('Error sending start capture message:', error);
-      setStatus('Error starting capture');
-    }
-  };
-
-  const stopCapture = async () => {
-    setStatus('Stopping capture...');
-    try {
-      const response = await chrome.runtime.sendMessage('jbginpeohajmpfgpimbakcabhafakmki', { action: 'stopCapture' }); // TODO: Replace with actual extension ID
-      console.log('Stop capture response:', response);
-      setStatus(response.status === 'captureStopped' ? 'Stopped' : 'Failed to stop capture');
-      // After stopping, fetch the final transcription
-      if (currentVideoId) {
-        const finalTranscription = await fetchTranscription(currentVideoId);
-        if (finalTranscription) {
-          setTranscription(finalTranscription);
-        }
-      }
-    } catch (error) {
-      console.error('Error sending stop capture message:', error);
-      setStatus('Error stopping capture');
-    }
-  };
+  // The capture functionality and related state/effects are removed as per user request.
+  // The transcription state and fetchTranscription function are kept for future use.
 
   return (
     <AuthGuard> {/* Wrap content with AuthGuard */}
       <main className="flex min-h-screen flex-col items-center justify-between p-24">
         <h1>Video Transcriptor Notes</h1>
         <p>Status: {status}</p>
-        <div>
-          <button
-            onClick={startCapture}
-            disabled={status === 'Capturing...'}
-            className="mr-4 px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
-          >
-            Start Capture
-          </button>
-          <button
-            onClick={stopCapture}
-            disabled={status !== 'Capturing...'}
-            className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
-          >
-            Stop Capture
-          </button>
-        </div>
+        {/* Capture buttons removed as extension integration is disabled */}
         {/* Display transcription results here */}
         {transcription && (
           <div className="mt-8 p-4 border rounded w-full max-w-2xl">

@@ -66,7 +66,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
 }
 
 // PUT /api/videos/{videoId} - Update video details
-export async function PUT(request: Request, { params }: { params: { videoId: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ videoId: string }> }) {
   
   // Await params before accessing videoId
   const { videoId } = await params;

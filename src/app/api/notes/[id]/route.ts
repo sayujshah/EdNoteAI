@@ -5,7 +5,10 @@ import createClient from '../../../../lib/supabase/server'; // Import server-sid
 // API route for managing a specific note by ID
 
 // PUT /api/notes/{id} - Update a note
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Await the params
+  const { id } = await params;
+  
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -14,11 +17,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('Updating note', params.id, 'for user:', user.id);
+  console.log('Updating note', id, 'for user:', user.id);
 
   // TODO: Get user ID from authenticated session and verify ownership
   // const userId = 'placeholder-user-id'; // Replace with actual user ID
-  const noteId = params.id;
+  const noteId = id;
 
   const updates: any = await request.json(); // Add type annotation for updates
 
@@ -42,7 +45,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 // DELETE /api/notes/{id} - Delete a note
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Await the params
+  const { id } = await params;
+  
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -51,9 +57,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('Deleting note', params.id, 'for user:', user.id);
+  console.log('Deleting note', id, 'for user:', user.id);
 
-  const noteId = params.id;
+  const noteId = id;
 
   const { error } = await supabaseServer // Use server-side client
     .from('notes')

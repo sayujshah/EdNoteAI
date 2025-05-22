@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react" // Import useCallback
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react"
@@ -28,7 +28,7 @@ interface Transcription {
 
 interface Note {
   id: string;
-  content: any; // TODO: Define a specific type for segmented content
+  content: any; // Segmented content (structured JSON)
   markdown_content?: string; // Markdown notes
   // Add other note properties if needed
 }
@@ -53,8 +53,8 @@ export default function AnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch media data
-  const fetchData = async () => {
+  // Function to fetch media data, wrapped in useCallback
+  const fetchData = useCallback(async () => {
     console.log("Fetching media data..."); // Added logging
     setLoading(true);
     setError(null);
@@ -74,7 +74,7 @@ export default function AnalysisPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]); // Dependency array for useCallback
 
 
   // Fetch media data on component mount and set up Realtime subscription
@@ -115,7 +115,7 @@ export default function AnalysisPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [id, fetchData]); // Rerun effect if id or fetchData changes
+  }, [id]); // Removed fetchData from dependency array
 
 
   // Format time in MM:SS format
@@ -269,7 +269,7 @@ export default function AnalysisPage() {
                 ref={videoRef}
                 className="h-full w-full object-contain"
                 src={media.file_url} // Use actual file URL
-                poster="/file.svg?height=720&width=1280" // Keep placeholder poster for now
+                poster="/placeholder.svg?height=720&width=1280" // Keep placeholder poster for now
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onError={handleVideoError} // Added error listener
@@ -400,7 +400,7 @@ export default function AnalysisPage() {
                      <p>Key points will be displayed here from markdown or segmented content.</p>
                   ) : getSegmentedContent()?.segments ? ( // Fallback to segmented content key points if available
                     <ul className="space-y-4">
-                      {getSegmentedContent().segments.map((segment: any /* TODO: Define a specific type for segment */, segmentIndex: number) => (
+                      {getSegmentedContent().segments.map((segment: any, segmentIndex: number) => (
                          segment.key_points && segment.key_points.map((kp: string, kpIndex: number) => (
                             <li key={`${segmentIndex}-${kpIndex}`} className="flex gap-3">
                               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">

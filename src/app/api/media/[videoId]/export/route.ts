@@ -28,20 +28,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   // Fetch the video and its associated transcript and segmented content
   const { data: videoData, error: fetchError } = await supabaseServer
     .from('videos')
-    .select('lessons(user_id), transcripts(*)') // Select video, lesson user_id, and transcript
+    .select('title, lessons(user_id), transcripts(*)') // Select video title, lesson user_id, and transcript
     .eq('id', videoId)
     .single();
 
-  if (fetchError || !videoData || videoData.lessons?.user_id !== user.id) {
+  if (fetchError || !videoData || videoData.lessons?.[0]?.user_id !== user.id) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 
-  if (!videoData.transcripts) {
+  if (!videoData.transcripts || videoData.transcripts.length === 0) {
       return NextResponse.json({ error: 'Transcript not available for this video' }, { status: 404 });
   }
 
-  const rawTranscript = videoData.transcripts.content;
-  const segmentedContent = videoData.transcripts.segmented_content; // Get segmented content
+  const rawTranscript = videoData.transcripts[0].content;
+  const segmentedContent = videoData.transcripts[0].segmented_content; // Get segmented content
 
   let exportedContent: string;
   let contentType: string;

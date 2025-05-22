@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const uploadCommand = new PutObjectCommand({
       Bucket: s3BucketName,
       Key: fileKey,
-      Body: audioStream as any, // Type assertion might be needed depending on stream type
+      Body: audioStream as any, // TODO: Find a more specific type for audioStream if possible
     });
 
     await s3Client.send(uploadCommand);
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     // Save initial transcription request status to Supabase
     // Save initial transcription request status to Supabase
-    const { data, error } = await supabaseServer
+    const { error } = await supabaseServer
       .from('videos')
       .update({ transcription_status: 'in_progress', s3_audio_key: fileKey })
       .eq('id', videoId)

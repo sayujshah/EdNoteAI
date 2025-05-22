@@ -14,7 +14,7 @@ interface VideoData {
     id: string;
     video_id: string;
     content: string;
-    segmented_content: any; // Use a more specific type later
+    segmented_content: any; // TODO: Use a more specific type for segmented content later
     created_at: string;
   } | null; // Transcript might not be available yet
 }
@@ -52,7 +52,7 @@ export default function VideoDetailPage() {
     if (videoId) {
       fetchData();
     }
-  }, [videoId]); // Rerun effect when videoId changes
+  }, [videoId, fetchData]); // Rerun effect when videoId changes
 
   if (loading) return <p>Loading video data...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
@@ -110,7 +110,7 @@ export default function VideoDetailPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">{videoData.transcripts.segmented_content.title || 'Generated Notes'}</h3>
                   {videoData.transcripts.segmented_content.segments && videoData.transcripts.segmented_content.segments.length > 0 ? (
-                    videoData.transcripts.segmented_content.segments.map((segment: any, index: number) => ( // Use 'any' for now
+                    videoData.transcripts.segmented_content.segments.map((segment: any /* TODO: Define a specific type for segment */, index: number) => ( // Use 'any' for now
                       <div key={index} className="mb-4 pb-4 border-b last:border-b-0">
                         <h4 className="text-md font-semibold mb-1">{segment.heading || `Segment ${index + 1}`}</h4>
                         {segment.summary && <p className="text-sm text-gray-700 mb-1">Summary: {segment.summary}</p>}

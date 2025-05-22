@@ -84,7 +84,7 @@ export default function NotesLibraryPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch notes');
       }
-      const data: any[] = await response.json(); // Use 'any' for now, map to NoteCardData
+      const data: VideoDataFromApi[] = await response.json(); // Use 'any' for now, map to NoteCardData
 
       // Map fetched data to NoteCardData structure
       const formattedNotes: NoteCardData[] = data.map(video => ({
@@ -110,7 +110,7 @@ export default function NotesLibraryPage() {
   // Fetch notes on component mount and when filter/sort state changes
   useEffect(() => {
     fetchNotes();
-  }, [typeFilter, sortBy]); // Rerun effect when filter or sort changes
+  }, [typeFilter, sortBy, fetchNotes]); // Rerun effect when filter or sort changes
 
   // Event handlers for filtering and sorting
   const handleTypeFilterChange = (filter: 'all' | 'video' | 'audio') => {

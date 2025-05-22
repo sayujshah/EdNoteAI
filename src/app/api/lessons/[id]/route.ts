@@ -20,7 +20,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   // const userId = 'placeholder-user-id'; // Replace with actual user ID
   const lessonId = params.id;
 
-  const updates: any = await request.json(); // Add type annotation for updates
+  const updates: any /* TODO: Define a specific type for lesson updates */ = await request.json(); // Add type annotation for updates
 
   const { data, error } = await supabaseServer // Use server-side client
     .from('lessons')

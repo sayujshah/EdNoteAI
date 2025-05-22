@@ -41,7 +41,6 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File; // Assuming the file is sent with the key 'file'
-    const videoId = formData.get('videoId') as string; // Assuming videoId is sent with the key 'videoId'
     const lessonId = formData.get('lessonId') as string; // Assuming lessonId is sent with the key 'lessonId'
 
     if (!file) {

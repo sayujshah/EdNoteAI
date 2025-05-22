@@ -28,7 +28,7 @@ interface Transcription {
 
 interface Note {
   id: string;
-  content: any; // Segmented content (structured JSON)
+  content: any; // TODO: Define a specific type for segmented content
   markdown_content?: string; // Markdown notes
   // Add other note properties if needed
 }
@@ -115,7 +115,7 @@ export default function AnalysisPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [id]); // Rerun effect if id changes
+  }, [id, fetchData]); // Rerun effect if id or fetchData changes
 
 
   // Format time in MM:SS format
@@ -400,7 +400,7 @@ export default function AnalysisPage() {
                      <p>Key points will be displayed here from markdown or segmented content.</p>
                   ) : getSegmentedContent()?.segments ? ( // Fallback to segmented content key points if available
                     <ul className="space-y-4">
-                      {getSegmentedContent().segments.map((segment: any, segmentIndex: number) => (
+                      {getSegmentedContent().segments.map((segment: any /* TODO: Define a specific type for segment */, segmentIndex: number) => (
                          segment.key_points && segment.key_points.map((kp: string, kpIndex: number) => (
                             <li key={`${segmentIndex}-${kpIndex}`} className="flex gap-3">
                               <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">

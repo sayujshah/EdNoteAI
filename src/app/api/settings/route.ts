@@ -5,7 +5,7 @@ import createClient from '../../../lib/supabase/server'; // Import server-side c
 // API route for managing user settings
 
 // GET /api/settings - Retrieve user settings
-export async function GET(request: Request) {
+export async function GET() {
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();

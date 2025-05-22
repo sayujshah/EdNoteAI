@@ -141,7 +141,7 @@ export default function UploadPage() {
   const handleUpload = async () => {
     if (!file) return;
 
-    let lessonIdToUse = selectedLessonId;
+    const lessonIdToUse = selectedLessonId;
 
     // If creating a new lesson, create it first
     if (isCreatingNewLesson && newLessonTitle.trim()) {

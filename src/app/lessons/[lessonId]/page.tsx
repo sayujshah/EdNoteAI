@@ -69,7 +69,7 @@ export default function LessonDetailPage() {
     if (lessonId) {
       fetchData();
     }
-  }, [lessonId]); // Rerun effect when lessonId changes
+  }, [lessonId, fetchData]); // Rerun effect when lessonId changes
 
   // Poll for video status updates (optional, for real-time feel)
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function LessonDetailPage() {
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval); // Clean up interval on component unmount
-  }, [videos]); // Rerun effect when videos state changes
+  }, [videos, fetchData]); // Rerun effect when videos state changes
 
 
   if (loading) return <p>Loading lesson details...</p>;

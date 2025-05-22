@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard'; // Adjust path as needed
 import NoteCard from '../../components/NoteCard'; // Import NoteCard component
 

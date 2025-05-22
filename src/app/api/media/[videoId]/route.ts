@@ -112,7 +112,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ vide
 }
 
 // DELETE /api/videos/{videoId} - Delete a video
-export async function DELETE(request: Request, { params }: { params: { videoId: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ videoId: string }> }) {
   // Await params before accessing videoId
   const { videoId } = await params;
   // Get authenticated user

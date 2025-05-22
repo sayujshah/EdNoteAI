@@ -20,7 +20,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   // const userId = 'placeholder-user-id'; // Replace with actual user ID
   const noteId = params.id;
 
-  const updates: Record<string, any> = await request.json(); // Add type annotation for updates
+  const updates: object = await request.json(); // Add type annotation for updates
 
   const { data, error } = await supabaseServer // Use server-side client
     .from('notes')

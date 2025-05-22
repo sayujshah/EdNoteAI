@@ -5,7 +5,10 @@ import createClient from '../../../../lib/supabase/server'; // Import server-sid
 // API route for managing a specific lesson by ID
 
 // PUT /api/lessons/{id} - Update a lesson
-export async function PUT(request: Request, { params }: Readonly<{ params: { [key: string]: string | string[] } }>) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Await the params
+  const { id } = await params;
+  
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -14,18 +17,13 @@ export async function PUT(request: Request, { params }: Readonly<{ params: { [ke
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('Updating lesson', params.id, 'for user:', user.id);
+  console.log('Updating lesson', id, 'for user:', user.id);
 
   // TODO: Get user ID from authenticated session and verify ownership
   // const userId = 'placeholder-user-id'; // Replace with actual user ID
-  const lessonId = params.id;
+  const lessonId = id;
 
-  const updates: unknown = await request.json(); // Use unknown for updates
-
-  // Basic type check for updates
-  if (typeof updates !== 'object' || updates === null) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-  }
+  const updates: any = await request.json(); // Add type annotation for updates
 
   const { data, error } = await supabaseServer // Use server-side client
     .from('lessons')
@@ -47,7 +45,10 @@ export async function PUT(request: Request, { params }: Readonly<{ params: { [ke
 }
 
 // DELETE /api/lessons/{id} - Delete a lesson
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Await the params
+  const { id } = await params;
+  
   // Get authenticated user
   const supabaseServer = await createClient(); // Add await
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -56,9 +57,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('Deleting lesson', params.id, 'for user:', user.id);
+  console.log('Deleting lesson', id, 'for user:', user.id);
 
-  const lessonId = params.id;
+  const lessonId = id;
 
   const { error } = await supabaseServer // Use server-side client
     .from('lessons')

@@ -5,13 +5,11 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
 import { Skeleton } from "@/components/ui/Skeleton";
 import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import dynamic from 'next/dynamic';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 // Dynamic import for ReactMarkdown to resolve CommonJS/ESM conflict
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
@@ -263,51 +261,6 @@ export default function AnalysisPage() {
         </div>
       );
     }
-  };
-
-  // Helper to extract summary from markdown content
-  const getSummaryFromMarkdown = (markdownContent: string): string | null => {
-    // Look for summary section in markdown
-    const summaryMatch = markdownContent.match(/## Summary\s*\n([\s\S]*?)(?=\n## |$)/i);
-    if (summaryMatch) {
-      return summaryMatch[1].trim();
-    }
-    
-    // Fallback: look for executive summary
-    const execSummaryMatch = markdownContent.match(/## Executive Summary\s*\n([\s\S]*?)(?=\n## |$)/i);
-    if (execSummaryMatch) {
-      return execSummaryMatch[1].trim();
-    }
-    
-    // Fallback: take first paragraph
-    const firstParagraph = markdownContent.split('\n').find(line => line.trim().length > 50);
-    return firstParagraph || null;
-  };
-
-  // Helper to extract key points from markdown content
-  const getKeyPointsFromMarkdown = (markdownContent: string): string[] => {
-    const keyPoints: string[] = [];
-    
-    // Look for key points section
-    const keyPointsMatch = markdownContent.match(/## Key Points\s*\n([\s\S]*?)(?=\n## |$)/i);
-    if (keyPointsMatch) {
-      const keyPointsText = keyPointsMatch[1];
-      // Extract list items
-      const listItems = keyPointsText.match(/[-*]\s+(.+)/g);
-      if (listItems) {
-        keyPoints.push(...listItems.map(item => item.replace(/^[-*]\s+/, '').trim()));
-      }
-    }
-    
-    // Fallback: look for any bullet points in the content
-    if (keyPoints.length === 0) {
-      const allListItems = markdownContent.match(/[-*]\s+(.+)/g);
-      if (allListItems) {
-        keyPoints.push(...allListItems.slice(0, 10).map(item => item.replace(/^[-*]\s+/, '').trim()));
-      }
-    }
-    
-    return keyPoints;
   };
 
   return (

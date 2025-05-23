@@ -60,12 +60,14 @@ def lambda_handler(event, context):
             s3_key = payload['s3Key']
             video_id = payload['videoId'] # Assuming videoId is passed in the payload
             user_id = payload['userId'] # Assuming userId is passed in the payload
+            note_format = payload.get('noteFormat', 'Markdown') # Get note format, default to markdown
         except (KeyError, json.JSONDecodeError):
             # Handle direct invocation or different event structure
             s3_bucket = event.get('bucketName')
             s3_key = event.get('s3Key')
             video_id = event.get('videoId') # Assuming videoId is passed in the event
             user_id = event.get('userId') # Assuming userId is passed in the event
+            note_format = event.get('noteFormat', 'Markdown') # Get note format, default to markdown
     except Exception as e:
         print(f"Error parsing event: {e}")
         return {
@@ -141,7 +143,8 @@ def lambda_handler(event, context):
                     Payload=json.dumps({ # Pass necessary info to the agent Lambda
                         'videoId': video_id,
                         'userId': user_id, # Pass user_id
-                        'rawTranscript': transcription_text # Pass the raw transcript
+                        'rawTranscript': transcription_text, # Pass the raw transcript
+                        'noteFormat': note_format # Pass the note format
                         # TODO: Include visual context data if available
                     })
                 )
@@ -166,3 +169,4 @@ def lambda_handler(event, context):
 
     except Exception as e:
         print(f"Error processing transcription: {e}")
+        

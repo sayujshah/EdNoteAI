@@ -43,6 +43,7 @@ def lambda_handler(event, context):
         payload = event # Assuming the event is the payload JSON
         video_id = payload.get('videoId')
         user_id = payload.get('userId')
+        note_format = payload.get('noteFormat', 'Markdown') # Get note format, default to markdown
         # raw_transcript is no longer expected directly, we fetch it
         on_screen_text_data = payload.get('onScreenTextData') # Expect on-screen text data
 
@@ -54,7 +55,7 @@ def lambda_handler(event, context):
                 'body': json.dumps('Missing videoId or userId')
             }
 
-        print(f"Generating notes for video ID: {video_id} for user: {user_id}")
+        print(f"Generating notes for video ID: {video_id} for user: {user_id} in format: {note_format}")
 
         # 1. Fetch the transcript text and transcript_id using the video_id
         # Assuming a one-to-one relationship between videos and transcripts
@@ -73,80 +74,63 @@ def lambda_handler(event, context):
                 'body': json.dumps(f'No transcript found for video ID: {video_id}')
             }
 
-        # --- First OpenAI Interaction: Generate Segmented Content (Structured JSON) ---
-        # Use the existing prompt to generate structured JSON notes (this will be our segmented_content)
-        segmentation_prompt = f"""
-        You are an AI assistant specialized in generating academic-style notes from lecture transcripts and on-screen text.
-        Your task is to take the provided raw transcript and on-screen text data and transform it into structured, academic notes.
-        This should include:
-        1.  **Concept Segmentation:** Break the transcript into logical sections based on the topics or concepts discussed.
-        2.  **Key Points:** For each segment, identify and list the key points.
-        3.  **Summaries:** Provide a concise summary for each segment.
-        4.  **On-screen Text Integration:** Integrate the provided on-screen text into the relevant segments or as separate entries. Clearly indicate that this text appeared on screen (e.g., "On-screen: [Text]"). Try to align it contextually with the spoken content.
-        5.  **Lecture Demonstrations:** If the transcript or on-screen text describes a demonstration (e.g., coding, experiment, diagram), provide a brief description of what was demonstrated.
-        6.  **Structure:** Format the output clearly, perhaps using Markdown or a similar hierarchical structure. Include timestamps if available in the raw transcript or on-screen text data (design for it).
+        # --- Generate Notes Based on Format ---
+        if note_format == 'LaTeX':
+            # LaTeX-specific prompt
+            generation_prompt = f"""
+            You are an AI assistant specialized in generating academic-style notes from lecture transcripts in LaTeX format.
+            Your task is to take the provided raw transcript and transform it into well-structured LaTeX content suitable for academic documents.
+            
+            Requirements:
+            1. **Document Structure**: Use LaTeX sectioning commands (\\section{{}}, \\subsection{{}}, \\subsubsection{{}})
+            2. **Lists**: Use \\begin{{itemize}} and \\begin{{enumerate}} for bullet points and numbered lists
+            3. **Mathematics**: Use proper LaTeX math notation with $ for inline math and $$ for display math
+            4. **Emphasis**: Use \\textbf{{}} for bold and \\textit{{}} for italics
+            5. **Content Organization**: Break content into logical sections based on topics discussed
+            6. **Academic Style**: Maintain formal academic tone and structure
+            
+            Raw Transcript:
+            {raw_transcript}
+            
+            On-screen Text Data (if available):
+            {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
+            
+            Generate comprehensive LaTeX content (without \\documentclass or \\begin{{document}} - just the content that would go inside a document).
+            Focus on clear structure, proper LaTeX formatting, and academic presentation.
+            """
+        else:
+            # Markdown-specific prompt (existing logic)
+            generation_prompt = f"""
+            You are an AI assistant specialized in generating academic-style notes from lecture transcripts in Markdown format.
+            Your task is to take the provided raw transcript and transform it into well-structured Markdown content.
+            
+            Requirements:
+            1. **Document Structure**: Use proper Markdown headers (# ## ###)
+            2. **Lists**: Use - or * for bullet points and 1. 2. 3. for numbered lists
+            3. **Emphasis**: Use **bold** and *italic* formatting
+            4. **Content Organization**: Break content into logical sections based on topics discussed
+            5. **Academic Style**: Maintain formal academic tone and structure
+            
+            Raw Transcript:
+            {raw_transcript}
+            
+            On-screen Text Data (if available):
+            {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
+            
+            Generate comprehensive Markdown content with clear structure and academic presentation.
+            """
 
-        Raw Transcript:
-        {raw_transcript}
-
-        On-screen Text Data (if available):
-        {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
-
-        Generate the academic notes in a structured JSON format with the following structure:
-        {{
-            "title": "Generated Notes Title (Infer from content)",
-            "segments": [
-                {{
-                    "heading": "Segment Heading (Infer topic)",
-                    "summary": "Concise summary of the segment.",
-                    "key_points": ["Key point 1", "Key point 2", ...],
-                    "on_screen_text": ["On-screen text excerpt 1", "On-screen text excerpt 2", ...], # List of relevant on-screen text excerpts
-                    "demonstration_description": "Brief description of demonstration if applicable (optional)",
-                    "start_time": 0, # Placeholder, ideally from transcript data
-                    "end_time": -1   # Placeholder, ideally from transcript data
-                }},
-                ... other segments ...
-            ],
-            "generated_at": f"{context.invoked_function_arn}" # Example metadata
-        }}
-        Ensure the JSON is valid and can be parsed directly. Do not include any introductory or concluding text outside the JSON object.
-        """
-
-        print("Sending request to OpenAI for segmented content generation (structured JSON)...")
-        segmentation_response = openai_client.chat.completions.create(
+        print(f"Sending request to OpenAI for {note_format} content generation...")
+        generation_response = openai_client.chat.completions.create(
             model="gpt-4o-mini", # Or your preferred model
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates structured academic notes in JSON format, integrating on-screen text."},
-                {"role": "user", "content": segmentation_prompt}
-            ],
-            response_format={ "type": "json_object" } # Request JSON object output
+                {"role": "system", "content": f"You are a helpful assistant that generates structured academic notes in {note_format.upper()} format."},
+                {"role": "user", "content": generation_prompt}
+            ]
         )
 
-        segmented_content_data = json.loads(segmentation_response.choices[0].message.content) # Parse the JSON string
-        print("Generated segmented content (structured JSON) successfully.")
-
-        # --- Second OpenAI Interaction: Generate Markdown Notes ---
-        # Now, generate markdown notes from the segmented content
-        markdown_prompt = f"""
-        You are an AI assistant specialized in converting structured academic content into well-formatted markdown notes.
-        Take the following structured content and convert it into readable academic notes using Markdown formatting.
-        Focus on clarity, hierarchy (using headings, lists), and readability.
-
-        Structured Content (JSON):
-        {json.dumps(segmented_content_data, indent=2)}
-        """
-
-        print("Sending request to OpenAI for markdown notes generation...")
-        markdown_response = openai_client.chat.completions.create(
-             model="gpt-4o-mini", # Or your preferred model
-             messages=[
-                 {"role": "system", "content": "You are a helpful assistant that converts structured academic content into well-formatted markdown notes."},
-                 {"role": "user", "content": markdown_prompt}
-             ]
-         )
-
-        markdown_content = markdown_response.choices[0].message.content
-        print("Generated markdown content successfully.")
+        generated_content = generation_response.choices[0].message.content
+        print(f"Generated {note_format} content successfully.")
 
         # --- Save to Supabase (notes table) ---
         # Insert a new record into the 'notes' table
@@ -159,8 +143,8 @@ def lambda_handler(event, context):
                 note_id = existing_note_response.data['id']
                 print(f"Note already exists for transcript {transcript_id}, updating note ID: {note_id}")
                 update_response = supabase.table('notes').update({
-                    'content': segmented_content_data, # Save segmented content (structured JSON)
-                    'markdown_content': markdown_content # Save markdown content
+                    'content': generated_content, # Save generated content
+                    'markdown_content': None # Markdown content is not saved for LaTeX notes
                 }).eq('id', note_id).execute()
 
             else:
@@ -169,8 +153,8 @@ def lambda_handler(event, context):
                 insert_response = supabase.table('notes').insert({
                     'transcript_id': transcript_id,
                     'user_id': user_id, # Link note to user
-                    'content': segmented_content_data, # Save segmented content (structured JSON)
-                    'markdown_content': markdown_content # Save markdown content
+                    'content': generated_content, # Save generated content
+                    'markdown_content': None # Markdown content is not saved for LaTeX notes
                 }).execute()
                 
             # Update video status to indicate notes are generated

@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File; // Assuming the file is sent with the key 'file'
     const lessonId = formData.get('lessonId') as string; // Assuming lessonId is sent with the key 'lessonId'
+    const noteFormat = formData.get('noteFormat') as string || 'Markdown'; // Get note format, default to markdown
 
     if (!file) {
       return NextResponse.json({ status: 'error', message: 'No file uploaded' }, { status: 400 });
@@ -49,6 +50,11 @@ export async function POST(request: Request) {
 
     if (!lessonId) {
        return NextResponse.json({ status: 'error', message: 'lessonId is required for now' }, { status: 400 });
+    }
+
+    // Validate note format
+    if (noteFormat !== 'Markdown' && noteFormat !== 'LaTeX') {
+      return NextResponse.json({ status: 'error', message: 'Invalid note format. Must be "Markdown" or "LaTeX"' }, { status: 400 });
     }
 
     // Generate a unique file key for S3
@@ -68,7 +74,7 @@ export async function POST(request: Request) {
     // Create a new video record in Supabase
     const { data: videoData, error: videoError } = await supabaseServer
       .from('videos')
-      .insert([{ lesson_id: lessonId, file_url: fileKey, transcription_status: 'pending', s3_audio_key: fileKey }]) // Save S3 key as file_url
+      .insert([{ lesson_id: lessonId, file_url: fileKey, transcription_status: 'pending', s3_audio_key: fileKey, note_format: noteFormat }]) // Save S3 key as file_url and note format
       .select('id') // Select the ID of the newly created video
       .single();
 
@@ -85,7 +91,7 @@ export async function POST(request: Request) {
     const invokeCommand = new InvokeCommand({
       FunctionName: transcriptionLambdaFunctionName,
       InvocationType: 'Event', // Use 'Event' for asynchronous invocation
-      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: newVideoId, userId: user.id }), // Pass necessary info to Lambda
+      Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: newVideoId, userId: user.id, noteFormat: noteFormat }), // Pass necessary info to Lambda including note format
     });
 
     await lambdaClient.send(invokeCommand);

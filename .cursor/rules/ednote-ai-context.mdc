@@ -1,0 +1,72 @@
+---
+description: Background context for the project so far
+globs: 
+alwaysApply: false
+---
+Task
+
+1. Current Work: The project aims to build a unified web app and Chrome extension for video-based lectures, featuring audio/video capture, transcription, AI note generation, and various output formats. Significant progress has been made on the core backend pipeline and the frontend web application.
+
+Key implemented features include:
+
+- File upload functionality on a dedicated page (`/dashboard/upload`) with the ability to select an existing lesson or create a new one for associating the uploaded media.
+- A backend API route (`/api/upload`) to handle file uploads to AWS S3 and trigger the transcription Lambda function.
+- AWS Lambda functions for transcription (using OpenAI Whisper) and AI note generation (using OpenAI GPT-4o-mini).
+- AWS S3 for storing uploaded media files.
+- Supabase as the backend, handling user authentication, database storage (PostgreSQL), and Realtime subscriptions.
+- Database schema adjustments to accommodate generated notes in a dedicated `notes` table, linked to `transcripts`, which are linked to `videos`.
+- An analysis page (`/dashboard/analysis/[id]`) that fetches media data, transcription, and generated notes from the backend API (`/api/media/[videoId]`).
+- Automatic updates on the analysis page using Supabase Realtime when the media processing status changes to 'completed'.
+- Display of transcription text and markdown-formatted generated notes on the analysis page.
+
+2. Key Technical Concepts:
+
+- __Frontend:__ Next.js (App Router, API Routes, Server/Client Components), React (State, Hooks), `react-markdown`, Supabase Client (`@supabase/supabase-js`, `@supabase/ssr`), UI components (`@/components/ui`).
+- __Backend:__ Next.js API Routes, Supabase (Auth, PostgreSQL, Realtime), Supabase Server Client (`@supabase/ssr`), AWS Lambda (Python), AWS S3, AWS SDKs (`@aws-sdk/client-s3`, `@aws-sdk/client-lambda`, `boto3`), OpenAI API (Whisper, GPT-4o-mini), AWS IAM, PostgreSQL (Schema, RLS), Environment Variables.
+- __Database Schema:__ `videos`, `transcripts`, `notes`, `lessons`, `user_settings` tables with defined relationships (videos linked to lessons, transcripts linked to videos, notes linked to transcripts). Key columns added/modified: `file_url` (videos), `segmented_content` (notes), `markdown_content` (notes), `url` (removed from videos).
+
+3. Relevant Files and Code:
+
+- `webapp/src/app/api/upload/route.ts`: Handles S3 upload and Lambda invocation. Modified to save `file_url` and return `mediaId`.
+- `webapp/src/app/api/media/route.ts`: API for listing media.
+- `webapp/src/app/api/media/[videoId]/route.ts`: API for fetching single media, transcript, and notes. Modified to await params, select nested transcripts and notes, and construct/return public S3 URL as `file_url`.
+- `webapp/src/app/api/lessons/route.ts`: API for lesson management.
+- `webapp/src/app/dashboard/upload/page.tsx`: Frontend upload page. Modified for lesson selection/creation and calling `/api/upload`.
+- `webapp/src/app/dashboard/analysis/[id]/page.tsx`: Frontend analysis page. Modified to fetch data, use Realtime for updates, display media preview (attempted), transcription, and markdown notes. Added video error logging.
+- `webapp/src/components/ui/select.tsx`: Added for lesson selection dropdown.
+- `lambda_function-audio_tran.py`: Transcription Lambda (managed in AWS).
+- `lambda_function-note_gen.py`: Note Generation Lambda (managed in AWS). Updated to fetch transcript, generate segmented content and markdown, and save to `notes` table.
+
+4. Problem Solving:
+
+- Resolved frontend module not found errors (`@supabase/ssr`, `react-markdown`).
+- Fixed Supabase authentication and RLS issues.
+- Corrected S3 upload body format.
+- Addressed database insert errors by adjusting schema and insert statements (`user_id`, `file_url`, `url`).
+- Fixed Lambda invocation issues.
+- Corrected API route dynamic parameter handling (`await params`).
+- Resolved Lambda Supabase errors (`PGRST116`, enum value) by using `.maybe_single()` and correcting status values.
+- Implemented automatic notes updates using Supabase Realtime by subscribing to video status changes.
+- Integrated `react-markdown` for displaying notes.
+- Diagnosed `'next' is not recognized` error as an environment/PATH issue with a direct execution workaround.
+
+5. Pending Tasks and Next Steps: The project has made significant progress, but several key features and issues remain:
+
+- __Resolve Media Playback Error:__ The media player on the analysis page is still showing a black screen and `404 Not Found` errors for the media file URL in the browser console. This is likely due to S3 bucket/object public access permissions or incorrect AWS environment variables (`AWS_S3_BUCKET_NAME`, `AWS_REGION`) used in the API route constructing the S3 URL. __This is the most immediate blocking issue for core functionality.__
+- __Refine Notes Display:__ While markdown is rendering, the "Summary" and "Key Points" tabs still use placeholder logic or raw segmented content. They need to be updated to extract and display relevant information from the generated markdown or segmented content structure.
+- __Implement Note Customization/Editing:__ Add UI and backend logic for users to edit the generated notes.
+- __Implement Segment Boundary Adjustment:__ Add UI and backend logic for users to manually adjust the concept segment boundaries.
+- __Add Metadata Management:__ Implement functionality to add, edit, and display metadata (course title, professor, date, tags) for media items/lessons.
+- __Implement Export Formats:__ Complete the backend logic for exporting notes in LaTeX, Markdown, Word (.docx), and plain .txt formats.
+- __Implement Video Capture:__ Develop the functionality to capture video directly from the browser (beyond file uploads).
+- __Implement Visual Context Extraction:__ Revisit and implement the feature to analyze on-screen visuals and integrate descriptions into notes.
+- __Develop and Integrate Chrome Extension:__ Build the Chrome extension to capture media directly from online lecture platforms and integrate it with the web app.
+- __Integrate AWS Amplify:__ Set up CI/CD and hosting using AWS Amplify.
+- __Integrate Stripe:__ Implement payment processing for subscriptions and one-time billing.
+- __Implement Granular Progress Feedback:__ Add more detailed real-time progress indicators during the upload and processing pipeline.
+- __Comprehensive Testing:__ Conduct thorough testing of all features.
+- __Set up Automated Deployment:__ Automate the deployment process.
+- __Implement Monitoring:__ Set up monitoring for the application and Lambda functions.
+
+
+The next AI agent should prioritize resolving the media playback error by assisting the user in verifying their AWS S3 public access settings and environment variables. Once media playback is working, they can proceed with refining the notes display and tackling other pending tasks based on the project plan and user priorities.

@@ -7,13 +7,20 @@ import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
-import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
 import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
+import { Skeleton } from "@/components/ui/Skeleton";
+import 'katex/dist/katex.min.css'; // Import KaTeX CSS
+import dynamic from 'next/dynamic';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+// Dynamic import for ReactMarkdown to resolve CommonJS/ESM conflict
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 
 // Define types for media data, transcription, and notes
 interface Media {
   id: string;
   file_url: string;
+  note_format?: 'Markdown' | 'LaTeX'; // Add note format field
   transcripts?: Transcription[]; // Transcription is now nested under Media
   transcription_status: string; // Add transcription status to Media type
   // Add other media properties if needed
@@ -21,7 +28,7 @@ interface Media {
 
 interface Transcription {
   id: string;
-  text: string;
+  content: string;
   notes?: Note[]; // Notes are now nested under Transcription
   // Add other transcription properties if needed (e.g., timestamps)
 }
@@ -210,7 +217,7 @@ export default function AnalysisPage() {
   // Helper to get the first transcription text (assuming one transcript per video for now)
   const getTranscriptionText = () => {
     if (media?.transcripts && media.transcripts.length > 0) {
-      return media.transcripts[0].text;
+      return media.transcripts[0].content;
     }
     return null;
   };
@@ -223,14 +230,85 @@ export default function AnalysisPage() {
     return null;
   };
 
-  // Helper to get the segmented content from the first note (assuming one note per transcript for now)
-   const getSegmentedContent = () => {
-     if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
-       return media.transcripts[0].notes[0].content;
-     }
-     return null;
-   };
+  // Helper to get the generated content from the first note (works for both markdown and latex)
+  const getGeneratedContent = () => {
+    if (media?.transcripts && media.transcripts.length > 0 && media.transcripts[0].notes && media.transcripts[0].notes.length > 0) {
+      return media.transcripts[0].notes[0].content;
+    }
+    return null;
+  };
 
+  // Helper to render notes based on format
+  const renderNotes = () => {
+    const content = getGeneratedContent();
+    if (!content) return null;
+
+    const noteFormat = media?.note_format || 'Markdown';
+
+    if (noteFormat === 'LaTeX') {
+      // For LaTeX, display raw content for now (we'll improve this later)
+      return (
+        <div className="space-y-4">
+          <div className="bg-muted/30 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">LaTeX Content:</p>
+            <pre className="whitespace-pre-wrap text-sm font-mono">{content}</pre>
+          </div>
+        </div>
+      );
+    } else {
+      // For Markdown, use ReactMarkdown
+      return (
+        <div className="prose prose-slate max-w-none dark:prose-invert">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
+      );
+    }
+  };
+
+  // Helper to extract summary from markdown content
+  const getSummaryFromMarkdown = (markdownContent: string): string | null => {
+    // Look for summary section in markdown
+    const summaryMatch = markdownContent.match(/## Summary\s*\n([\s\S]*?)(?=\n## |$)/i);
+    if (summaryMatch) {
+      return summaryMatch[1].trim();
+    }
+    
+    // Fallback: look for executive summary
+    const execSummaryMatch = markdownContent.match(/## Executive Summary\s*\n([\s\S]*?)(?=\n## |$)/i);
+    if (execSummaryMatch) {
+      return execSummaryMatch[1].trim();
+    }
+    
+    // Fallback: take first paragraph
+    const firstParagraph = markdownContent.split('\n').find(line => line.trim().length > 50);
+    return firstParagraph || null;
+  };
+
+  // Helper to extract key points from markdown content
+  const getKeyPointsFromMarkdown = (markdownContent: string): string[] => {
+    const keyPoints: string[] = [];
+    
+    // Look for key points section
+    const keyPointsMatch = markdownContent.match(/## Key Points\s*\n([\s\S]*?)(?=\n## |$)/i);
+    if (keyPointsMatch) {
+      const keyPointsText = keyPointsMatch[1];
+      // Extract list items
+      const listItems = keyPointsText.match(/[-*]\s+(.+)/g);
+      if (listItems) {
+        keyPoints.push(...listItems.map(item => item.replace(/^[-*]\s+/, '').trim()));
+      }
+    }
+    
+    // Fallback: look for any bullet points in the content
+    if (keyPoints.length === 0) {
+      const allListItems = markdownContent.match(/[-*]\s+(.+)/g);
+      if (allListItems) {
+        keyPoints.push(...allListItems.slice(0, 10).map(item => item.replace(/^[-*]\s+/, '').trim()));
+      }
+    }
+    
+    return keyPoints;
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -322,7 +400,12 @@ export default function AnalysisPage() {
             <h2 className="mb-2 text-lg font-semibold">Transcription</h2>
             <div className="rounded-lg bg-muted/30 p-4 text-sm overflow-y-auto max-h-[200px]">
               {loading ? (
-                <p>Loading transcription...</p>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
               ) : error ? (
                 <p className="text-red-500">Error loading transcription: {error}</p>
               ) : getTranscriptionText() ? (
@@ -336,90 +419,22 @@ export default function AnalysisPage() {
 
         {/* Right panel - Notes */}
         <div className="w-1/2 overflow-y-auto p-6">
-          <Tabs defaultValue="notes">
-            <TabsList className="mb-6">
-              <TabsTrigger value="notes">AI Notes</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="keypoints">Key Points</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="notes" className="focus-visible:outline-none focus-visible:ring-0">
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Academic Notes</h2>
-
-                {loading ? (
-                   <p>Loading notes...</p>
-                 ) : error ? (
-                   <p className="text-red-500">Error loading notes: {error}</p>
-                 ) : getMarkdownContent() ? (
-                   <ReactMarkdown>{getMarkdownContent()}</ReactMarkdown> // Render markdown content
-                 ) : getSegmentedContent() ? (
-                    <div className="space-y-4">
-                      <p>Notes loaded (rendering raw segmented content for now):</p>
-                      <pre>{JSON.stringify(getSegmentedContent(), null, 2)}</pre> {/* Fallback to raw segmented content */}
-                    </div>
-                 ) : (
-                   <div className="space-y-4">
-                     <p>Notes not available yet.</p>
-                     <p className="mt-2 text-sm text-muted-foreground">
-                       Notes will appear here after processing is complete.
-                     </p>
-                   </div>
-                 )}
-
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary" className="focus-visible:outline-none focus-visible:ring-0">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Executive Summary</h2>
-                 {loading ? (
-                    <p>Loading summary...</p>
-                  ) : error ? (
-                    <p className="text-red-500">Error loading summary: {error}</p>
-                  ) : getMarkdownContent() ? ( // Assuming summary is part of markdown content or can be extracted
-                    // TODO: Extract summary from markdown or segmented content if needed
-                    <p>Summary will be displayed here from markdown or segmented content.</p>
-                  ) : getSegmentedContent()?.summary ? ( // Fallback to segmented content summary if available
-                    <p>{getSegmentedContent().summary}</p>
-                  ) : (
-                    <p>Summary not available yet.</p>
-                  )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="keypoints" className="focus-visible:outline-none focus-visible:ring-0">
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Key Points</h2>
-                 {loading ? (
-                    <p>Loading key points...</p>
-                  ) : error ? (
-                    <p className="text-red-500">Error loading key points: {error}</p>
-                  ) : getMarkdownContent() ? ( // Assuming key points are part of markdown content or can be extracted
-                     // TODO: Extract key points from markdown or segmented content if needed
-                     <p>Key points will be displayed here from markdown or segmented content.</p>
-                  ) : getSegmentedContent()?.segments ? ( // Fallback to segmented content key points if available
-                    <ul className="space-y-4">
-                      {getSegmentedContent().segments.map((segment: any, segmentIndex: number) => (
-                         segment.key_points && segment.key_points.map((kp: string, kpIndex: number) => (
-                            <li key={`${segmentIndex}-${kpIndex}`} className="flex gap-3">
-                              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                                {kpIndex + 1}
-                              </div>
-                              <div>
-                                <p className="font-medium">{kp}</p>
-                                {/* No description in this structure, just the key point text */}
-                              </div>
-                            </li>
-                         ))
-                      )).flat()} {/* Flatten the array of arrays */}
-                    </ul>
-                  ) : (
-                    <p>Key points not available yet.</p>
-                  )}
-              </div>
-            </TabsContent>
-          </Tabs>
+          <h2 className="text-2xl font-bold mb-6">Academic Notes</h2>
+          {loading || (!getMarkdownContent() && !getGeneratedContent()) ? (
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : error ? (
+            <p className="text-red-500">Error loading notes: {error}</p>
+          ) : getMarkdownContent() ? (
+            renderNotes()
+          ) : getGeneratedContent() ? (
+            renderNotes()
+          ) : null}
         </div>
       </div>
     </div>

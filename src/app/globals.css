@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "katex/dist/katex.min.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -119,4 +120,16 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.prose ul {
+  list-style-type: disc !important;
+  margin-left: 1.5em !important;
+}
+.prose ol {
+  list-style-type: decimal !important;
+  margin-left: 1.5em !important;
+}
+.prose li {
+  display: list-item !important;
 }

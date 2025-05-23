@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import createClient from '../../../../lib/supabase/server'; // Import server-side client
 import { DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3'; // Import DeleteObjectCommand and S3Client
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // Import getSignedUrl for signed URLs
+import { GetObjectCommand } from '@aws-sdk/client-s3'; // Import GetObjectCommand
 
 // Initialize AWS S3 client
 const s3Client = new S3Client({
@@ -34,7 +36,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   // Select the s3_audio_key to construct the public URL
   const { data: videoData, error: videoError } = await supabaseServer
     .from('videos')
-    .select('*, transcripts(*, notes(*)), lessons(user_id), s3_audio_key') // Select s3_audio_key
+    .select('*, transcripts(*, notes(*)), lessons(user_id), s3_audio_key, note_format') // Select s3_audio_key and note_format
     .eq('id', videoId)
     .single(); // Assuming one video per ID
 
@@ -47,20 +49,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 
-  // Construct the public S3 object URL using the s3_audio_key
-  // Assuming the S3 bucket is publicly accessible
-  const publicFileUrl = `https://${s3BucketName}.s3.${awsRegion}.amazonaws.com/${videoData.s3_audio_key}`;
+  // Construct a signed S3 object URL using the s3_audio_key
+  let signedFileUrl = null;
+  if (videoData.s3_audio_key) {
+    const command = new GetObjectCommand({
+      Bucket: s3BucketName,
+      Key: videoData.s3_audio_key,
+    });
+    signedFileUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 }); // 5 minutes
+  }
 
-  // Return the video data, replacing the stored file_url (S3 key) with the public URL
-  // Or add a new property for the public URL if you want to keep the S3 key
-  // Let's replace file_url for simplicity, assuming frontend expects the playable URL there
   const responseData = {
       ...videoData,
-      file_url: publicFileUrl, // Replace file_url with the public S3 URL
-      // Remove s3_audio_key from the response if you don't want to expose it
-      // s3_audio_key: undefined,
+      file_url: signedFileUrl, // Replace file_url with the signed S3 URL
+      // s3_audio_key: undefined, // Optionally remove this from the response
   };
-
 
   return NextResponse.json(responseData);
 }

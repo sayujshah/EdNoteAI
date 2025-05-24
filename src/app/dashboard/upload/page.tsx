@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Import Select components
 import { Input } from "@/components/ui/input" // Import Input component
+import { useAuth } from '@/contexts/AuthContext'
 
 // Define a type for lessons
 interface Lesson {
@@ -35,6 +36,7 @@ export default function UploadPage() {
   const [createLessonError, setCreateLessonError] = useState<string | null>(null); // State for create lesson error
   const [noteFormat, setNoteFormat] = useState<'Markdown' | 'LaTeX'>('Markdown'); // State for note format selection
 
+  const auth = useAuth();
   const router = useRouter()
 
   // Fetch lessons on component mount
@@ -194,6 +196,14 @@ export default function UploadPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -210,7 +220,7 @@ export default function UploadPage() {
             <Link href="/dashboard/library" className="text-sm font-medium hover:text-primary">
               Library
             </Link>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           </nav>

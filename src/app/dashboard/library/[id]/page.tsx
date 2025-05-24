@@ -13,12 +13,14 @@ import dynamic from 'next/dynamic';
 import { InlineMath, BlockMath } from 'react-katex';
 import type { SavedNote, UpdateSavedNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Dynamic import for ReactMarkdown
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 
 export default function NoteViewerPage() {
   const { id } = useParams() as { id: string };
+  const auth = useAuth();
   const router = useRouter();
   const [note, setNote] = useState<SavedNote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -165,6 +167,15 @@ export default function NoteViewerPage() {
     );
   };
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -248,7 +259,7 @@ export default function NoteViewerPage() {
             <Link href="/dashboard/library" className="text-sm font-medium hover:text-primary">
               Library
             </Link>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           </nav>

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { SavedNote } from '@/lib/types/library';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 // Note Card Component
 interface NoteCardProps {
@@ -160,6 +162,8 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
 }
 
 export default function LibraryPage() {
+  const auth = useAuth();
+  const router = useRouter();
   const [notes, setNotes] = useState<SavedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -250,6 +254,15 @@ export default function LibraryPage() {
     fetchNotes();
   };
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -267,7 +280,7 @@ export default function LibraryPage() {
             <Link href="/dashboard/upload" className="text-sm font-medium hover:text-primary">
               Upload
             </Link>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           </nav>

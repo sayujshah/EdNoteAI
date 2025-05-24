@@ -37,8 +37,8 @@ export default function AuthPage() {
         setError(error.message)
         console.error("Login error:", error)
       } else {
-        // Redirect to the dashboard/upload page after successful login
-        router.push("/dashboard/upload")
+        // Redirect to the dashboard library after successful login
+        router.push("/dashboard/library")
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")
@@ -54,7 +54,7 @@ export default function AuthPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -68,10 +68,15 @@ export default function AuthPage() {
         setError(error.message)
         console.error("Sign up error:", error)
       } else {
-        // Show a confirmation message
-        alert("Sign up successful! Please check your email for confirmation.")
-        // Switch to sign in tab
-        setActiveTab("signin")
+        // Check if user needs email confirmation
+        if (data.user && !data.session) {
+          // Email confirmation required
+          alert("Sign up successful! Please check your email for confirmation.")
+          setActiveTab("signin")
+        } else if (data.session) {
+          // User is automatically signed in (email confirmation disabled)
+          router.push("/dashboard/library")
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")

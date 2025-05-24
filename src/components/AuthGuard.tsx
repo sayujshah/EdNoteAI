@@ -1,53 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '../lib/supabase'; // Adjust path as needed
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    // Define public paths that don't require authentication
+    const publicPaths = ['/', '/login', '/auth'];
+    const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/auth/');
 
-      // If no user and not on a public page, redirect to login
-      const publicPaths = ['/', '/login']; // Define public paths
-      if (!user && !publicPaths.includes(pathname)) {
-        router.push('/login');
-      } else if (user && pathname === '/login') {
-        // Redirect authenticated users away from login page
-        router.push('/'); // Redirect to home or dashboard after login
-      } else {
-        setLoading(false);
-      }
-    };
+    // Don't redirect while loading
+    if (loading) return;
 
-    checkAuth();
+    // If user is not authenticated and trying to access protected route
+    if (!user && !isPublicPath) {
+      console.log('Redirecting unauthenticated user to login');
+      router.push('/login');
+      return;
+    }
 
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const publicPaths = ['/', '/login']; // Define public paths
-      if (!session && !publicPaths.includes(pathname)) {
-        router.push('/login');
-      } else if (session && pathname === '/login') {
-        // Redirect authenticated users away from login page
-        router.push('/'); // Redirect to home or dashboard after login
-      } else {
-        setLoading(false);
-      }
-    });
+    // If user is authenticated and on login page, redirect to dashboard
+    if (user && pathname === '/login') {
+      console.log('Redirecting authenticated user to dashboard');
+      router.push('/dashboard/library');
+      return;
+    }
+  }, [user, loading, pathname, router]);
 
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [pathname, router]); // Rerun effect if pathname or router changes
-
-  if (loading && pathname !== '/login') {
-    // Optionally show a loading spinner or null while checking auth
-    return <div>Loading...</div>;
+  // Show loading state for protected routes while checking auth
+  if (loading && pathname !== '/' && pathname !== '/login' && !pathname.startsWith('/auth/')) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

@@ -4,11 +4,15 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, BookOpen, Clock, FileText, Upload, Zap } from "lucide-react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 
 import { Button } from "@/components/ui/button"
 import { FileUploadModal } from "@/components/file-upload-modal"
 
 export default function LandingPage() {
+  const auth = useAuth();
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,12 +35,7 @@ export default function LandingPage() {
               Pricing
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
-              Sign In
-            </Link>
-            <Button>Get Started</Button>
-          </div>
+          <HeaderActions />
         </div>
       </header>
       <main className="flex-1">
@@ -577,13 +576,74 @@ export default function LandingPage() {
   )
 }
 
+function HeaderActions() {
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  if (auth.loading) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="h-4 w-16 animate-pulse bg-muted rounded" />
+        <div className="h-9 w-20 animate-pulse bg-muted rounded" />
+      </div>
+    );
+  }
+
+  if (auth.isAuthenticated) {
+    return (
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard/library" className="text-sm font-medium hover:underline underline-offset-4">
+          Dashboard
+        </Link>
+        <Button variant="outline" onClick={handleSignOut}>
+          Sign Out
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4">
+        Sign In
+      </Link>
+      <Button onClick={() => router.push('/login')}>
+        Get Started
+      </Button>
+    </div>
+  );
+}
+
 function TryForFreeButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const router = useRouter()
+  const auth = useAuth()
+
+  const handleTryForFree = () => {
+    if (auth.loading) {
+      return; // Don't do anything while checking auth state
+    }
+    
+    if (auth.isAuthenticated) {
+      router.push('/dashboard/library');
+    } else {
+      router.push('/login');
+    }
+  }
 
   return (
     <>
-      <Button size="lg" className="gap-1" onClick={() => setIsModalOpen(true)}>
-        Try for Free <ArrowRight className="h-4 w-4" />
+      <Button size="lg" className="gap-1" onClick={handleTryForFree} disabled={auth.loading}>
+        {auth.loading ? 'Loading...' : 'Try for Free'} <ArrowRight className="h-4 w-4" />
       </Button>
 
       {isModalOpen && <FileUploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}

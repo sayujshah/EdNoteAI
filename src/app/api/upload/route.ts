@@ -3,6 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import createClient from '../../../lib/supabase/server'; // Import server-side client
+import { SubscriptionService } from '@/lib/services/subscriptionService';
 
 // Configure AWS S3 client (same as transcribe route)
 const s3Client = new S3Client({
@@ -25,6 +26,15 @@ const lambdaClient = new LambdaClient({
 });
 
 const transcriptionLambdaFunctionName = process.env.AWS_TRANSCRIPTION_LAMBDA_FUNCTION_NAME!;
+
+// Helper function to get media duration (simplified for demo - you may want to use a media library)
+async function getMediaDurationMinutes(file: File): Promise<number> {
+  // This is a simplified version. In production, you'd want to use a proper media analysis library
+  // For now, we'll estimate based on file size (very rough approximation)
+  // 1MB ≈ 1 minute for audio/video files (this is just an estimate)
+  const fileSizeMB = file.size / (1024 * 1024);
+  return Math.ceil(fileSizeMB); // Very rough estimate - replace with actual media duration detection
+}
 
 // POST /api/upload - Handle file uploads for transcription
 export async function POST(request: Request) {
@@ -57,6 +67,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: 'error', message: 'Invalid note format. Must be "Markdown" or "LaTeX"' }, { status: 400 });
     }
 
+    // Get estimated duration for validation
+    const estimatedDurationMinutes = await getMediaDurationMinutes(file);
+    console.log(`Estimated file duration: ${estimatedDurationMinutes} minutes`);
+
+    // Validate upload against user's subscription limits
+    const validation = await SubscriptionService.validateUpload(user.id, estimatedDurationMinutes);
+    
+    if (!validation.canUpload) {
+      const errorMessages = {
+        no_credits: `Insufficient credits. You have ${validation.creditsRemaining} credits remaining.`,
+        duration_exceeded: `File duration (${estimatedDurationMinutes} min) exceeds your plan limit of ${validation.maxDurationMinutes} minutes.`,
+        subscription_expired: 'Your subscription has expired. Please renew to continue uploading.'
+      };
+
+      return NextResponse.json({ 
+        status: 'error', 
+        message: errorMessages[validation.reason!] || 'Upload not allowed',
+        code: validation.reason,
+        details: {
+          maxDurationMinutes: validation.maxDurationMinutes,
+          creditsRemaining: validation.creditsRemaining,
+          estimatedDuration: estimatedDurationMinutes
+        }
+      }, { status: 403 });
+    }
+
     // Generate a unique file key for S3
     const fileExtension = file.name.split('.').pop(); // Corrected split
     const fileKey = `uploads/${uuidv4()}.${fileExtension}`;
@@ -71,10 +107,19 @@ export async function POST(request: Request) {
     await s3Client.send(uploadCommand);
     console.log(`File uploaded to S3: ${fileKey}`);
 
-    // Create a new video record in Supabase
+    // Create a new video record in Supabase with duration tracking
     const { data: videoData, error: videoError } = await supabaseServer
       .from('videos')
-      .insert([{ lesson_id: lessonId, file_url: fileKey, transcription_status: 'pending', s3_audio_key: fileKey, note_format: noteFormat }]) // Save S3 key as file_url and note format
+      .insert([{ 
+        lesson_id: lessonId, 
+        file_url: fileKey, 
+        transcription_status: 'pending', 
+        s3_audio_key: fileKey, 
+        note_format: noteFormat,
+        duration_minutes: estimatedDurationMinutes,
+        credits_consumed: 1,
+        uploaded_at: new Date().toISOString()
+      }]) // Save S3 key as file_url and note format
       .select('id') // Select the ID of the newly created video
       .single();
 
@@ -85,6 +130,19 @@ export async function POST(request: Request) {
     }
 
     const newVideoId = videoData.id; // Get the ID of the newly created video
+
+    // Consume user credits
+    const creditsConsumed = await SubscriptionService.consumeCredits(user.id, 1);
+    if (!creditsConsumed) {
+      console.error('Failed to consume credits after successful upload');
+      // In production, you might want to delete the video record and S3 file here
+    }
+
+    // Update usage statistics
+    await SubscriptionService.updateUsage(user.id, {
+      uploadMinutes: estimatedDurationMinutes,
+      transcriptionsCount: 1
+    });
 
     console.log(`Attempting to trigger Lambda function: ${transcriptionLambdaFunctionName}`); // Added logging
     // Trigger the transcription Lambda function

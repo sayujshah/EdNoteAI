@@ -295,10 +295,10 @@ export default function AnalysisPage() {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex h-16 items-center justify-between border-b px-6">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <BookOpen className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold">Media Analysis</h1>
-        </div>
+          <h1 className="text-xl font-bold">EdNoteAI</h1>
+        </Link>
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
@@ -323,7 +323,7 @@ export default function AnalysisPage() {
               </>
             )}
           </Button>
-          <Link href="/dashboard">
+          <Link href="/dashboard/library">
             <Button variant="ghost" size="icon">
               <X className="h-5 w-5" />
             </Button>

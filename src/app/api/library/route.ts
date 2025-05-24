@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import createClient from '../../../lib/supabase/server';
+import { SubscriptionService } from '@/lib/services/subscriptionService';
 import type { SavedNote, LibraryFilter, LibrarySort } from '@/lib/types/library';
 
 // API route for managing saved notes library
@@ -12,6 +13,15 @@ export async function GET(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Check if user can access the library (premium feature)
+  const canSaveNotes = await SubscriptionService.canSaveNotes(user.id);
+  if (!canSaveNotes) {
+    return NextResponse.json({ 
+      error: 'Library access requires a premium subscription',
+      code: 'PREMIUM_REQUIRED'
+    }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -81,6 +91,15 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Check if user can save notes (premium feature)
+  const canSaveNotes = await SubscriptionService.canSaveNotes(user.id);
+  if (!canSaveNotes) {
+    return NextResponse.json({ 
+      error: 'Saving notes to library requires a premium subscription',
+      code: 'PREMIUM_REQUIRED'
+    }, { status: 403 });
   }
 
   try {

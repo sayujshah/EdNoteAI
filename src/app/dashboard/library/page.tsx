@@ -268,15 +268,12 @@ export default function LibraryPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
             <span className="text-sm text-muted-foreground ml-2">/ Notes Library</span>
-          </div>
+          </Link>
           <nav className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-sm font-medium hover:text-primary">
-              Dashboard
-            </Link>
             <Link href="/dashboard/upload" className="text-sm font-medium hover:text-primary">
               Upload
             </Link>

@@ -17,10 +17,10 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
-          </div>
+          </Link>
           <nav className="hidden md:flex gap-6">
             <Link href="#features" className="text-sm font-medium hover:text-primary">
               Features
@@ -146,7 +146,7 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 md:grid-cols-3">
               <div className="relative flex flex-col items-center space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
                   1
                 </div>
                 <div className="rounded-lg border bg-background p-6 shadow-sm">
@@ -158,10 +158,10 @@ export default function LandingPage() {
                     </p>
                   </div>
                 </div>
-                <div className="absolute right-0 top-6 hidden h-0.5 w-full bg-muted md:block md:w-1/2" />
+                <div className="absolute left-1/2 top-8 hidden h-0.5 w-1/2 bg-gradient-to-r from-primary/50 to-muted md:block" />
               </div>
               <div className="relative flex flex-col items-center space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
                   2
                 </div>
                 <div className="rounded-lg border bg-background p-6 shadow-sm">
@@ -173,11 +173,11 @@ export default function LandingPage() {
                     </p>
                   </div>
                 </div>
-                <div className="absolute right-0 top-6 hidden h-0.5 w-1/2 bg-muted md:block" />
-                <div className="absolute left-0 top-6 hidden h-0.5 w-1/2 bg-muted md:block" />
+                <div className="absolute left-0 top-8 hidden h-0.5 w-1/2 bg-gradient-to-l from-primary/50 to-muted md:block" />
+                <div className="absolute right-0 top-8 hidden h-0.5 w-1/2 bg-gradient-to-r from-primary/50 to-muted md:block" />
               </div>
               <div className="relative flex flex-col items-center space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground">
+                <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground shadow-lg">
                   3
                 </div>
                 <div className="rounded-lg border bg-background p-6 shadow-sm">
@@ -189,7 +189,7 @@ export default function LandingPage() {
                     </p>
                   </div>
                 </div>
-                <div className="absolute left-0 top-6 hidden h-0.5 w-1/2 bg-muted md:block" />
+                <div className="absolute right-1/2 top-8 hidden h-0.5 w-1/2 bg-gradient-to-l from-primary/50 to-muted md:block" />
               </div>
             </div>
           </div>
@@ -438,7 +438,7 @@ export default function LandingPage() {
                   <h3 className="text-2xl font-bold">Professional</h3>
                   <p className="text-muted-foreground">For educators and professionals</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">$24.99</span>
+                    <span className="text-3xl font-bold">$14.99</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
                 </div>
@@ -552,10 +552,10 @@ export default function LandingPage() {
       </main>
       <footer className="w-full border-t bg-background">
         <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold">EdNoteAI</span>
-          </div>
+          </Link>
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
             © {new Date().getFullYear()} EdNoteAI. All rights reserved.
           </p>
@@ -602,7 +602,7 @@ function HeaderActions() {
     return (
       <div className="flex items-center gap-4">
         <Link href="/dashboard/library" className="text-sm font-medium hover:underline underline-offset-4">
-          Dashboard
+          Library
         </Link>
         <Button variant="outline" onClick={handleSignOut}>
           Sign Out

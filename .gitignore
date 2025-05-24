@@ -26,6 +26,11 @@
 .clinerules
 .cursor
 .idea
+db_templates
+# TEMP
+database_migrations
+docs
+scripts
 
 # debug
 npm-debug.log*

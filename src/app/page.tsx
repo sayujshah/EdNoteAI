@@ -1,7 +1,6 @@
 'use client';
 
 import Link from "next/link"
-import Image from "next/image"
 import { ArrowRight, BookOpen, Clock, FileText, Upload, Zap } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -9,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 import { Button } from "@/components/ui/button"
 import { FileUploadModal } from "@/components/file-upload-modal"
+import { LandingPricing } from "@/components/pricing/LandingPricing"
 
 export default function LandingPage() {
   const auth = useAuth();
@@ -61,14 +61,37 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <div className="relative h-[350px] w-full overflow-hidden rounded-xl bg-muted">
-                  <Image
-                    src="/placeholder.svg?height=700&width=700"
-                    width={700}
-                    height={700}
-                    alt="EdNoteAI Dashboard Preview"
-                    className="object-cover"
-                  />
+                <div className="relative h-[350px] w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950 dark:via-purple-950 dark:to-pink-950 border">
+                  {/* Mock Dashboard Content */}
+                  <div className="absolute inset-4 bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-lg p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <FileText className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                        </div>
+                        <div className="h-6 bg-green-100 dark:bg-green-900 rounded-full px-2 flex items-center">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                          <span className="text-xs text-green-700 dark:text-green-300">Complete</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="h-6 bg-blue-100 dark:bg-blue-900 rounded-full px-2 flex items-center">
+                          <span className="text-xs text-blue-700 dark:text-blue-300">AI Notes</span>
+                        </div>
+                        <div className="h-6 bg-purple-100 dark:bg-purple-900 rounded-full px-2 flex items-center">
+                          <span className="text-xs text-purple-700 dark:text-purple-300">Transcription</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <div className="rounded-lg bg-background/90 p-2 backdrop-blur">
@@ -117,7 +140,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold">Academic Notes</h3>
                 <p className="text-center text-muted-foreground">
-                  Transform transcriptions into structured academic notes with key concepts highlighted.
+                  Transform transcriptions into structured academic-style notes in markdown or LaTeX format.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border bg-background p-6 shadow-sm">
@@ -199,13 +222,35 @@ export default function LandingPage() {
         <section id="benefits" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
-              <Image
-                src="/placeholder.svg?height=550&width=550"
-                width={550}
-                height={550}
-                alt="Student studying with EdNoteAI"
-                className="mx-auto aspect-square overflow-hidden rounded-xl object-cover object-center sm:w-full lg:order-last"
-              />
+              <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950 dark:via-blue-950 dark:to-purple-950 border sm:w-full lg:order-last flex items-center justify-center">
+                {/* Study/Learning Illustration */}
+                <div className="relative w-full h-full p-8">
+                  <div className="absolute inset-8 bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                      <BookOpen className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mx-auto"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto"></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 w-full">
+                      <div className="h-2 bg-primary/20 rounded"></div>
+                      <div className="h-2 bg-primary/40 rounded"></div>
+                      <div className="h-2 bg-primary/60 rounded"></div>
+                      <div className="h-2 bg-primary/80 rounded"></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    </div>
+                  </div>
+                  {/* Floating elements for visual interest */}
+                  <div className="absolute top-4 right-4 w-3 h-3 bg-yellow-400 rounded-full opacity-60"></div>
+                  <div className="absolute bottom-4 left-4 w-2 h-2 bg-pink-400 rounded-full opacity-60"></div>
+                  <div className="absolute top-1/3 left-4 w-2 h-2 bg-blue-400 rounded-full opacity-60"></div>
+                </div>
+              </div>
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
@@ -269,256 +314,7 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
-                  Pricing
-                </div>
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">Simple, Transparent Pricing</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-                  Choose the plan that fits your learning needs
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-3">
-              <div className="flex flex-col rounded-lg border bg-background p-6 shadow-sm">
-                <div className="flex flex-col space-y-2">
-                  <h3 className="text-2xl font-bold">Free</h3>
-                  <p className="text-muted-foreground">Perfect for trying out EdNoteAI</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">$0</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                </div>
-                <ul className="my-6 space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>3 transcriptions per month</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Files up to 10 minutes</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Basic note formatting</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="mt-auto">
-                  Get Started
-                </Button>
-              </div>
-              <div className="relative flex flex-col rounded-lg border bg-background p-6 shadow-sm">
-                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                  Most Popular
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <h3 className="text-2xl font-bold">Student</h3>
-                  <p className="text-muted-foreground">For serious learners</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">$9.99</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                </div>
-                <ul className="my-6 space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Unlimited transcriptions</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Files up to 2 hours</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Advanced academic notes</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Key concept highlighting</span>
-                  </li>
-                </ul>
-                <Button className="mt-auto">Subscribe Now</Button>
-              </div>
-              <div className="flex flex-col rounded-lg border bg-background p-6 shadow-sm">
-                <div className="flex flex-col space-y-2">
-                  <h3 className="text-2xl font-bold">Professional</h3>
-                  <p className="text-muted-foreground">For educators and professionals</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">$14.99</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                </div>
-                <ul className="my-6 space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Everything in Student plan</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Files up to 8 hours</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Custom branding</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 text-primary"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Priority processing</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="mt-auto">
-                  Subscribe Now
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingPricing />
 
         {/* CTA Section */}
         <section className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">

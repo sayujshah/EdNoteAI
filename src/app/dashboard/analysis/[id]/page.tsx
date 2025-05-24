@@ -2,14 +2,18 @@
 
 import { useState, useRef, useEffect, useCallback } from "react" // Import useCallback
 import Link from "next/link"
-import { useParams } from "next/navigation"
-import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
 import { Skeleton } from "@/components/ui/Skeleton";
 import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import dynamic from 'next/dynamic';
+import { InlineMath, BlockMath } from 'react-katex'; // Import KaTeX components
+import SaveToLibraryModal from '@/components/ui/SaveToLibraryModal'; // Import save modal
+import type { SaveNoteRequest } from '@/lib/types/library';
+import NoteRenderer from '@/components/ui/NoteRenderer'; // Import shared renderer
 
 // Dynamic import for ReactMarkdown to resolve CommonJS/ESM conflict
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
@@ -47,6 +51,7 @@ const supabase = createBrowserClient(
 
 export default function AnalysisPage() {
   const { id } = useParams() as { id: string };
+  const router = useRouter();
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -57,6 +62,10 @@ export default function AnalysisPage() {
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Save to Library state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Function to fetch media data, wrapped in useCallback
   const fetchData = useCallback(async () => {
@@ -243,24 +252,44 @@ export default function AnalysisPage() {
 
     const noteFormat = media?.note_format || 'Markdown';
 
-    if (noteFormat === 'LaTeX') {
-      // For LaTeX, display raw content for now (we'll improve this later)
-      return (
-        <div className="space-y-4">
-          <div className="bg-muted/30 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">LaTeX Content:</p>
-            <pre className="whitespace-pre-wrap text-sm font-mono">{content}</pre>
-          </div>
-        </div>
-      );
-    } else {
-      // For Markdown, use ReactMarkdown
-      return (
-        <div className="prose prose-slate max-w-none dark:prose-invert">
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </div>
-      );
+    return (
+      <NoteRenderer 
+        content={content} 
+        format={noteFormat}
+        className="space-y-4"
+      />
+    );
+  };
+
+  // Save note to library function
+  const handleSaveToLibrary = async (noteData: SaveNoteRequest) => {
+    try {
+      const response = await fetch('/api/library', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(noteData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save note');
+      }
+
+      // Show success state
+      setSaveSuccess(true);
+      
+    } catch (error: any) {
+      throw error; // Re-throw to be handled by the modal
     }
+  };
+
+  // Handle successful save - show success briefly then navigate
+  const handleSaveSuccess = () => {
+    setTimeout(() => {
+      router.push('/dashboard/library');
+    }, 1500); // Navigate after 1.5 seconds
   };
 
   return (
@@ -275,9 +304,24 @@ export default function AnalysisPage() {
             <Settings className="h-4 w-4" />
             <span>Customize Notes</span>
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Save className="h-4 w-4" />
-            <span>Save to Library</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => setShowSaveModal(true)}
+            disabled={!getGeneratedContent() || loading}
+          >
+            {saveSuccess ? (
+              <>
+                <Check className="h-4 w-4 text-green-600" />
+                <span>Saved!</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span>Save to Library</span>
+              </>
+            )}
           </Button>
           <Link href="/dashboard">
             <Button variant="ghost" size="icon">
@@ -390,6 +434,20 @@ export default function AnalysisPage() {
           ) : null}
         </div>
       </div>
+
+      {/* Save to Library Modal */}
+      {media && getGeneratedContent() && (
+        <SaveToLibraryModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveToLibrary}
+          onSaveSuccess={handleSaveSuccess}
+          content={getGeneratedContent()}
+          format={media.note_format || 'Markdown'}
+          mediaId={media.id}
+          mediaTitle={`Analysis ${media.id}`} // You could get a better title from media metadata
+        />
+      )}
     </div>
   )
 }

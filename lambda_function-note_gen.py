@@ -118,6 +118,7 @@ def lambda_handler(event, context):
             {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
             
             Generate comprehensive Markdown content with clear structure and academic presentation.
+            Generate clean markdown content without any code block wrappers or formatting indicators. Return only the raw markdown content.
             """
 
         print(f"Sending request to OpenAI for {note_format} content generation...")

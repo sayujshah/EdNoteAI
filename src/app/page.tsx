@@ -269,7 +269,7 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
+        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -521,7 +521,7 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32">
+        <section className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -544,7 +544,6 @@ export default function LandingPage() {
                     Get Started
                   </Button>
                 </form>
-                <p className="text-xs text-muted-foreground">Start with a free trial. No credit card required.</p>
               </div>
             </div>
           </div>
@@ -603,6 +602,9 @@ function HeaderActions() {
       <div className="flex items-center gap-4">
         <Link href="/dashboard/library" className="text-sm font-medium hover:underline underline-offset-4">
           Library
+        </Link>
+        <Link href="/dashboard/account" className="text-sm font-medium hover:underline underline-offset-4">
+          Account
         </Link>
         <Button variant="outline" onClick={handleSignOut}>
           Sign Out

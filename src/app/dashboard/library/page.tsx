@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Filter, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc } from "lucide-react";
+import { BookOpen, Search, Filter, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -274,8 +274,8 @@ export default function LibraryPage() {
             <span className="text-sm text-muted-foreground ml-2">/ Notes Library</span>
           </Link>
           <nav className="flex items-center gap-6">
-            <Link href="/dashboard/upload" className="text-sm font-medium hover:text-primary">
-              Upload
+            <Link href="/dashboard/account" className="text-sm font-medium hover:text-primary">
+              Account
             </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
@@ -296,10 +296,10 @@ export default function LibraryPage() {
               }
             </p>
           </div>
-          <Link href="/dashboard/upload">
+          <Link href="/dashboard/account">
             <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Upload Media
+              <User className="h-4 w-4" />
+              Account Settings
             </Button>
           </Link>
         </div>

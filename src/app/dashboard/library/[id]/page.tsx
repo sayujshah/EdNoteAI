@@ -9,14 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/Skeleton";
 import 'katex/dist/katex.min.css';
-import dynamic from 'next/dynamic';
-import { InlineMath, BlockMath } from 'react-katex';
 import type { SavedNote, UpdateSavedNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer';
 import { useAuth } from '@/contexts/AuthContext';
-
-// Dynamic import for ReactMarkdown
-const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 
 export default function NoteViewerPage() {
   const { id } = useParams() as { id: string };
@@ -180,15 +175,18 @@ export default function NoteViewerPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="relative flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">EdNoteAI</span>
+              <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+                BETA
+              </span>
             </div>
           </div>
         </header>
         
-        <main className="flex-1 container py-8 max-w-4xl">
+        <main className="flex-1 container mx-auto py-8 max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <Skeleton className="h-8 w-16" />
             <Skeleton className="h-12 w-3/4" />
@@ -211,15 +209,18 @@ export default function NoteViewerPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="relative flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">EdNoteAI</span>
+              <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+                BETA
+              </span>
             </div>
           </div>
         </header>
         
-        <main className="flex-1 container py-8 max-w-4xl">
+        <main className="flex-1 container mx-auto py-8 max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
               {error === 'Note not found' ? 'Note Not Found' : 'Error Loading Note'}
@@ -246,10 +247,13 @@ export default function NoteViewerPage() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
+            <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+              BETA
+            </span>
             <span className="text-sm text-muted-foreground ml-2">/ Note</span>
           </Link>
           <nav className="flex items-center gap-6">
@@ -264,7 +268,7 @@ export default function NoteViewerPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container py-8 max-w-4xl">
+      <main className="flex-1 container mx-auto py-8 max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link href="/dashboard/library">
           <Button variant="outline" className="mb-6">

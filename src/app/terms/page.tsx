@@ -5,7 +5,7 @@ export default function TermsOfService() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
@@ -19,7 +19,7 @@ export default function TermsOfService() {
         </div>
       </header>
 
-      <main className="flex-1 container py-12 max-w-4xl mx-auto px-4">
+      <main className="flex-1 container mx-auto py-12 max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
           <div>
             <h1 className="text-4xl font-bold tracking-tighter mb-4">Terms of Service</h1>
@@ -194,7 +194,7 @@ export default function TermsOfService() {
       </main>
 
       <footer className="w-full border-t bg-background">
-        <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 py-10 px-4 sm:px-6 lg:px-8 md:h-24 md:flex-row md:py-0">
           <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold">EdNoteAI</span>

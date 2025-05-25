@@ -45,19 +45,23 @@ export class SubscriptionService {
     
     // Get user's plan limits using the database function
     const { data: limitsData, error: limitsError } = await supabase
-      .rpc('get_user_plan_limits', { p_user_id: userId });
+      .rpc('get_user_subscription_info', { p_user_id: userId });
 
     if (limitsError) {
       throw new Error(`Failed to fetch user limits: ${limitsError.message}`);
     }
 
-    const limits = limitsData?.[0] || {
-      plan_name: 'Free' as const,
-      max_upload_duration_minutes: 10,
-      monthly_credits: 3,
-      can_save_notes: false,
-      credits_used_this_month: 0,
-      credits_remaining: 3
+    const subscriptionInfo = limitsData?.[0];
+    
+    const limits: UserPlanLimits = {
+      plan_name: (subscriptionInfo?.plan_name || 'Free') as 'Free' | 'Student' | 'Professional',
+      max_upload_duration_minutes: subscriptionInfo?.max_file_duration_minutes || 10,
+      monthly_credits: subscriptionInfo?.monthly_credits || 3,
+      can_save_notes: subscriptionInfo?.has_library_access || false,
+      credits_used_this_month: subscriptionInfo?.credits_used || 0,
+      credits_remaining: subscriptionInfo?.monthly_credits === -1 
+        ? -1 
+        : Math.max(0, (subscriptionInfo?.monthly_credits || 3) - (subscriptionInfo?.credits_used || 0))
     };
 
     // Get current subscription
@@ -89,8 +93,8 @@ export class SubscriptionService {
       user_id: userId,
       month: currentMonth,
       year: currentYear,
-      credits_used: 0,
-      total_upload_minutes: 0,
+      credits_used: subscriptionInfo?.credits_used || 0,
+      total_upload_minutes: subscriptionInfo?.duration_used || 0,
       transcriptions_count: 0,
       notes_generated_count: 0,
       created_at: new Date().toISOString(),
@@ -188,34 +192,33 @@ export class SubscriptionService {
     }
   ): Promise<void> {
     const supabase = await createClient();
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
 
-    const updateData: any = {};
+    // Use the database function to increment usage (bypasses RLS with SECURITY DEFINER)
     if (updates.uploadMinutes !== undefined) {
-      updateData.total_upload_minutes = updates.uploadMinutes;
-    }
-    if (updates.transcriptionsCount !== undefined) {
-      updateData.transcriptions_count = updates.transcriptionsCount;
-    }
-    if (updates.notesCount !== undefined) {
-      updateData.notes_generated_count = updates.notesCount;
-    }
-
-    const { error } = await supabase
-      .from('user_usage')
-      .upsert({
-        user_id: userId,
-        month: currentMonth,
-        year: currentYear,
-        ...updateData
-      }, {
-        onConflict: 'user_id,month,year'
+      const { error } = await supabase.rpc('increment_user_usage', {
+        p_user_id: userId,
+        p_file_duration_minutes: updates.uploadMinutes,
+        p_credits_used: updates.transcriptionsCount || 1 // Default to 1 credit per upload
       });
 
-    if (error) {
-      throw new Error(`Failed to update usage: ${error.message}`);
+      if (error) {
+        throw new Error(`Failed to update usage: ${error.message}`);
+      }
+    } else if (updates.transcriptionsCount !== undefined) {
+      // If only updating credits without upload minutes
+      const { error } = await supabase.rpc('increment_user_usage', {
+        p_user_id: userId,
+        p_credits_used: updates.transcriptionsCount
+      });
+
+      if (error) {
+        throw new Error(`Failed to update usage: ${error.message}`);
+      }
     }
+
+    // Note: The current database function doesn't handle notes_count separately
+    // If you need to track notes separately, you'll need to extend the function
+    // For now, we'll skip notes_count updates to avoid RLS issues
   }
 
   /**

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import createClient from '../../../lib/supabase/server';
 import { SubscriptionService } from '@/lib/services/subscriptionService';
-import type { SavedNote, LibraryFilter, LibrarySort } from '@/lib/types/library';
 
 // API route for managing saved notes library
 

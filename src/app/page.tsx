@@ -16,7 +16,7 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
@@ -44,7 +44,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
@@ -112,7 +112,7 @@ export default function LandingPage() {
 
         {/* Features Section */}
         <section id="features" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
@@ -161,7 +161,7 @@ export default function LandingPage() {
 
         {/* How It Works Section */}
         <section id="how-it-works" className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">How EdNoteAI Works</h2>
@@ -223,7 +223,7 @@ export default function LandingPage() {
 
         {/* Benefits Section */}
         <section id="benefits" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
               <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 border sm:w-full lg:order-last flex items-center justify-center">
                 {/* LaTeX vs Plain Text Comparison */}
@@ -352,7 +352,7 @@ export default function LandingPage() {
 
         {/* Chrome Extension Section */}
         <section className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
@@ -475,7 +475,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
@@ -503,7 +503,7 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="w-full border-t bg-background">
-        <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 py-10 px-4 sm:px-6 lg:px-8 md:h-24 md:flex-row md:py-0">
           <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold">EdNoteAI</span>

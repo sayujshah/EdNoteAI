@@ -208,7 +208,7 @@ export default function UploadPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
@@ -225,7 +225,7 @@ export default function UploadPage() {
       </header>
 
       <main className="flex-1">
-        <div className="container py-12">
+        <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-bold">Upload Media</h1>

@@ -9,14 +9,9 @@ import { Slider } from "@/components/ui/slider"
 import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
 import { Skeleton } from "@/components/ui/Skeleton";
 import 'katex/dist/katex.min.css'; // Import KaTeX CSS
-import dynamic from 'next/dynamic';
-import { InlineMath, BlockMath } from 'react-katex'; // Import KaTeX components
 import SaveToLibraryModal from '@/components/ui/SaveToLibraryModal'; // Import save modal
 import type { SaveNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer'; // Import shared renderer
-
-// Dynamic import for ReactMarkdown to resolve CommonJS/ESM conflict
-const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false });
 
 // Define types for media data, transcription, and notes
 interface Media {
@@ -295,9 +290,12 @@ export default function AnalysisPage() {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex h-16 items-center justify-between border-b px-6">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
           <BookOpen className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold">EdNoteAI</h1>
+          <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+            BETA
+          </span>
         </Link>
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" className="gap-2">

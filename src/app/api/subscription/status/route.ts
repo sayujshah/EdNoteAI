@@ -4,7 +4,7 @@ import { SubscriptionService } from '@/lib/services/subscriptionService';
 import type { SubscriptionStatusResponse } from '@/lib/types/subscription';
 
 // GET /api/subscription/status - Get user's subscription status
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Get authenticated user
     const supabase = await createClient();

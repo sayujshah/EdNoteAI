@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 import { SubscriptionService } from '@/lib/services/subscriptionService';
 
 // GET /api/subscription/plans - Get all available subscription plans
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Get authenticated user (optional for viewing plans)
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
     console.log('Fetching subscription plans');
 
     // Get all active plans

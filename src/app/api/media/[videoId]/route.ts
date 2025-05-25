@@ -14,7 +14,6 @@ const s3Client = new S3Client({
 });
 
 const s3BucketName = process.env.AWS_S3_BUCKET_NAME!;
-const awsRegion = process.env.AWS_REGION!; // Get AWS region for S3 URL construction
 
 // API route for managing a specific video by ID
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Filter, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc, User } from "lucide-react";
+import { BookOpen, Search, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -267,7 +267,7 @@ export default function LibraryPage() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
@@ -285,7 +285,7 @@ export default function LibraryPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Your Notes Library</h1>
@@ -298,7 +298,7 @@ export default function LibraryPage() {
           </div>
           <Link href="/dashboard/upload">
             <Button className="gap-2">
-              <User className="h-4 w-4" />
+              <Upload className="h-4 w-4" />
               Upload Media
             </Button>
           </Link>

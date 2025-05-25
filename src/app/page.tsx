@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link"
-import { ArrowRight, BookOpen, GraduationCap, FileText, SquareFunction, Upload, Zap } from "lucide-react"
+import { ArrowRight, Atom, BookOpen, Chrome, GraduationCap, FileText, FileVideo2, SquareFunction, Upload, Workflow, Zap } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -350,8 +350,131 @@ export default function LandingPage() {
         {/* Pricing Section */}
         <LandingPricing />
 
-        {/* CTA Section */}
+        {/* Chrome Extension Section */}
         <section className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="inline-block rounded-lg bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      Coming Soon
+                    </div>
+                  </div>
+                  <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                    <div className="flex items-center gap-2">
+                      <Chrome className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-primary" /> 
+                      <span>Chrome Extension</span>
+                    </div>
+                  </h2>
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
+                    Watch any video freely while our AI automatically transcribes and takes notes in the background.
+                  </p>
+                </div>
+                <ul className="grid gap-6">
+                  <li>
+                    <div className="grid gap-1">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-primary/10 p-1">
+                          <FileVideo2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Any Video, Anywhere</h3>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Works with YouTube, Coursera, Zoom recordings, and any video playing in your browser.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <div className="grid gap-1">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-primary/10 p-1">
+                          <Atom className="h-4 w-4 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Hands-Free Learning</h3>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Focus entirely on watching and understanding while our AI handles note-taking automatically.
+                      </p>
+                    </div>
+                  </li>
+                  <li>
+                    <div className="grid gap-1">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-primary/10 p-1">
+                          <Workflow className="h-4 w-4 text-primary" />
+                        </div>
+                        <h3 className="text-xl font-bold">Seamless Integration</h3>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Notes sync directly to your EdNoteAI library with the same high-quality formatting and LaTeX support.
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 border sm:w-full lg:order-last flex items-center justify-center">
+                {/* Chrome Extension Mockup */}
+                <div className="relative w-full h-full p-6">
+                  <div className="absolute inset-6 bg-white/95 dark:bg-gray-900/95 rounded-lg shadow-xl border">
+                    {/* Browser Window Mockup */}
+                    <div className="flex items-center gap-2 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-t-lg">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                        <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                        <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                      </div>
+                      <div className="flex-1 text-center">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 rounded px-2 py-1 mx-4">
+                          📹 youtube.com/watch?v=...
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Video Player Area */}
+                    <div className="p-4 space-y-3">
+                      <div className="bg-black rounded aspect-video flex items-center justify-center">
+                        <div className="text-white text-xs">▶️ Video Playing</div>
+                      </div>
+                      
+                      {/* Extension Popup */}
+                      <div className="absolute top-16 right-8 bg-primary text-primary-foreground rounded-lg p-3 shadow-lg max-w-48">
+                        <div className="text-xs font-semibold mb-1 flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          EdNoteAI Extension
+                        </div>
+                        <div className="text-[10px] opacity-90 mb-2">
+                          🎯 Auto-transcribing...
+                        </div>
+                        <div className="space-y-1">
+                          <div className="h-1.5 bg-primary-foreground/20 rounded">
+                            <div className="h-full bg-primary-foreground/80 rounded w-3/4"></div>
+                          </div>
+                          <div className="text-[9px] opacity-75">
+                            Taking notes in background
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating Elements */}
+                  <div className="absolute top-4 left-4 text-blue-500 dark:text-blue-400 opacity-60">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2L3 7v11h14V7l-7-5z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute bottom-4 right-4 text-purple-500 dark:text-purple-400 opacity-60">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -359,7 +482,7 @@ export default function LandingPage() {
                   Ready to Transform Your Learning Experience?
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-                  Join thousands of students and educators who are already saving time and improving their learning
+                  Join other students and educators who are already saving time and improving their learning
                   outcomes.
                 </p>
               </div>

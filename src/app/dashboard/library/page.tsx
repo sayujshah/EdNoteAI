@@ -296,10 +296,10 @@ export default function LibraryPage() {
               }
             </p>
           </div>
-          <Link href="/dashboard/account">
+          <Link href="/dashboard/upload">
             <Button className="gap-2">
               <User className="h-4 w-4" />
-              Account Settings
+              Upload Media
             </Button>
           </Link>
         </div>

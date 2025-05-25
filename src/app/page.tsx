@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link"
-import { ArrowRight, BookOpen, Clock, FileText, Upload, Zap } from "lucide-react"
+import { ArrowRight, BookOpen, GraduationCap, FileText, SquareFunction, Upload, Zap } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
@@ -22,16 +22,16 @@ export default function LandingPage() {
             <span className="text-xl font-bold">EdNoteAI</span>
           </Link>
           <nav className="hidden md:flex gap-6">
-            <Link href="#features" className="text-sm font-medium hover:text-primary">
+            <Link href="#features" className="text-sm font-medium hover:text-primary" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
               Features
             </Link>
-            <Link href="#how-it-works" className="text-sm font-medium hover:text-primary">
+            <Link href="#how-it-works" className="text-sm font-medium hover:text-primary" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>
               How It Works
             </Link>
-            <Link href="#benefits" className="text-sm font-medium hover:text-primary">
+            <Link href="#benefits" className="text-sm font-medium hover:text-primary" onClick={() => document.getElementById('benefits')?.scrollIntoView({ behavior: 'smooth' })}>
               Benefits
             </Link>
-            <Link href="#pricing" className="text-sm font-medium hover:text-primary">
+            <Link href="#pricing" className="text-sm font-medium hover:text-primary" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
               Pricing
             </Link>
           </nav>
@@ -55,7 +55,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <TryForFreeButton />
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
                     See How It Works
                   </Button>
                 </div>
@@ -95,9 +95,9 @@ export default function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-background/20" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <div className="rounded-lg bg-background/90 p-2 backdrop-blur">
-                      <p className="text-xs font-medium">Transcription complete: 98% accuracy</p>
+                      <p className="text-xs font-medium">Generating notes...</p>
                       <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[98%] rounded-full bg-primary" />
+                        <div className="h-full w-[75%] rounded-full bg-primary" />
                       </div>
                     </div>
                   </div>
@@ -192,7 +192,7 @@ export default function LandingPage() {
                     <FileText className="h-8 w-8 text-primary" />
                     <h3 className="text-xl font-bold">AI Transcription</h3>
                     <p className="text-muted-foreground">
-                      Our AI transcribes your content with high accuracy, identifying speakers and key sections.
+                      Using state-of-the-art LLMs,our AI transcribes your content with high accuracy, intelligently identifying key concepts.
                     </p>
                   </div>
                 </div>
@@ -222,33 +222,68 @@ export default function LandingPage() {
         <section id="benefits" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
-              <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950 dark:via-blue-950 dark:to-purple-950 border sm:w-full lg:order-last flex items-center justify-center">
-                {/* Study/Learning Illustration */}
-                <div className="relative w-full h-full p-8">
-                  <div className="absolute inset-8 bg-white/90 dark:bg-gray-900/90 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center space-y-4">
-                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                      <BookOpen className="h-8 w-8 text-white" />
+              <div className="mx-auto aspect-square overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-blue-950 dark:to-indigo-950 border sm:w-full lg:order-last flex items-center justify-center">
+                {/* LaTeX vs Plain Text Comparison */}
+                <div className="relative w-full h-full p-4">
+                  <div className="absolute inset-4 bg-white/95 dark:bg-gray-900/95 rounded-lg shadow-xl">
+                    {/* Header */}
+                    <div className="flex items-center justify-center py-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="text-xs font-semibold text-gray-600 dark:text-gray-400">Plain Text vs LaTeX Notes</div>
                     </div>
-                    <div className="text-center space-y-2">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mx-auto"></div>
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto"></div>
+                    
+                    {/* Comparison Content */}
+                    <div className="grid grid-cols-2 h-119">
+                      {/* Plain Text Side */}
+                      <div className="p-3 border-r border-gray-200 dark:border-gray-700">
+                        <div className="text-xs font-medium text-red-600 dark:text-red-400 mb-2">❌ Plain Text</div>
+                        <div className="space-y-1 text-[10px] leading-tight text-gray-700 dark:text-gray-300">
+                          <div className="font-medium">Quadratic Formula:</div>
+                          <div className="bg-red-50 dark:bg-red-950/20 p-1 rounded text-red-800 dark:text-red-200">
+                            x = (-b +- sqrt(b^2 - 4ac)) / 2a
+                          </div>
+                          <div className="mt-2 font-medium">Integration:</div>
+                          <div className="bg-red-50 dark:bg-red-950/20 p-1 rounded text-red-800 dark:text-red-200">
+                            integral of x^2 dx = x^3/3 + C
+                          </div>
+                          <div className="mt-1 text-[9px] text-gray-500">
+                            Hard to read, unprofessional
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* LaTeX Side */}
+                      <div className="p-3">
+                        <div className="text-xs font-medium text-green-600 dark:text-green-400 mb-2">✅ LaTeX Formatted</div>
+                        <div className="space-y-2 text-[10px] leading-tight text-gray-700 dark:text-gray-300">
+                          <div className="font-medium">Quadratic Formula:</div>
+                          <div className="bg-green-50 dark:bg-green-950/20 p-2 rounded text-center">
+                            <div className="text-lg font-serif">𝑥 = <span className="text-sm">−𝑏 ± √𝑏²−4𝑎𝑐</span></div>
+                            <div className="border-t-1 border-black w-36 mx-auto mt-1 pt-1">
+                              <span className="text-lg">2𝑎</span>
+                            </div>
+                          </div>
+                          <div className="font-medium">Integration:</div>
+                          <div className="bg-green-50 dark:bg-green-950/20 p-1 rounded text-center">
+                            <span className="text-lg font-serif">∫ 𝑥² 𝑑𝑥 = </span>
+                            <span className="text-sm border-t border-green-200 dark:border-green-800">𝑥³</span>
+                            <span className="text-lg"> + 𝐶</span>
+                            <div className="border-t-1 border-black w-36 mx-auto mt-1 pt-1"></div>
+                            <div className="text-sm">3</div>
+                          </div>
+                          <div className="mt-1 text-[9px] text-green-600 dark:text-green-400 font-medium">
+                            Beautiful, professional formatting
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 w-full">
-                      <div className="h-2 bg-primary/20 rounded"></div>
-                      <div className="h-2 bg-primary/40 rounded"></div>
-                      <div className="h-2 bg-primary/60 rounded"></div>
-                      <div className="h-2 bg-primary/80 rounded"></div>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    
+                    {/* Bottom Badge */}
+                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
+                      <div className="bg-primary text-primary-foreground text-[10px] font-medium px-2 py-1 rounded-full">
+                        EdNoteAI Advantage
+                      </div>
                     </div>
                   </div>
-                  {/* Floating elements for visual interest */}
-                  <div className="absolute top-4 right-4 w-3 h-3 bg-yellow-400 rounded-full opacity-60"></div>
-                  <div className="absolute bottom-4 left-4 w-2 h-2 bg-pink-400 rounded-full opacity-60"></div>
-                  <div className="absolute top-1/3 left-4 w-2 h-2 bg-blue-400 rounded-full opacity-60"></div>
                 </div>
               </div>
               <div className="flex flex-col justify-center space-y-4">
@@ -260,8 +295,7 @@ export default function LandingPage() {
                     Learn Faster, Remember Longer
                   </h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
-                    EdNoteAI is designed to optimize your learning process and help you retain information more
-                    effectively.
+                    EdNoteAI is designed to optimize your learning process and help you retain information more effectively.
                   </p>
                 </div>
                 <ul className="grid gap-6">
@@ -269,13 +303,12 @@ export default function LandingPage() {
                     <div className="grid gap-1">
                       <div className="flex items-center gap-2">
                         <div className="rounded-full bg-primary/10 p-1">
-                          <Clock className="h-4 w-4 text-primary" />
+                          <SquareFunction className="h-4 w-4 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold">Save 70% of Study Time</h3>
+                        <h3 className="text-xl font-bold">Professional LaTeX Formatting</h3>
                       </div>
                       <p className="text-muted-foreground">
-                        Stop taking manual notes and rewatching videos. Our AI does the heavy lifting so you can focus
-                        on understanding.
+                        Mathematical equations, formulas, and scientific notation are automatically rendered in beautiful LaTeX format, making your study materials look polished and more refined. No need to manually type equations or formulas in LaTeX notation!
                       </p>
                     </div>
                   </li>
@@ -285,11 +318,10 @@ export default function LandingPage() {
                         <div className="rounded-full bg-primary/10 p-1">
                           <Zap className="h-4 w-4 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold">Accelerate Learning</h3>
+                        <h3 className="text-xl font-bold">Save 70% of Study Time</h3>
                       </div>
                       <p className="text-muted-foreground">
-                        Our structured notes highlight key concepts and connections, helping you grasp complex topics
-                        faster.
+                        Stop taking manual notes and rewatching videos. Our AI does the heavy lifting so you can focus on understanding.
                       </p>
                     </div>
                   </li>
@@ -297,13 +329,12 @@ export default function LandingPage() {
                     <div className="grid gap-1">
                       <div className="flex items-center gap-2">
                         <div className="rounded-full bg-primary/10 p-1">
-                          <BookOpen className="h-4 w-4 text-primary" />
+                          <GraduationCap className="h-4 w-4 text-primary" />
                         </div>
-                        <h3 className="text-xl font-bold">Improve Retention</h3>
+                        <h3 className="text-xl font-bold">Academic-Grade Quality</h3>
                       </div>
                       <p className="text-muted-foreground">
-                        Notes are formatted using proven memory techniques to help you remember information for longer
-                        periods.
+                        Notes are structured and formatted using proven academic standards, making them perfect for research, assignments, and professional use.
                       </p>
                     </div>
                   </li>
@@ -355,10 +386,10 @@ export default function LandingPage() {
             © {new Date().getFullYear()} EdNoteAI. All rights reserved.
           </p>
           <nav className="flex gap-4 sm:gap-6">
-            <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link href="/terms" className="text-sm font-medium hover:underline underline-offset-4">
               Terms
             </Link>
-            <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link href="/privacy" className="text-sm font-medium hover:underline underline-offset-4">
               Privacy
             </Link>
             <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">

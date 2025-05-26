@@ -4,6 +4,7 @@ import os
 from supabase import create_client, Client
 import openai # Using the openai library for transcription
 from botocore.exceptions import ClientError # Import ClientError for AWS errors
+import time
 
 # Initialize AWS S3 client
 s3_client = boto3.client('s3')
@@ -76,33 +77,96 @@ def lambda_handler(event, context):
         }
 
     if not s3_bucket or not s3_key or not video_id or not user_id:
-        print("Error: Missing S3 bucket, key, video ID, or user ID in event payload.")
-        # TODO: Update video status to 'failed' in Supabase
+        error_msg = "Missing S3 bucket, key, video ID, or user ID in event payload."
+        print(f"Error: {error_msg}")
+        if video_id:
+            update_video_status(video_id, 'failed', error_msg)
         return {
             'statusCode': 400,
-            'body': json.dumps('Error: Missing S3 bucket, key, video ID, or user ID.')
+            'body': json.dumps(f'Error: {error_msg}')
         }
 
     print(f"Processing s3://{s3_bucket}/{s3_key} for video ID: {video_id}, user ID: {user_id}")
+
+    # Check if this video is already being processed or completed
+    try:
+        existing_video = supabase.table('videos').select('transcription_status').eq('id', video_id).execute()
+        if existing_video.data and len(existing_video.data) > 0:
+            current_status = existing_video.data[0]['transcription_status']
+            if current_status in ['in_progress', 'completed']:
+                print(f"Video {video_id} is already {current_status}. Skipping processing.")
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(f'Video already {current_status}. Skipping duplicate processing.')
+                }
+    except Exception as e:
+        print(f"Warning: Could not check existing video status: {e}")
+
+    # Update status to in_progress to prevent duplicate processing
+    update_video_status(video_id, 'in_progress')
 
     # Define local path for downloading the audio file
     local_audio_path = f"/tmp/{os.path.basename(s3_key)}"
 
     try:
+        # Check available disk space and file size
+        try:
+            file_info = s3_client.head_object(Bucket=s3_bucket, Key=s3_key)
+            file_size = file_info['ContentLength']
+            file_size_mb = file_size / (1024 * 1024)
+            print(f"File size: {file_size_mb:.2f} MB")
+            
+            # Check if file is too large for Lambda /tmp (512MB limit)
+            if file_size_mb > 400:  # Leave some buffer
+                error_msg = f"File too large ({file_size_mb:.2f} MB) for Lambda processing. Maximum supported size is ~400MB."
+                print(error_msg)
+                update_video_status(video_id, 'failed', error_msg)
+                return {
+                    'statusCode': 413,
+                    'body': json.dumps(error_msg)
+                }
+        except ClientError as e:
+            error_msg = f"Could not get file info from S3: {e}"
+            print(error_msg)
+            update_video_status(video_id, 'failed', error_msg)
+            return {
+                'statusCode': 404,
+                'body': json.dumps(error_msg)
+            }
+
         # Download the audio file from S3
+        print(f"Downloading {file_size_mb:.2f} MB file from S3...")
+        start_time = time.time()
         s3_client.download_file(s3_bucket, s3_key, local_audio_path)
-        print(f"Downloaded audio to {local_audio_path}")
+        download_time = time.time() - start_time
+        print(f"Downloaded audio to {local_audio_path} in {download_time:.2f} seconds")
 
         # Transcribe the audio file using OpenAI Whisper
         # Initialize OpenAI client with API key from environment variable
         openai_client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
+        print("Starting transcription with OpenAI Whisper...")
+        transcription_start = time.time()
+        
         with open(local_audio_path, "rb") as audio_file:
-            transcription = openai_client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+            # For large files, we might want to add timeout handling
+            transcription = openai_client.audio.transcriptions.create(
+                model="whisper-1", 
+                file=audio_file,
+                response_format="text"  # Get plain text response
+            )
 
-        transcription_text = transcription.text
-        print("Transcription complete.")
-        print("Transcription:", transcription_text[:200] + "...") # Print first 200 chars
+        transcription_time = time.time() - transcription_start
+        print(f"Transcription completed in {transcription_time:.2f} seconds")
+
+        # Handle different response formats
+        if hasattr(transcription, 'text'):
+            transcription_text = transcription.text
+        else:
+            transcription_text = str(transcription)
+
+        print(f"Transcription length: {len(transcription_text)} characters")
+        print("Transcription preview:", transcription_text[:200] + "..." if len(transcription_text) > 200 else transcription_text)
 
         # Save the transcription result to Supabase
         # Create a new record in the 'transcripts' table
@@ -129,15 +193,18 @@ def lambda_handler(event, context):
         print(f"Raw transcription saved for video_id: {video_id}")
 
         # Clean up the temporary audio file
-        os.remove(local_audio_path)
-        print(f"Removed temporary file {local_audio_path}")
+        try:
+            os.remove(local_audio_path)
+            print(f"Removed temporary file {local_audio_path}")
+        except Exception as e:
+            print(f"Warning: Could not remove temporary file: {e}")
 
         # --- Trigger Note Generation Lambda ---
         print(f"NOTE_GENERATOR_LAMBDA_ARN value: {NOTE_GENERATOR_LAMBDA_ARN}")
         if NOTE_GENERATOR_LAMBDA_ARN:
             print(f"Invoking Note Generation Lambda for video ID: {video_id}")
             try:
-                lambda_client.invoke(
+                invoke_response = lambda_client.invoke(
                     FunctionName=NOTE_GENERATOR_LAMBDA_ARN,
                     InvocationType='Event', # Use 'Event' for asynchronous invocation
                     Payload=json.dumps({ # Pass necessary info to the agent Lambda
@@ -148,25 +215,68 @@ def lambda_handler(event, context):
                         # TODO: Include visual context data if available
                     })
                 )
-                print(f"Note Generation Lambda invoked for video ID: {video_id}")
+                print(f"Note Generation Lambda invoked successfully for video ID: {video_id}")
+                print(f"Invoke response status: {invoke_response.get('StatusCode', 'Unknown')}")
+
+                # Update video status to indicate transcription is complete and note generation is starting
+                update_video_status(video_id, 'completed')
 
             except ClientError as e:
-                print(f"AWS Client Error invoking Note Generation Lambda: {e}")
-                update_video_status(video_id, 'note_generation_failed', f'AWS Client Error invoking Note Generation Lambda: {e}')
+                error_msg = f"AWS Client Error invoking Note Generation Lambda: {e}"
+                print(error_msg)
+                update_video_status(video_id, 'failed', error_msg)
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps(error_msg)
+                }
             except Exception as e:
-                print(f"An unexpected error occurred invoking Note Generation Lambda: {e}")
-                update_video_status(video_id, 'note_generation_failed', f'An unexpected error occurred invoking Note Generation Lambda: {e}')
+                error_msg = f"Unexpected error invoking Note Generation Lambda: {e}"
+                print(error_msg)
+                update_video_status(video_id, 'failed', error_msg)
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps(error_msg)
+                }
         else:
             print("NOTE_GENERATOR_LAMBDA_ARN environment variable is not set. Skipping note generation.")
-            # Update video status to 'transcribed_only' or similar
-            update_video_status(video_id, 'transcribed_only')
-
+            # Update video status to 'completed' since transcription is done
+            update_video_status(video_id, 'completed')
 
         return {
             'statusCode': 200,
-            'body': json.dumps('Transcription processed and note generation triggered successfully.')
+            'body': json.dumps({
+                'message': 'Transcription processed and note generation triggered successfully.',
+                'videoId': video_id,
+                'transcriptionLength': len(transcription_text),
+                'processingTime': {
+                    'download': f"{download_time:.2f}s",
+                    'transcription': f"{transcription_time:.2f}s"
+                }
+            })
         }
 
+    except openai.APIError as e:
+        error_msg = f"OpenAI API Error: {e}"
+        print(error_msg)
+        update_video_status(video_id, 'failed', error_msg)
+        return {
+            'statusCode': 502,
+            'body': json.dumps(error_msg)
+        }
+    except openai.APITimeoutError as e:
+        error_msg = f"OpenAI API Timeout (file too large or API overloaded): {e}"
+        print(error_msg)
+        update_video_status(video_id, 'failed', error_msg)
+        return {
+            'statusCode': 504,
+            'body': json.dumps(error_msg)
+        }
     except Exception as e:
-        print(f"Error processing transcription: {e}")
+        error_msg = f"Error processing transcription: {e}"
+        print(error_msg)
+        update_video_status(video_id, 'failed', error_msg)
+        return {
+            'statusCode': 500,
+            'body': json.dumps(error_msg)
+        }
         

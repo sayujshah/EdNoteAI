@@ -33,6 +33,58 @@ def update_video_status(video_id: str, status: str, error_message: str = None):
         print(f"An unexpected error occurred while updating video status for {video_id} to {status}: {e}")
 
 
+def post_process_latex_content(content: str) -> str:
+    """
+    Post-process LaTeX content to fix common formatting issues and ensure KaTeX compatibility.
+    """
+    import re
+    
+    # Fix common LaTeX math delimiter issues
+    processed_content = content
+    
+    # Replace \[ ... \] with $$ ... $$
+    processed_content = re.sub(r'\\?\\\[([^\\]*?)\\?\\\]', r'$$\1$$', processed_content)
+    
+    # Replace \( ... \) with $ ... $
+    processed_content = re.sub(r'\\?\\\(([^\\]*?)\\?\\\)', r'$\1$', processed_content)
+    
+    # Fix equation environments - replace with display math
+    processed_content = re.sub(r'\\begin\{equation\*?\}(.*?)\\end\{equation\*?\}', r'$$\1$$', processed_content, flags=re.DOTALL)
+    
+    # Fix align environments - replace with display math
+    processed_content = re.sub(r'\\begin\{align\*?\}(.*?)\\end\{align\*?\}', r'$$\1$$', processed_content, flags=re.DOTALL)
+    
+    # Clean up extra backslashes in math mode
+    processed_content = re.sub(r'\$\$\s*\\\s*', r'$$', processed_content)
+    processed_content = re.sub(r'\s*\\\s*\$\$', r'$$', processed_content)
+    processed_content = re.sub(r'\$\s*\\\s*', r'$', processed_content)
+    processed_content = re.sub(r'\s*\\\s*\$', r'$', processed_content)
+    
+    # Fix common spacing issues in math
+    processed_content = re.sub(r'\$\s+', r'$', processed_content)
+    processed_content = re.sub(r'\s+\$', r'$', processed_content)
+    processed_content = re.sub(r'\$\$\s+', r'$$', processed_content)
+    processed_content = re.sub(r'\s+\$\$', r'$$', processed_content)
+    
+    # Fix integration by parts notation specifically
+    # Replace \[ u \, dv = uv - v \, du \] with proper display math
+    processed_content = re.sub(r'\\?\\\[\s*([^\\]*?)\s*\\?\\\]', r'$$\1$$', processed_content)
+    
+    # Ensure proper spacing in mathematical expressions
+    processed_content = re.sub(r'(\$\$[^$]*?)\s*\\\s*([^$]*?\$\$)', r'\1 \2', processed_content)
+    
+    # Fix any remaining document-level commands that shouldn't be there
+    processed_content = re.sub(r'\\documentclass.*?\n', '', processed_content)
+    processed_content = re.sub(r'\\begin\{document\}', '', processed_content)
+    processed_content = re.sub(r'\\end\{document\}', '', processed_content)
+    processed_content = re.sub(r'\\usepackage.*?\n', '', processed_content)
+    
+    # Clean up multiple newlines
+    processed_content = re.sub(r'\n\s*\n\s*\n+', '\n\n', processed_content)
+    
+    return processed_content.strip()
+
+
 def lambda_handler(event, context):
     print("Received note generation event:", json.dumps(event))
 
@@ -81,13 +133,31 @@ def lambda_handler(event, context):
             You are an AI assistant specialized in generating academic-style notes from lecture transcripts in LaTeX format.
             Your task is to take the provided raw transcript and transform it into well-structured LaTeX content suitable for academic documents.
             
-            Requirements:
-            1. **Document Structure**: Use LaTeX sectioning commands (\\section{{}}, \\subsection{{}}, \\subsubsection{{}})
-            2. **Lists**: Use \\begin{{itemize}} and \\begin{{enumerate}} for bullet points and numbered lists
-            3. **Mathematics**: Use proper LaTeX math notation with $ for inline math and $$ for display math
-            4. **Emphasis**: Use \\textbf{{}} for bold and \\textit{{}} for italics
+            CRITICAL MATH FORMATTING RULES:
+            1. **Inline Math**: Use single dollar signs $...$ for inline mathematical expressions
+            2. **Display Math**: Use double dollar signs $$...$$ for centered mathematical expressions
+            3. **NO DOCUMENT COMMANDS**: Do not use \\[...\\], \\(...\\), \\begin{{equation}}, or \\documentclass
+            4. **Math Examples**:
+               - Inline: The quadratic formula is $x = \\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}}}{{2a}}$
+               - Display: $$\\int x^2 \\, dx = \\frac{{x^3}}{{3}} + C$$
+               - Fractions: Use \\frac{{numerator}}{{denominator}}
+               - Square roots: Use \\sqrt{{expression}}
+               - Integrals: Use \\int, \\sum, \\prod
+               - Greek letters: \\alpha, \\beta, \\gamma, \\pi, \\theta, etc.
+            
+            DOCUMENT STRUCTURE RULES:
+            1. **Sections**: Use \\section{{Title}}, \\subsection{{Title}}, \\subsubsection{{Title}}
+            2. **Lists**: Use \\begin{{itemize}}...\\end{{itemize}} and \\begin{{enumerate}}...\\end{{enumerate}}
+            3. **List Items**: Use \\item for each list item
+            4. **Emphasis**: Use \\textbf{{bold text}} and \\textit{{italic text}}
             5. **Content Organization**: Break content into logical sections based on topics discussed
-            6. **Academic Style**: Maintain formal academic tone and structure
+            
+            MATHEMATICAL CONTENT GUIDELINES:
+            - Always use proper LaTeX math syntax for equations, formulas, and mathematical expressions
+            - Use display math ($$...$$) for important equations that should be centered
+            - Use inline math ($...$) for mathematical terms within sentences
+            - Include step-by-step derivations when applicable
+            - Format mathematical definitions clearly
             
             Raw Transcript:
             {raw_transcript}
@@ -96,7 +166,8 @@ def lambda_handler(event, context):
             {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
             
             Generate comprehensive LaTeX content (without \\documentclass or \\begin{{document}} - just the content that would go inside a document).
-            Focus on clear structure, proper LaTeX formatting, and academic presentation.
+            Focus on clear structure, proper LaTeX math formatting with $ and $$ delimiters, and academic presentation.
+            Ensure all mathematical expressions use proper LaTeX syntax that will render correctly with KaTeX.
             """
         else:
             # Markdown-specific prompt (existing logic)
@@ -122,16 +193,27 @@ def lambda_handler(event, context):
             """
 
         print(f"Sending request to OpenAI for {note_format} content generation...")
+        
+        if note_format == 'LaTeX':
+            system_message = "You are a helpful assistant that generates structured academic notes in LaTeX format. You MUST use proper math delimiters: single $ for inline math and double $$ for display math. Never use \\[...\\] or \\(...\\) or \\begin{equation}. Always use KaTeX-compatible LaTeX syntax."
+        else:
+            system_message = f"You are a helpful assistant that generates structured academic notes in {note_format.upper()} format."
+        
         generation_response = openai_client.chat.completions.create(
             model="gpt-4o-mini", # Or your preferred model
             messages=[
-                {"role": "system", "content": f"You are a helpful assistant that generates structured academic notes in {note_format.upper()} format."},
+                {"role": "system", "content": system_message},
                 {"role": "user", "content": generation_prompt}
             ]
         )
 
         generated_content = generation_response.choices[0].message.content
         print(f"Generated {note_format} content successfully.")
+
+        # Post-process LaTeX content to fix common issues
+        if note_format == 'LaTeX':
+            generated_content = post_process_latex_content(generated_content)
+            print("Applied LaTeX post-processing.")
 
         # --- Save to Supabase (notes table) ---
         # Insert a new record into the 'notes' table

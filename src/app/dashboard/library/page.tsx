@@ -170,7 +170,7 @@ export default function LibraryPage() {
   
   // Filters and search
   const [searchQuery, setSearchQuery] = useState("");
-  const [formatFilter, setFormatFilter] = useState<'all' | 'Markdown' | 'LaTeX'>('all');
+  // formatFilter removed since all notes now use unified Markdown+LaTeX format
   const [sortField, setSortField] = useState<'created_at' | 'updated_at' | 'title'>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -192,9 +192,7 @@ export default function LibraryPage() {
         sortDirection
       });
       
-      if (formatFilter !== 'all') {
-        params.append('format', formatFilter);
-      }
+      // Format filter removed - all notes use unified Markdown+LaTeX format
       
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim());
@@ -222,7 +220,7 @@ export default function LibraryPage() {
 
   useEffect(() => {
     fetchNotes();
-  }, [currentPage, formatFilter, sortField, sortDirection, searchQuery]);
+  }, [currentPage, sortField, sortDirection, searchQuery]);
 
   const handleDelete = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
@@ -321,20 +319,7 @@ export default function LibraryPage() {
               </div>
             </div>
 
-            {/* Format Filter */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Format</label>
-              <Select value={formatFilter} onValueChange={(value: 'all' | 'Markdown' | 'LaTeX') => setFormatFilter(value)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="Markdown">Markdown</SelectItem>
-                  <SelectItem value="LaTeX">LaTeX</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Note: Format filter removed since all notes now use unified Markdown+LaTeX format */}
 
             {/* Sort */}
             <div>
@@ -417,15 +402,15 @@ export default function LibraryPage() {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              {searchQuery || formatFilter !== 'all' ? 'No matching notes found' : 'No saved notes yet'}
+              {searchQuery ? 'No matching notes found' : 'No saved notes yet'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {searchQuery || formatFilter !== 'all' 
-                ? 'Try adjusting your search or filters'
+              {searchQuery 
+                ? 'Try adjusting your search'
                 : 'Upload media and generate notes to get started'
               }
             </p>
-            {!searchQuery && formatFilter === 'all' && (
+            {!searchQuery && (
               <Link href="/dashboard/upload">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />

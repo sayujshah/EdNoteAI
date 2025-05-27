@@ -34,7 +34,6 @@ export default function UploadPage() {
   const [isCreatingNewLesson, setIsCreatingNewLesson] = useState(false); // State to toggle between selecting/creating lesson
   const [creatingLesson, setCreatingLesson] = useState(false); // State for creating lesson process
   const [createLessonError, setCreateLessonError] = useState<string | null>(null); // State for create lesson error
-  const [noteFormat, setNoteFormat] = useState<'Markdown' | 'LaTeX'>('Markdown'); // State for note format selection
 
   const auth = useAuth();
   const router = useRouter()
@@ -170,7 +169,7 @@ export default function UploadPage() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('lessonId', lessonIdToUse); // Append the selected/new lessonId
-    formData.append('noteFormat', noteFormat); // Append the selected note format
+    formData.append('noteFormat', 'Markdown'); // Use unified Markdown+LaTeX format
 
     try {
       const response = await fetch('/api/upload', {
@@ -332,24 +331,7 @@ export default function UploadPage() {
                     {createLessonError && <p className="text-red-500 text-sm">{createLessonError}</p>}
                   </div>
 
-                  {/* Note Format Selection */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Note Format</label>
-                    <select
-                      value={noteFormat}
-                      onChange={e => setNoteFormat(e.target.value as 'Markdown' | 'LaTeX')}
-                      className="border rounded p-2 w-full"
-                    >
-                      <option value="Markdown">Markdown (Standard)</option>
-                      <option value="LaTeX">LaTeX (Mathematical)</option>
-                    </select>
-                    <p className="text-xs text-muted-foreground">
-                      {noteFormat === 'Markdown'
-                        ? 'Standard formatting with bullet points, headers, and basic styling.'
-                        : 'Mathematical formatting with LaTeX support for equations and advanced typography.'
-                      }
-                    </p>
-                  </div>
+
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">

@@ -13,465 +13,327 @@ const ReactMarkdown = dynamic(() => import('react-markdown'), {
 
 interface NoteRendererProps {
   content: string;
-  format: 'Markdown' | 'LaTeX';
+  format?: 'Markdown' | 'LaTeX';
   className?: string;
 }
 
-export default function NoteRenderer({ content, format, className = "" }: NoteRendererProps) {
+interface MathSegment {
+  type: 'text' | 'inline-math' | 'block-math';
+  content: string;
+  index: number;
+}
+
+export default function NoteRenderer({ content, format = 'Markdown', className = "" }: NoteRendererProps) {
   // Clean up AI-generated code block wrappers
   const cleanContent = (rawContent: string): string => {
     return rawContent
-      // Remove markdown code block wrappers
-      .replace(/^```markdown\s*/i, '')
-      .replace(/^```md\s*/i, '')
-      .replace(/\s*```$/, '')
-      // Remove LaTeX code block wrappers
-      .replace(/^```latex\s*/i, '')
-      .replace(/^```tex\s*/i, '')
-      // Remove any generic code block wrappers at start/end
-      .replace(/^```\w*\s*/, '')
+      .replace(/^```(?:markdown|md|latex|tex)?\s*/i, '')
       .replace(/\s*```$/, '')
       .trim();
   };
 
-  const cleanedContent = cleanContent(content);
-
-  // Enhanced LaTeX rendering function with nested structure support
-  const renderLatexContent = (text: string): React.ReactElement[] => {
-    const elements: React.ReactElement[] = [];
-    let currentIndex = 0;
-    
-    interface LatexMatch {
-      type: string;
-      match: string;
-      content: string;
-      index: number;
-      endIndex: number;
-    }
-
-    // Comprehensive LaTeX command cleanup function
-    const cleanupLatexCommands = (inputText: string): string => {
-      return inputText
-        // Remove list environment commands
-        .replace(/\\end\{itemize\}/g, '')
-        .replace(/\\end\{enumerate\}/g, '')
-        .replace(/\\begin\{itemize\}/g, '')
-        .replace(/\\begin\{enumerate\}/g, '')
-        // Remove other common LaTeX commands that might be missed
-        .replace(/\\item\s*/g, '')
-        .replace(/\\[a-zA-Z]+\{[^}]*\}/g, '') // Remove any remaining \command{content}
-        .replace(/\\[a-zA-Z]+/g, '') // Remove any remaining \command
-        // Clean up whitespace
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-
-    // Process text formatting first (textbf, textit, etc.) - these are inline
-    const processTextFormatting = (inputText: string): (string | React.ReactElement)[] => {
-      const result: (string | React.ReactElement)[] = [];
-      let lastIndex = 0;
-      
-      // First, clean up any remaining LaTeX commands that weren't processed
-      let cleanedText = inputText
-        .replace(/\\end\{itemize\}/g, '')  // Remove stray \end{itemize}
-        .replace(/\\end\{enumerate\}/g, '') // Remove stray \end{enumerate}
-        .replace(/\\begin\{itemize\}/g, '') // Remove stray \begin{itemize}
-        .replace(/\\begin\{enumerate\}/g, '') // Remove stray \begin{enumerate}
-        .replace(/\s+/g, ' ')  // Clean up extra whitespace
-        .trim();
-      
-      const patterns = [
-        { type: 'textbf', regex: /\\textbf\{([^}]+)\}/g },
-        { type: 'textit', regex: /\\textit\{([^}]+)\}/g },
-        { type: 'emph', regex: /\\emph\{([^}]+)\}/g },
-      ];
-
-      const allMatches: { type: string; match: RegExpExecArray }[] = [];
-      
-      patterns.forEach(pattern => {
-        let match;
-        while ((match = pattern.regex.exec(cleanedText)) !== null) {
-          allMatches.push({ type: pattern.type, match });
-        }
-        pattern.regex.lastIndex = 0;
-      });
-
-      allMatches.sort((a, b) => a.match.index - b.match.index);
-
-      allMatches.forEach((matchObj, i) => {
-        const { type, match } = matchObj;
-        
-        if (match.index > lastIndex) {
-          result.push(cleanedText.slice(lastIndex, match.index));
-        }
-
-        if (type === 'textbf') {
-          result.push(
-            <strong key={`bold-${i}-${match.index}`} className="font-bold">
-              {match[1]}
-            </strong>
-          );
-        } else if (type === 'textit' || type === 'emph') {
-          result.push(
-            <em key={`italic-${i}-${match.index}`} className="italic">
-              {match[1]}
-            </em>
-          );
-        }
-
-        lastIndex = match.index + match[0].length;
-      });
-
-      if (lastIndex < cleanedText.length) {
-        const remainingText = cleanedText.slice(lastIndex);
-        // Apply final cleanup to any remaining text
-        const finalText = cleanupLatexCommands(remainingText);
-        if (finalText) {
-          result.push(finalText);
-        }
-      }
-
-      return result.length > 0 ? result : [cleanupLatexCommands(cleanedText)];
-    };
-
-    // Recursive function to parse nested lists
-    const parseNestedList = (listContent: string, listType: 'itemize' | 'enumerate'): React.ReactElement[] => {
-      const items: React.ReactElement[] = [];
-      const lines = listContent.split('\n');
-      let currentItem = '';
-      let itemIndex = 0;
-      let insideNestedList = false;
-      let nestedListContent = '';
-      let nestedListType: 'itemize' | 'enumerate' | null = null;
-      let braceCount = 0;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        // Check for nested list start
-        if (line.includes('\\begin{itemize}') || line.includes('\\begin{enumerate}')) {
-          if (currentItem) {
-            // Save current item before starting nested list
-            items.push(
-              <li key={`item-${itemIndex}`} className="text-gray-700 dark:text-gray-300 mb-2">
-                {processTextFormatting(currentItem.trim())}
-              </li>
-            );
-            itemIndex++;
-            currentItem = '';
-          }
-          
-          insideNestedList = true;
-          nestedListType = line.includes('\\begin{itemize}') ? 'itemize' : 'enumerate';
-          nestedListContent = '';
-          braceCount = 1;
-          continue;
-        }
-
-        // Check for nested list end
-        if (insideNestedList && (line.includes('\\end{itemize}') || line.includes('\\end{enumerate}'))) {
-          braceCount--;
-          if (braceCount === 0) {
-            // Render nested list
-            const nestedItems = parseNestedList(nestedListContent, nestedListType!);
-            const NestedListComponent = nestedListType === 'itemize' ? 'ul' : 'ol';
-            const nestedListClass = nestedListType === 'itemize' 
-              ? "list-disc list-inside my-2 space-y-1 ml-6"
-              : "list-decimal list-inside my-2 space-y-1 ml-6";
-            
-            items.push(
-              React.createElement(
-                NestedListComponent,
-                {
-                  key: `nested-${itemIndex}`,
-                  className: nestedListClass
-                },
-                nestedItems
-              )
-            );
-            
-            itemIndex++;
-            insideNestedList = false;
-            nestedListContent = '';
-            nestedListType = null;
-            continue;
-          }
-        }
-
-        // If inside nested list, accumulate content
-        if (insideNestedList) {
-          // Check for additional nested beginnings
-          if (line.includes('\\begin{')) braceCount++;
-          nestedListContent += line + '\n';
-          continue;
-        }
-
-        // Regular item processing
-        if (line.startsWith('\\item')) {
-          // Save previous item if exists
-          if (currentItem.trim()) {
-            items.push(
-              <li key={`item-${itemIndex}`} className="text-gray-700 dark:text-gray-300 mb-2">
-                {processTextFormatting(currentItem.trim())}
-              </li>
-            );
-            itemIndex++;
-          }
-          // Start new item
-          currentItem = line.replace(/^\\item\s*/, '');
-        } else if (currentItem && line) {
-          // Continue current item
-          currentItem += ' ' + line;
-        }
-      }
-
-      // Add final item if exists
-      if (currentItem.trim()) {
-        items.push(
-          <li key={`item-${itemIndex}`} className="text-gray-700 dark:text-gray-300 mb-2">
-            {processTextFormatting(currentItem.trim())}
-          </li>
-        );
-      }
-
-      return items;
-    };
-
-    // Main patterns for block-level elements (excluding lists for special handling)
-    const patterns = [
-      // Math expressions (highest priority)
-      { type: 'blockmath', regex: /\$\$[\s\S]*?\$\$/g },
-      { type: 'inlinemath', regex: /\$[^$\n]+?\$/g },
-      // Document structure
-      { type: 'section', regex: /\\section\{([^}]+)\}/g },
-      { type: 'subsection', regex: /\\subsection\{([^}]+)\}/g },
-      { type: 'subsubsection', regex: /\\subsubsection\{([^}]+)\}/g },
+  // Fix missing backslashes before LaTeX math functions
+  const fixMissingBackslashes = (text: string): string => {
+    // List of common LaTeX math functions that require backslashes
+    const mathFunctions = [
+      // Basic math functions
+      'frac', 'sqrt', 'cbrt', 'root',
+      // Trigonometric functions
+      'sin', 'cos', 'tan', 'sec', 'csc', 'cot',
+      'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh',
+      // Logarithmic functions
+      'log', 'ln', 'lg',
+      // Summation and integration
+      'sum', 'prod', 'int', 'oint', 'iint', 'iiint',
+      // Limits and derivatives
+      'lim', 'limsup', 'liminf', 'sup', 'inf',
+      'partial', 'nabla', 'grad', 'div', 'curl',
+      // Greek letters
+      'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'varepsilon',
+      'zeta', 'eta', 'theta', 'vartheta', 'iota', 'kappa',
+      'lambda', 'mu', 'nu', 'xi', 'pi', 'varpi', 'rho', 'varrho',
+      'sigma', 'varsigma', 'tau', 'upsilon', 'phi', 'varphi',
+      'chi', 'psi', 'omega',
+      'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma',
+      'Upsilon', 'Phi', 'Psi', 'Omega',
+      // Mathematical operators and symbols
+      'cdot', 'times', 'div', 'pm', 'mp', 'ast', 'star',
+      'circ', 'bullet', 'diamond', 'oplus', 'ominus', 'otimes',
+      'odot', 'oslash', 'cap', 'cup', 'uplus', 'sqcap', 'sqcup',
+      'vee', 'wedge', 'setminus', 'wr',
+      // Relations
+      'leq', 'geq', 'equiv', 'models', 'prec', 'succ', 'sim',
+      'perp', 'mid', 'parallel', 'bowtie', 'smile', 'frown',
+      'asymp', 'notin', 'neq', 'approx', 'cong', 'simeq',
+      'propto', 'sqsubseteq', 'sqsupseteq', 'subset', 'supset',
+      'subseteq', 'supseteq',
+      // Arrows
+      'leftarrow', 'rightarrow', 'leftrightarrow', 'uparrow',
+      'downarrow', 'updownarrow', 'Leftarrow', 'Rightarrow',
+      'Leftrightarrow', 'Uparrow', 'Downarrow', 'Updownarrow',
+      'mapsto', 'longmapsto', 'hookleftarrow', 'hookrightarrow',
+      'leftharpoonup', 'rightharpoonup', 'leftharpoondown', 'rightharpoondown',
+      // Special symbols
+      'infty', 'emptyset', 'varnothing', 'triangle', 'Box',
+      'Diamond', 'clubsuit', 'diamondsuit', 'heartsuit', 'spadesuit',
+      'neg', 'flat', 'natural', 'sharp', 'ell', 'hbar',
+      'imath', 'jmath', 'wp', 'Re', 'Im', 'prime', 'forall', 'exists',
+      // Text modifiers (though less common in math mode)
+      'text', 'textbf', 'textit', 'textrm', 'textsc', 'texttt',
+      'mathbf', 'mathit', 'mathrm', 'mathbb', 'mathcal', 'mathfrak',
+      'mathsf', 'mathtt',
+      // Spacing
+      'quad', 'qquad', 'thinspace', 'medspace', 'thickspace',
+      // Brackets and delimiters  
+      'left', 'right', 'big', 'Big', 'bigg', 'Bigg',
+      // Matrix and array
+      'begin', 'end', 'matrix', 'pmatrix', 'bmatrix', 'vmatrix', 'Vmatrix',
+      // Other common functions
+      'to', 'gcd', 'lcm', 'max', 'min', 'arg', 'ker', 'dim', 'hom',
+      'det', 'exp', 'deg', 'Pr'
     ];
 
-    // Find all matches except lists
-    const matches: LatexMatch[] = [];
-    patterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.regex.exec(text)) !== null) {
-        matches.push({
-          type: pattern.type,
-          match: match[0],
-          content: match[1] || match[0],
-          index: match.index,
-          endIndex: match.index + match[0].length
-        });
+    // Create regex pattern for math functions
+    const mathFunctionPattern = mathFunctions.join('|');
+    
+    // Fix missing backslashes in both inline and block math
+    // Pattern: $ followed by math function (without backslash)
+    const inlineMathPattern = new RegExp(`(\\$)([^$\\\\]*?)(${mathFunctionPattern})([^$]*?\\$)`, 'g');
+    const blockMathPattern = new RegExp(`(\\$\\$)([^$\\\\]*?)(${mathFunctionPattern})([^$]*?\\$\\$)`, 'g');
+    
+    let fixedText = text;
+    
+    // Fix block math first (to avoid conflicts with inline math)
+    fixedText = fixedText.replace(blockMathPattern, (match, opening, beforeFunc, func, afterFunc) => {
+      // Only add backslash if there isn't already one
+      if (!beforeFunc.endsWith('\\')) {
+        return `${opening}${beforeFunc}\\${func}${afterFunc}`;
       }
+      return match;
     });
+    
+    // Fix inline math
+    fixedText = fixedText.replace(inlineMathPattern, (match, opening, beforeFunc, func, afterFunc) => {
+      // Only add backslash if there isn't already one
+      if (!beforeFunc.endsWith('\\')) {
+        return `${opening}${beforeFunc}\\${func}${afterFunc}`;
+      }
+      return match;
+    });
+    
+    // Additional fix for cases where math function is immediately after the $
+    // Pattern: $functionName or $$functionName
+    const immediatePattern = new RegExp(`(\\$\\$?)(${mathFunctionPattern})`, 'g');
+    fixedText = fixedText.replace(immediatePattern, (match, dollars, func) => {
+      return `${dollars}\\${func}`;
+    });
+    
+    return fixedText;
+  };
 
-    // Find list matches separately with better parsing
-    const findListMatches = (input: string, startIndex: number = 0): LatexMatch[] => {
-      const listMatches: LatexMatch[] = [];
-      const listTypes = ['itemize', 'enumerate'];
+  // Parse content into segments (text, inline math, block math)
+  const parseContentSegments = (text: string): MathSegment[] => {
+    const segments: MathSegment[] = [];
+    let currentIndex = 0;
+    
+    // First pass: find all block math ($$...$$)
+    const blockMathMatches: Array<{start: number, end: number, content: string}> = [];
+    const blockMathRegex = /\$\$[\s\S]*?\$\$/g;
+    let blockMatch;
+    
+    while ((blockMatch = blockMathRegex.exec(text)) !== null) {
+      blockMathMatches.push({
+        start: blockMatch.index,
+        end: blockMatch.index + blockMatch[0].length,
+        content: blockMatch[0].slice(2, -2).trim()
+      });
+    }
+    
+    // Second pass: find all inline math ($...$) that don't overlap with block math
+    const inlineMathMatches: Array<{start: number, end: number, content: string}> = [];
+    const inlineMathRegex = /\$([^$\n]+?)\$/g;
+    let inlineMatch;
+    
+    while ((inlineMatch = inlineMathRegex.exec(text)) !== null) {
+      const start = inlineMatch.index;
+      const end = start + inlineMatch[0].length;
       
-      listTypes.forEach(listType => {
-        const beginPattern = new RegExp(`\\\\begin\\{${listType}\\}`, 'g');
-        const endPattern = `\\\\end\\{${listType}\\}`;
+      // Check if this inline math overlaps with any block math
+      const overlapsWithBlock = blockMathMatches.some(block => 
+        (start >= block.start && start < block.end) || 
+        (end > block.start && end <= block.end) ||
+        (start < block.start && end > block.end)
+      );
+      
+      if (!overlapsWithBlock) {
+        const mathContent = inlineMatch[1].trim();
         
-        let match;
-        beginPattern.lastIndex = startIndex;
+        // Improved math detection - check for LaTeX commands or mathematical symbols
+        const hasMathContent = /[\\{}^_]|\\[a-zA-Z]+|frac|sqrt|sum|int|prod|lim|infty|alpha|beta|gamma|theta|pi|sigma|mu|nu|tau|omega|Delta|Gamma|Phi|Psi|cdot|times|div|pm|mp|leq|geq|neq|equiv|approx|propto|subset|supset|in|notin|cup|cap|vee|wedge|neg|forall|exists|nabla|partial|rightarrow|leftarrow|Rightarrow|Leftarrow/.test(mathContent);
         
-        while ((match = beginPattern.exec(input)) !== null) {
-          // Find matching end, accounting for nesting
-          let braceCount = 1;
-          let searchIndex = match.index + match[0].length;
-          let endIndex = -1;
-          
-          while (braceCount > 0 && searchIndex < input.length) {
-            const beginMatch = input.indexOf(`\\begin{${listType}}`, searchIndex);
-            const endMatch = input.indexOf(`\\end{${listType}}`, searchIndex);
-            
-            if (endMatch === -1) break;
-            
-            if (beginMatch !== -1 && beginMatch < endMatch) {
-              braceCount++;
-              searchIndex = beginMatch + `\\begin{${listType}}`.length;
-            } else {
-              braceCount--;
-              if (braceCount === 0) {
-                endIndex = endMatch + `\\end{${listType}}`.length;
-              } else {
-                searchIndex = endMatch + `\\end{${listType}}`.length;
-              }
-            }
-          }
-          
-          if (endIndex !== -1) {
-            const fullMatch = input.slice(match.index, endIndex);
-            const content = input.slice(match.index + match[0].length, endIndex - `\\end{${listType}}`.length);
-            
-            listMatches.push({
-              type: listType,
-              match: fullMatch,
-              content: content,
-              index: match.index,
-              endIndex: endIndex
-            });
-          }
+        // Don't treat simple numbers or currency as math
+        const isSimpleNumber = /^[\d\s,\.]+$/.test(mathContent);
+        const isLikelyCurrency = /^\d+(\.\d{2})?$/.test(mathContent);
+        
+        if (hasMathContent && !isSimpleNumber && !isLikelyCurrency) {
+          inlineMathMatches.push({
+            start,
+            end,
+            content: mathContent
+          });
         }
+      }
+    }
+    
+    // Combine and sort all matches
+    const allMatches = [
+      ...blockMathMatches.map(m => ({...m, type: 'block-math' as const})),
+      ...inlineMathMatches.map(m => ({...m, type: 'inline-math' as const}))
+    ].sort((a, b) => a.start - b.start);
+    
+    // Create segments
+    let textStart = 0;
+    
+    allMatches.forEach(match => {
+      // Add text before this math
+      if (match.start > textStart) {
+        const textContent = text.slice(textStart, match.start);
+        if (textContent.trim()) {
+          segments.push({
+            type: 'text',
+            content: textContent,
+            index: textStart
+          });
+        }
+      }
+      
+      // Add math segment
+      segments.push({
+        type: match.type,
+        content: match.content,
+        index: match.start
       });
       
-      return listMatches;
-    };
+      textStart = match.end;
+    });
+    
+    // Add remaining text
+    if (textStart < text.length) {
+      const textContent = text.slice(textStart);
+      if (textContent.trim()) {
+        segments.push({
+          type: 'text',
+          content: textContent,
+          index: textStart
+        });
+      }
+    }
+    
+    return segments;
+  };
 
-    // Add list matches
-    matches.push(...findListMatches(text));
-
-    // Sort all matches by position
-    matches.sort((a, b) => a.index - b.index);
-
-    // Process text and matches
-    matches.forEach((matchObj, i) => {
-      // Add text before this match
-      if (matchObj.index > currentIndex) {
-        const textBefore = text.slice(currentIndex, matchObj.index);
-        if (textBefore.trim()) {
-          const processedText = processTextFormatting(textBefore.trim());
-          elements.push(
-            <div key={`text-${currentIndex}`} className="whitespace-pre-wrap mb-2">
-              {processedText}
+  // Render a single segment
+  const renderSegment = (segment: MathSegment, index: number): React.ReactNode => {
+    const key = `segment-${segment.type}-${index}`;
+    
+    switch (segment.type) {
+      case 'block-math':
+        try {
+          return (
+            <div key={key} className="my-4 text-center">
+              <BlockMath>{segment.content}</BlockMath>
+            </div>
+          );
+        } catch (error) {
+          console.warn('Block math rendering error:', error);
+          return (
+            <div key={key} className="my-4 p-2 bg-red-50 border border-red-200 rounded">
+              <code className="text-red-800">$${segment.content}$$</code>
+              <div className="text-xs text-red-600 mt-1">Math rendering error</div>
             </div>
           );
         }
-      }
-
-      const key = `${matchObj.type}-${matchObj.index}`;
-      
-      switch (matchObj.type) {
-        case 'blockmath':
-          try {
-            const mathExpression = matchObj.content.slice(2, -2).trim();
-            elements.push(
-              <div key={key} className="my-4">
-                <BlockMath>{mathExpression}</BlockMath>
-              </div>
-            );
-          } catch (error) {
-            elements.push(
-              <code key={key} className="bg-red-100 text-red-800 px-1 rounded">
-                {matchObj.match}
-              </code>
-            );
-          }
-          break;
-
-        case 'inlinemath':
-          try {
-            const mathExpression = matchObj.content.slice(1, -1).trim();
-            elements.push(
-              <InlineMath key={key}>{mathExpression}</InlineMath>
-            );
-          } catch (error) {
-            elements.push(
-              <code key={key} className="bg-red-100 text-red-800 px-1 rounded">
-                {matchObj.match}
-              </code>
-            );
-          }
-          break;
-
-        case 'section':
-          elements.push(
-            <h2 key={key} className="text-2xl font-bold mt-6 mb-4 text-gray-900 dark:text-gray-100">
-              {matchObj.content}
-            </h2>
+        
+      case 'inline-math':
+        try {
+          return <InlineMath key={key}>{segment.content}</InlineMath>;
+        } catch (error) {
+          console.warn('Inline math rendering error:', error);
+          return (
+            <code key={key} className="bg-red-100 text-red-800 px-1 rounded text-sm">
+              ${segment.content}$
+            </code>
           );
-          break;
-
-        case 'subsection':
-          elements.push(
-            <h3 key={key} className="text-xl font-semibold mt-5 mb-3 text-gray-800 dark:text-gray-200">
-              {matchObj.content}
-            </h3>
-          );
-          break;
-
-        case 'subsubsection':
-          elements.push(
-            <h4 key={key} className="text-lg font-medium mt-4 mb-2 text-gray-700 dark:text-gray-300">
-              {matchObj.content}
-            </h4>
-          );
-          break;
-
-        case 'itemize':
-          const items = parseNestedList(matchObj.content, 'itemize');
-          elements.push(
-            <ul key={key} className="list-disc list-inside my-4 space-y-2 ml-4">
-              {items}
-            </ul>
-          );
-          break;
-
-        case 'enumerate':
-          const enumItems = parseNestedList(matchObj.content, 'enumerate');
-          elements.push(
-            <ol key={key} className="list-decimal list-inside my-4 space-y-2 ml-4">
-              {enumItems}
-            </ol>
-          );
-          break;
-
-        default:
-          elements.push(
-            <span key={key}>{matchObj.match}</span>
-          );
-      }
-
-      currentIndex = matchObj.endIndex;
-    });
-
-    // Add any remaining text
-    if (currentIndex < text.length) {
-      const remainingText = text.slice(currentIndex);
-      if (remainingText.trim()) {
-        const processedText = processTextFormatting(remainingText.trim());
-        elements.push(
-          <div key="text-end" className="whitespace-pre-wrap">
-            {processedText}
-          </div>
+        }
+        
+      case 'text':
+        // Render text segment as markdown
+        return (
+          <ReactMarkdown
+            key={key}
+            components={{
+              h1: ({ children }) => <h1 className="text-3xl font-bold mt-6 mb-4">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-bold mt-6 mb-4">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-semibold mt-5 mb-3">{children}</h3>,
+              h4: ({ children }) => <h4 className="text-lg font-medium mt-4 mb-2">{children}</h4>,
+              h5: ({ children }) => <h5 className="text-base font-medium mt-3 mb-2">{children}</h5>,
+              h6: ({ children }) => <h6 className="text-sm font-medium mt-2 mb-1">{children}</h6>,
+              p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-inside my-4 space-y-2 ml-4">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside my-4 space-y-2 ml-4">{children}</ol>,
+              li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
+              strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+              em: ({ children }) => <em className="italic">{children}</em>,
+              code: ({ children }) => (
+                <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono">
+                  {children}
+                </code>
+              ),
+              pre: ({ children }) => (
+                <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg overflow-x-auto my-4">
+                  {children}
+                </pre>
+              ),
+              blockquote: ({ children }) => (
+                <blockquote className="border-l-4 border-gray-300 pl-4 italic my-4 text-gray-600 dark:text-gray-400">
+                  {children}
+                </blockquote>
+              ),
+              table: ({ children }) => (
+                <div className="overflow-x-auto my-4">
+                  <table className="min-w-full border-collapse border border-gray-200 dark:border-gray-700">
+                    {children}
+                  </table>
+                </div>
+              ),
+              th: ({ children }) => (
+                <th className="border border-gray-200 dark:border-gray-700 px-3 py-2 bg-gray-50 dark:bg-gray-800 font-semibold text-left">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td className="border border-gray-200 dark:border-gray-700 px-3 py-2">
+                  {children}
+                </td>
+              ),
+            }}
+          >
+            {segment.content}
+          </ReactMarkdown>
         );
-      }
+        
+      default:
+        return null;
     }
-
-    return elements.length > 0 ? elements : [
-      <div key="empty" className="whitespace-pre-wrap">{text}</div>
-    ];
   };
 
-  if (format === 'LaTeX') {
-    return (
-      <div className={`prose prose-slate max-w-none dark:prose-invert ${className}`}>
-        <div className="text-base leading-relaxed">
-          {renderLatexContent(cleanedContent)}
-        </div>
-      </div>
-    );
-  } else {
-    // For Markdown, use ReactMarkdown with proper configuration
-    return (
-      <div className={`prose prose-slate max-w-none dark:prose-invert ${className}`}>
-        <ReactMarkdown
-          components={{
-            // Ensure proper styling for markdown elements
-            h1: ({ children }) => <h1 className="text-3xl font-bold mt-6 mb-4">{children}</h1>,
-            h2: ({ children }) => <h2 className="text-2xl font-bold mt-6 mb-4">{children}</h2>,
-            h3: ({ children }) => <h3 className="text-xl font-semibold mt-5 mb-3">{children}</h3>,
-            ul: ({ children }) => <ul className="list-disc list-inside my-4 space-y-2 ml-4">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal list-inside my-4 space-y-2 ml-4">{children}</ol>,
-            li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
-            p: ({ children }) => <p className="mb-4">{children}</p>,
-            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-            em: ({ children }) => <em className="italic">{children}</em>,
-          }}
-        >
-          {cleanedContent}
-        </ReactMarkdown>
-      </div>
-    );
-  }
-} 
+  const cleanedContent = cleanContent(content);
+  const fixedContent = fixMissingBackslashes(cleanedContent);
+  const segments = parseContentSegments(fixedContent);
+
+  return (
+    <div className={`prose prose-slate max-w-none dark:prose-invert ${className}`}>
+      {segments.map((segment, index) => renderSegment(segment, index))}
+    </div>
+  );
+}

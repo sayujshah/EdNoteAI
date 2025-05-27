@@ -62,10 +62,7 @@ export async function POST(request: Request) {
        return NextResponse.json({ status: 'error', message: 'lessonId is required for now' }, { status: 400 });
     }
 
-    // Validate note format
-    if (noteFormat !== 'Markdown' && noteFormat !== 'LaTeX') {
-      return NextResponse.json({ status: 'error', message: 'Invalid note format. Must be "Markdown" or "LaTeX"' }, { status: 400 });
-    }
+    // Note: noteFormat is always 'Markdown' in the unified format (Markdown + LaTeX math)
 
     // Get estimated duration for validation
     const estimatedDurationMinutes = await getMediaDurationMinutes(file);

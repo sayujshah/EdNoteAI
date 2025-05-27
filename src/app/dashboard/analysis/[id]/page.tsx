@@ -240,17 +240,14 @@ export default function AnalysisPage() {
     return null;
   };
 
-  // Helper to render notes based on format
+  // Helper to render notes with unified Markdown + LaTeX format
   const renderNotes = () => {
     const content = getGeneratedContent();
     if (!content) return null;
 
-    const noteFormat = media?.note_format || 'Markdown';
-
     return (
       <NoteRenderer 
         content={content} 
-        format={noteFormat}
         className="space-y-4"
       />
     );
@@ -441,7 +438,7 @@ export default function AnalysisPage() {
           onSave={handleSaveToLibrary}
           onSaveSuccess={handleSaveSuccess}
           content={getGeneratedContent()}
-          format={media.note_format || 'Markdown'}
+          format={'Markdown'}
           mediaId={media.id}
           mediaTitle={`Analysis ${media.id}`} // You could get a better title from media metadata
         />

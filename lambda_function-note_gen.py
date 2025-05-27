@@ -39,8 +39,23 @@ def post_process_latex_content(content: str) -> str:
     """
     import re
     
-    # Fix common LaTeX math delimiter issues
+    # First, fix missing backslashes before common LaTeX functions
+    common_math_functions = [
+        'frac', 'sqrt', 'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sum', 'prod', 'int',
+        'lim', 'alpha', 'beta', 'gamma', 'delta', 'pi', 'theta', 'sigma', 'omega',
+        'infty', 'partial', 'nabla', 'cdot', 'times', 'pm', 'leq', 'geq', 'neq'
+    ]
+    
     processed_content = content
+    
+    # Fix missing backslashes in math expressions
+    for func in common_math_functions:
+        # Pattern: $ followed by function name without backslash
+        pattern = rf'(\$\$?[^$]*?)([^\\]|^)({func})([^a-zA-Z])'
+        replacement = rf'\1\2\\{func}\4'
+        processed_content = re.sub(pattern, replacement, processed_content)
+    
+    # Fix common LaTeX math delimiter issues
     
     # Replace \[ ... \] with $$ ... $$
     processed_content = re.sub(r'\\?\\\[([^\\]*?)\\?\\\]', r'$$\1$$', processed_content)
@@ -126,78 +141,120 @@ def lambda_handler(event, context):
                 'body': json.dumps(f'No transcript found for video ID: {video_id}')
             }
 
-        # --- Generate Notes Based on Format ---
-        if note_format == 'LaTeX':
-            # LaTeX-specific prompt
-            generation_prompt = f"""
-            You are an AI assistant specialized in generating academic-style notes from lecture transcripts in LaTeX format.
-            Your task is to take the provided raw transcript and transform it into well-structured LaTeX content suitable for academic documents.
-            
-            CRITICAL MATH FORMATTING RULES:
-            1. **Inline Math**: Use single dollar signs $...$ for inline mathematical expressions
-            2. **Display Math**: Use double dollar signs $$...$$ for centered mathematical expressions
-            3. **NO DOCUMENT COMMANDS**: Do not use \\[...\\], \\(...\\), \\begin{{equation}}, or \\documentclass
-            4. **Math Examples**:
-               - Inline: The quadratic formula is $x = \\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}}}{{2a}}$
-               - Display: $$\\int x^2 \\, dx = \\frac{{x^3}}{{3}} + C$$
-               - Fractions: Use \\frac{{numerator}}{{denominator}}
-               - Square roots: Use \\sqrt{{expression}}
-               - Integrals: Use \\int, \\sum, \\prod
-               - Greek letters: \\alpha, \\beta, \\gamma, \\pi, \\theta, etc.
-            
-            DOCUMENT STRUCTURE RULES:
-            1. **Sections**: Use \\section{{Title}}, \\subsection{{Title}}, \\subsubsection{{Title}}
-            2. **Lists**: Use \\begin{{itemize}}...\\end{{itemize}} and \\begin{{enumerate}}...\\end{{enumerate}}
-            3. **List Items**: Use \\item for each list item
-            4. **Emphasis**: Use \\textbf{{bold text}} and \\textit{{italic text}}
-            5. **Content Organization**: Break content into logical sections based on topics discussed
-            
-            MATHEMATICAL CONTENT GUIDELINES:
-            - Always use proper LaTeX math syntax for equations, formulas, and mathematical expressions
-            - Use display math ($$...$$) for important equations that should be centered
-            - Use inline math ($...$) for mathematical terms within sentences
-            - Include step-by-step derivations when applicable
-            - Format mathematical definitions clearly
-            
-            Raw Transcript:
-            {raw_transcript}
-            
-            On-screen Text Data (if available):
-            {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
-            
-            Generate comprehensive LaTeX content (without \\documentclass or \\begin{{document}} - just the content that would go inside a document).
-            Focus on clear structure, proper LaTeX math formatting with $ and $$ delimiters, and academic presentation.
-            Ensure all mathematical expressions use proper LaTeX syntax that will render correctly with KaTeX.
-            """
-        else:
-            # Markdown-specific prompt (existing logic)
-            generation_prompt = f"""
-            You are an AI assistant specialized in generating academic-style notes from lecture transcripts in Markdown format.
-            Your task is to take the provided raw transcript and transform it into well-structured Markdown content.
-            
-            Requirements:
-            1. **Document Structure**: Use proper Markdown headers (# ## ###)
-            2. **Lists**: Use - or * for bullet points and 1. 2. 3. for numbered lists
-            3. **Emphasis**: Use **bold** and *italic* formatting
-            4. **Content Organization**: Break content into logical sections based on topics discussed
-            5. **Academic Style**: Maintain formal academic tone and structure
-            
-            Raw Transcript:
-            {raw_transcript}
-            
-            On-screen Text Data (if available):
-            {json.dumps(on_screen_text_data) if on_screen_text_data else "No on-screen text data provided."}
-            
-            Generate comprehensive Markdown content with clear structure and academic presentation.
-            Generate clean markdown content without any code block wrappers or formatting indicators. Return only the raw markdown content.
-            """
+        # --- Generate Notes in Unified Markdown + LaTeX Format ---
+        # Always generate Markdown content with embedded LaTeX math expressions
+        generation_prompt = f"""
+        AI AGENT INSTRUCTIONS: CONVERT TRANSCRIPT TO MARKDOWN CONVERTER WITH LATEX MATH
 
-        print(f"Sending request to OpenAI for {note_format} content generation...")
+        You are a specialized AI agent responsible for converting transcripts into well-structured Markdown notes. Your primary focus is creating clean, readable documentation with properly formatted mathematical expressions that render correctly in KaTeX.
+
+        CORE RESPONSIBILITIES:
+            1. Transform spoken content into structured written notes
+            2. Format mathematical expressions using proper LaTeX syntax
+            3. Organize content with clear hierarchy and flow
+            4. Ensure KaTeX compatibility for all math expressions
+
+        MARKDOWN STRUCTURE GUIDELINES:
+            - Use appropriate heading levels (`#`, `##`, `###`) to create logical document hierarchy
+            - Employ bullet points and numbered lists for clarity
+            - Add emphasis with **bold** and *italic* text where appropriate
+            - Include code blocks for non-mathematical code or formulas
+            - Use blockquotes for important definitions or key concepts
+
+        LaTeX MATH FORMATTING RULES:
+            1. For KaTeX Compatibility:
+                - Inline math: Wrap in single dollar signs `$...$`
+                - Display math blocks: Wrap in double dollar signs `$$...$$`
+                    - Always place display blocks on separate lines with blank lines above and below
+
+            2. Mathematical Expression Guidelines:
+                - Use `\\frac{{numerator}}{{denominator}}` for fractions
+                - Use `^{{}}` for superscripts and `_{{}}` for subscripts
+                - Use `\\sqrt{{}}` for square roots, `\\sqrt[n]{{}}` for nth roots
+                - Use proper LaTeX function names: `\\sin`, `\\cos`, `\\log`, `\\ln`, `\\exp`
+                - Use `\\sum`, `\\prod`, `\\int` for summation, product, and integral symbols
+                - Use `\\alpha`, `\\beta`, `\\gamma`, etc. for Greek letters
+                - Use `\\mathbf{{}}` for bold math symbols
+                - Use `\\text{{}}` for text within math expressions
+
+            3. Common Math Symbols and Operators:
+                - `\\pm` for ±, `\\mp` for ∓
+                - `\\times` for ×, `\\cdot` for ·
+                - `\\leq` for ≤, `\\geq` for ≥
+                - `\\neq` for ≠, `\\approx` for ≈
+                - `\\infty` for ∞
+                - `\\partial` for partial derivatives
+                - `\\nabla` for gradient operator
+
+        CONTENT ORGANIZATION:
+            1. Title: Create a clear, descriptive title
+            2. Overview/Summary: Brief introduction to the topic
+            3. Main Sections: Organize content thematically with subheadings
+            4. Key Equations: Highlight important formulas in display math blocks
+            5. Examples: Include worked examples where applicable
+            6. Definitions: Clearly mark and format important definitions
+
+        QUALITY STANDARDS:
+            - Accuracy: Ensure all mathematical expressions are syntactically correct
+            - Readability: Balance detail with clarity
+            - Consistency: Use consistent formatting throughout
+            - Completeness: Don't omit important information from the transcript
+
+        EXAMPLE OUTPUT FORMAT:
+
+            ```markdown
+            # Topic Title
+
+            ## Overview
+            Brief description of the content covered.
+
+            ## Key Concepts
+
+            ### Concept 1
+            Explanation with inline math like $E = mc^2$ when appropriate.
+
+            Important formula:
+            $$
+            \\int_{{-\\infty}}^{{\\infty}} e^{{-x^2}} dx = \\sqrt{{\\pi}}
+            $$
+
+            ### Concept 2
+            More content with proper LaTeX formatting.
+
+            ## Examples
+
+            ### Example 1
+            Step-by-step solution showing:
+            $$
+            \\frac{{d}}{{dx}}[x^n] = nx^{{n-1}}
+            $$
+
+            ## Summary
+            Key takeaways and important formulas.
+            ```
+
+        ERROR PREVENTION CHECKLIST
+        Before finalizing output, verify:
+            - All math expressions use proper LaTeX syntax
+            - Display math blocks are properly separated with blank lines
+            - Inline math doesn't break across lines
+            - Heading hierarchy is logical and consistent
+            - All mathematical symbols render correctly in KaTeX
+            - No raw transcript artifacts remain (e.g., "um", "uh", speaker names)
+
+        SPECIAL INSTRUCITONS:
+            - If the transcript contains unclear mathematical expressions, make reasonable interpretations based on context
+            - When in doubt about mathematical notation, choose the most standard LaTeX representation
+            - Preserve the logical flow and key insights from the original transcript
+            - Add clarifying context where the spoken word might be ambiguous in written form
+            - If equations are referenced verbally (e.g., "equation 1"), create numbered equations using `\\tag{{}}`
+
+        Remember: Your output will be processed by KaTeX, so all LaTeX must be compatible with KaTeX's supported functions and syntax.
+        """
+
+        print(f"Sending request to OpenAI for unified Markdown+LaTeX content generation...")
         
-        if note_format == 'LaTeX':
-            system_message = "You are a helpful assistant that generates structured academic notes in LaTeX format. You MUST use proper math delimiters: single $ for inline math and double $$ for display math. Never use \\[...\\] or \\(...\\) or \\begin{equation}. Always use KaTeX-compatible LaTeX syntax."
-        else:
-            system_message = f"You are a helpful assistant that generates structured academic notes in {note_format.upper()} format."
+        system_message = "You are a helpful assistant that generates structured academic notes in Markdown format with embedded LaTeX math expressions. CRITICAL REQUIREMENTS: 1) MUST use proper math delimiters: single $ for inline math and double $$ for display math. 2) EVERY LaTeX function MUST start with a backslash (\\): use \\frac not frac, \\sin not sin, \\sum not sum, \\alpha not alpha. 3) Never use \\[...\\] or \\(...\\) or \\begin{{equation}}. 4) Always use KaTeX-compatible LaTeX syntax within Markdown structure. REMEMBER: Missing backslashes will break math rendering!"
         
         generation_response = openai_client.chat.completions.create(
             model="gpt-4o-mini", # Or your preferred model
@@ -208,12 +265,11 @@ def lambda_handler(event, context):
         )
 
         generated_content = generation_response.choices[0].message.content
-        print(f"Generated {note_format} content successfully.")
+        print(f"Generated unified Markdown+LaTeX content successfully.")
 
         # Post-process LaTeX content to fix common issues
-        if note_format == 'LaTeX':
-            generated_content = post_process_latex_content(generated_content)
-            print("Applied LaTeX post-processing.")
+        generated_content = post_process_latex_content(generated_content)
+        print("Applied LaTeX post-processing.")
 
         # --- Save to Supabase (notes table) ---
         # Insert a new record into the 'notes' table

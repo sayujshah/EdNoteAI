@@ -2,7 +2,7 @@ import json
 import os
 import boto3
 from supabase import create_client, Client
-from openai import OpenAI # Using the official OpenAI Python library
+from google import genai  # Using Google Generative AI library
 
 # Initialize Supabase client
 # Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set as environment variables in Lambda
@@ -10,10 +10,10 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
-# Initialize OpenAI client
-# Ensure OPENAI_API_KEY environment variable is set in Lambda configuration
-openai_api_key = os.environ.get("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=openai_api_key)
+# Initialize Gemini client
+# Ensure GEMINI_API_KEY environment variable is set in Lambda configuration
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=gemini_api_key)
 
 def update_video_status(video_id: str, status: str, error_message: str = None):
     """Helper function to update video transcription status in Supabase."""
@@ -33,20 +33,57 @@ def update_video_status(video_id: str, status: str, error_message: str = None):
         print(f"An unexpected error occurred while updating video status for {video_id} to {status}: {e}")
 
 
+def add_spaces_around_math(content: str) -> str:
+    """
+    Add spaces around inline math delimiters to ensure proper rendering.
+    """
+    import re
+    
+    # First, protect display math blocks ($$...$$) from spacing changes
+    display_math_blocks = []
+    display_math_pattern = r'\$\$[\s\S]*?\$\$'
+    
+    def preserve_display_math(match):
+        display_math_blocks.append(match.group())
+        return f"__DISPLAY_MATH_PLACEHOLDER_{len(display_math_blocks) - 1}__"
+    
+    # Replace display math with placeholders
+    processed_content = re.sub(display_math_pattern, preserve_display_math, content)
+    
+    # Add space before $ if it's preceded by a non-whitespace character that's not another $
+    # This handles cases like "text$math$" -> "text $math$"
+    processed_content = re.sub(r'(?<![\s$])\$', r' $', processed_content)
+    
+    # Add space after $ if it's followed by a non-whitespace character that's not another $
+    # This handles cases like "$math$text" -> "$math$ text"
+    processed_content = re.sub(r'\$(?![\s$])', r'$ ', processed_content)
+    
+    # Restore display math blocks
+    for i, block in enumerate(display_math_blocks):
+        placeholder = f"__DISPLAY_MATH_PLACEHOLDER_{i}__"
+        processed_content = processed_content.replace(placeholder, block)
+    
+    # Clean up any double spaces that might have been created
+    processed_content = re.sub(r'  +', ' ', processed_content)
+    
+    return processed_content
+
+
 def post_process_latex_content(content: str) -> str:
     """
     Post-process LaTeX content to fix common formatting issues and ensure KaTeX compatibility.
     """
     import re
     
-    # First, fix missing backslashes before common LaTeX functions
+    # First, add proper spacing around inline math delimiters
+    processed_content = add_spaces_around_math(content)
+    
+    # Fix missing backslashes before common LaTeX functions
     common_math_functions = [
         'frac', 'sqrt', 'sin', 'cos', 'tan', 'log', 'ln', 'exp', 'sum', 'prod', 'int',
         'lim', 'alpha', 'beta', 'gamma', 'delta', 'pi', 'theta', 'sigma', 'omega',
         'infty', 'partial', 'nabla', 'cdot', 'times', 'pm', 'leq', 'geq', 'neq'
     ]
-    
-    processed_content = content
     
     # Fix missing backslashes in math expressions
     for func in common_math_functions:
@@ -146,12 +183,14 @@ def lambda_handler(event, context):
         generation_prompt = f"""
         AI AGENT INSTRUCTIONS: CONVERT TRANSCRIPT TO MARKDOWN CONVERTER WITH LATEX MATH
 
-        You are a specialized AI agent responsible for converting transcripts into well-structured Markdown notes. Your primary focus is creating clean, readable documentation with properly formatted mathematical expressions that render correctly in KaTeX.
+        You are a specialized AI agent responsible for converting the transcript found at the end of this message into well-structured Markdown notes. Your primary focus is creating clean, readable documentation with properly formatted mathematical expressions that render correctly in KaTeX.
 
         CORE RESPONSIBILITIES:
-            1. Transform spoken content into structured written notes
-            2. Format mathematical expressions using proper LaTeX syntax
-            3. Organize content with clear hierarchy and flow
+            1. Transform spoken content into structured, academic-style notes
+                - Be detailed and include all important information from the transcript. These are academic notes, not a summary.
+                - There is no limit to the amount of notes needed to cover all the content in the transcript.
+            2. Organize content with clear hierarchy and flow
+            3. Format mathematical expressions using proper LaTeX syntax
             4. Ensure KaTeX compatibility for all math expressions
 
         MARKDOWN STRUCTURE GUIDELINES:
@@ -250,21 +289,54 @@ def lambda_handler(event, context):
             - If equations are referenced verbally (e.g., "equation 1"), create numbered equations using `\\tag{{}}`
 
         Remember: Your output will be processed by KaTeX, so all LaTeX must be compatible with KaTeX's supported functions and syntax.
+        
+        THE TRANSCRIPT IS:
+        
+        {raw_transcript}
         """
 
-        print(f"Sending request to OpenAI for unified Markdown+LaTeX content generation...")
+        print(f"Sending request to Gemini 2.5 Flash for unified Markdown+LaTeX content generation...")
         
-        system_message = "You are a helpful assistant that generates structured academic notes in Markdown format with embedded LaTeX math expressions. CRITICAL REQUIREMENTS: 1) MUST use proper math delimiters: single $ for inline math and double $$ for display math. 2) EVERY LaTeX function MUST start with a backslash (\\): use \\frac not frac, \\sin not sin, \\sum not sum, \\alpha not alpha. 3) Never use \\[...\\] or \\(...\\) or \\begin{{equation}}. 4) Always use KaTeX-compatible LaTeX syntax within Markdown structure. REMEMBER: Missing backslashes will break math rendering!"
+        # Combine system message with user prompt for Gemini
+        system_instructions = """
+        You are a helpful assistant that generates structured academic notes in Markdown format with embedded LaTeX math expressions. 
         
-        generation_response = openai_client.chat.completions.create(
-            model="gpt-4o-mini", # Or your preferred model
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": generation_prompt}
-            ]
-        )
+        CRITICAL REQUIREMENTS: 
+        1) MUST use proper math delimiters: single $ for inline math and double $$ for display math. 
+        2) EVERY LaTeX function MUST start with a backslash (\\): use \\frac not frac, \\sin not sin, \\sum not sum, \\alpha not alpha. 
+        3) ALWAYS add spaces around inline math: write 'as $x$ approaches $c$' NOT 'as$x$approaches$c$'. 
+        4) Never use \\[...\\] or \\(...\\) or \\begin{{equation}}. 
+        5) Always use KaTeX-compatible LaTeX syntax within Markdown structure. 
 
-        generated_content = generation_response.choices[0].message.content
+        REMEMBER: Missing backslashes will break math rendering!
+        """
+        
+        # Configure generation parameters
+        generation_config = genai.types.GenerateContentConfig(
+            system_instruction=system_instructions,
+            candidate_count=1,
+            max_output_tokens=8192,  # Sufficient for detailed academic notes
+            temperature=0.1,  # Low temperature for consistent, factual output
+        )
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-preview-05-20",
+            contents=generation_prompt,
+            config=generation_config
+        )
+        
+        # Check if the response was blocked
+        if response.candidates[0].finish_reason == 'SAFETY':
+            print("[WARNING] Response was blocked by safety filters, trying with higher temperature...")
+            # Retry with slightly higher temperature
+            generation_config.temperature = 0.3
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-preview-05-20",
+                contents=generation_prompt,
+                config=generation_config
+            )
+        
+        generated_content = response.text
         print(f"Generated unified Markdown+LaTeX content successfully.")
 
         # Post-process LaTeX content to fix common issues
@@ -313,13 +385,13 @@ def lambda_handler(event, context):
                 'body': json.dumps(f'Error saving generated notes to Supabase: {db_error}')
             }
 
-    except Exception as openai_error:
-        print(f"Error during OpenAI API calls: {openai_error}")
+    except Exception as gemini_error:
+        print(f"Error during Gemini API calls: {gemini_error}")
         if video_id:
-             update_video_status(video_id, 'note_generation_failed', f'Error during OpenAI API calls: {openai_error}')
+             update_video_status(video_id, 'note_generation_failed', f'Error during Gemini API calls: {gemini_error}')
         return {
             'statusCode': 500,
-            'body': json.dumps(f'Error during OpenAI API calls: {openai_error}')
+            'body': json.dumps(f'Error during Gemini API calls: {gemini_error}')
         }
 
     except Exception as e:

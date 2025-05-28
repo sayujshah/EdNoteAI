@@ -24,7 +24,7 @@ export default function TermsOfService() {
           <div>
             <h1 className="text-4xl font-bold tracking-tighter mb-4">TERMS OF SERVICE</h1>
             <p className="text-muted-foreground text-lg">
-              Last updated May 27, 2025
+              Last updated May 28, 2025
             </p>
           </div>
 
@@ -32,13 +32,13 @@ export default function TermsOfService() {
             <section>
               <h2 className="text-2xl font-semibold mb-4">AGREEMENT TO OUR LEGAL TERMS</h2>
               <p>
-                We are EdNoteAI ("Company," "we," "us," "our"), a company registered in Illinois, United States at __________, Chicago, IL 60640.
+                We are EdNoteAI ("Company," "we," "us," "our"), a company registered in Illinois, United States at Chicago, IL 60640.
               </p>
               <p className="mt-4">
                 We operate the website http://www.ednoteai.com (the "Site"), as well as any other related products and services that refer or link to these legal terms (the "Legal Terms") (collectively, the "Services").
               </p>
               <p className="mt-4">
-                You can contact us by email at support@ednoteai.com or by mail to __________, Chicago, IL 60640, United States.
+                You can contact us by email at support@ednoteai.com.
               </p>
               <p className="mt-4">
                 These Legal Terms constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you"), and EdNoteAI, concerning your access to and use of the Services. You agree that by accessing the Services, you have read, understood, and agreed to be bound by all of these Legal Terms. IF YOU DO NOT AGREE WITH ALL OF THESE LEGAL TERMS, THEN YOU ARE EXPRESSLY PROHIBITED FROM USING THE SERVICES AND YOU MUST DISCONTINUE USE IMMEDIATELY.
@@ -244,6 +244,31 @@ export default function TermsOfService() {
                 <li>Sell or otherwise transfer your profile.</li>
                 <li>Use the Services to advertise or offer to sell goods and services.</li>
               </ul>
+
+              <h3 className="text-lg font-semibold mb-2 mt-6">Educational Content Restrictions</h3>
+              <p>
+                By uploading any media to our Services, you represent and warrant that you are the rightful owner of such content or have obtained all necessary permissions, licenses, and consents for its use. You are solely responsible for ensuring compliance with all applicable laws, regulations, and institutional policies. EdNoteAI is not responsible for any legal consequences arising from your failure to obtain proper permissions prior to uploading content.
+              </p>
+              <p className="mt-4">
+                In addition to the general prohibited activities listed above, users are specifically prohibited from:
+              </p>
+              <ul className="list-disc pl-6 space-y-3 mt-2">
+                <li>
+                  <strong>Uploading Copyrighted Content without Permission:</strong> You may not upload, process, or share any audio, video, or other media content that is protected by copyright unless you are the copyright owner or have obtained explicit written permission from the copyright holder. This includes but is not limited to music, films, television shows, podcasts, audiobooks, or any other copyrighted material. Uploading copyrighted content without proper authorization may result in immediate account termination and potential legal action.
+                </li>
+                <li>
+                  <strong>Uploading Faculty-Generated Content without Permission:</strong> You may not upload recordings of lectures, seminars, presentations, or any other content created by faculty members, instructors, or educational staff without their explicit written consent. Faculty members retain intellectual property rights over their educational materials, and unauthorized recording or sharing of their content may violate both copyright law and institutional policies. Students must obtain clear permission before recording any classroom activities or faculty presentations.
+                </li>
+                <li>
+                  <strong>Sharing of Recordings or Transcripts:</strong> You may not share, distribute, or make available to third parties any recordings, transcripts, or generated notes that contain content from others without proper authorization. This includes sharing content in which other students, faculty, or third parties appear or speak. All participants in recorded content must provide consent for such sharing. You are responsible for protecting the privacy and rights of all individuals whose voices or likenesses may be captured in your uploads.
+                </li>
+                <li>
+                  <strong>Disobeying University Policies:</strong> You must comply with all applicable institutional policies, codes of conduct, and academic integrity guidelines when using our Services. This includes but is not limited to policies regarding recording in classrooms, use of technology for academic purposes, privacy protection, and academic honesty. Violation of your institution's policies through use of our Services may result in account suspension or termination, and we may report violations to your educational institution when required or appropriate.
+                </li>
+              </ul>
+              <p className="mt-4">
+                <strong>Important Notice:</strong> Users acknowledge that by uploading any content to EdNoteAI, they take full legal responsibility for ensuring they have the right to upload and process such content. EdNoteAI does not monitor uploaded content for copyright compliance or permission verification, and users agree to indemnify and hold EdNoteAI harmless from any claims, damages, or legal issues arising from unauthorized uploads or violations of third-party rights.
+              </p>
             </section>
 
             <section id="user-generated-contributions">
@@ -304,7 +329,10 @@ export default function TermsOfService() {
             <section id="privacy-policy">
               <h2 className="text-2xl font-semibold mb-4">12. PRIVACY POLICY</h2>
               <p>
-                We care about data privacy and security. Please review our Privacy Policy: __________. By using the Services, you agree to be bound by our Privacy Policy, which is incorporated into these Legal Terms. Please be advised the Services are hosted in the United States. If you access the Services from any other region of the world with laws or other requirements governing personal data collection, use, or disclosure that differ from applicable laws in the United States, then through your continued use of the Services, you are transferring your data to the United States, and you expressly consent to have your data transferred to and processed in the United States.
+                We care about data privacy and security. Please review our <Link href="/privacy" className="text-primary hover:underline font-medium">Privacy Policy</Link>. By using the Services, you agree to be bound by our Privacy Policy, which is incorporated into these Legal Terms. Please be advised the Services are hosted in the United States. If you access the Services from any other region of the world with laws or other requirements governing personal data collection, use, or disclosure that differ from applicable laws in the United States, then through your continued use of the Services, you are transferring your data to the United States, and you expressly consent to have your data transferred to and processed in the United States.
+              </p>
+              <p className="mt-4">
+                For detailed information about our use of cookies and tracking technologies, please see our <Link href="/cookies" className="text-primary hover:underline font-medium">Cookies Policy</Link>.
               </p>
               <p className="mt-4">
                 Further, we do not knowingly accept, request, or solicit information from children or knowingly market to children. Therefore, in accordance with the U.S. Children's Online Privacy Protection Act, if we receive actual knowledge that anyone under the age of 13 has provided personal information to us without the requisite and verifiable parental consent, we will delete that information from the Services as quickly as is reasonably practical.
@@ -380,6 +408,21 @@ export default function TermsOfService() {
               <p>
                 THE SERVICES ARE PROVIDED ON AN AS-IS AND AS-AVAILABLE BASIS. YOU AGREE THAT YOUR USE OF THE SERVICES WILL BE AT YOUR SOLE RISK. TO THE FULLEST EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, IN CONNECTION WITH THE SERVICES AND YOUR USE THEREOF, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. WE MAKE NO WARRANTIES OR REPRESENTATIONS ABOUT THE ACCURACY OR COMPLETENESS OF THE SERVICES' CONTENT OR THE CONTENT OF ANY WEBSITES OR MOBILE APPLICATIONS LINKED TO THE SERVICES AND WE WILL ASSUME NO LIABILITY OR RESPONSIBILITY FOR ANY (1) ERRORS, MISTAKES, OR INACCURACIES OF CONTENT AND MATERIALS, (2) PERSONAL INJURY OR PROPERTY DAMAGE, OF ANY NATURE WHATSOEVER, RESULTING FROM YOUR ACCESS TO AND USE OF THE SERVICES, (3) ANY UNAUTHORIZED ACCESS TO OR USE OF OUR SECURE SERVERS AND/OR ANY AND ALL PERSONAL INFORMATION AND/OR FINANCIAL INFORMATION STORED THEREIN, (4) ANY INTERRUPTION OR CESSATION OF TRANSMISSION TO OR FROM THE SERVICES, (5) ANY BUGS, VIRUSES, TROJAN HORSES, OR THE LIKE WHICH MAY BE TRANSMITTED TO OR THROUGH THE SERVICES BY ANY THIRD PARTY, AND/OR (6) ANY ERRORS OR OMISSIONS IN ANY CONTENT AND MATERIALS OR FOR ANY LOSS OR DAMAGE OF ANY KIND INCURRED AS A RESULT OF THE USE OF ANY CONTENT POSTED, TRANSMITTED, OR OTHERWISE MADE AVAILABLE VIA THE SERVICES. WE DO NOT WARRANT, ENDORSE, GUARANTEE, OR ASSUME RESPONSIBILITY FOR ANY PRODUCT OR SERVICE ADVERTISED OR OFFERED BY A THIRD PARTY THROUGH THE SERVICES, ANY HYPERLINKED WEBSITE, OR ANY WEBSITE OR MOBILE APPLICATION FEATURED IN ANY BANNER OR OTHER ADVERTISING, AND WE WILL NOT BE A PARTY TO OR IN ANY WAY BE RESPONSIBLE FOR MONITORING ANY TRANSACTION BETWEEN YOU AND ANY THIRD-PARTY PROVIDERS OF PRODUCTS OR SERVICES. AS WITH THE PURCHASE OF A PRODUCT OR SERVICE THROUGH ANY MEDIUM OR IN ANY ENVIRONMENT, YOU SHOULD USE YOUR BEST JUDGMENT AND EXERCISE CAUTION WHERE APPROPRIATE.
               </p>
+              
+              <h3 className="text-lg font-semibold mb-2 mt-6">AI-Generated Content Disclaimer</h3>
+              <p>
+                <strong>IMPORTANT NOTICE REGARDING AI-GENERATED CONTENT:</strong> Our Services utilize artificial intelligence to generate transcriptions, notes, and other content based on uploaded media files. You acknowledge and agree that:
+              </p>
+              <ul className="list-disc pl-6 space-y-2 mt-4">
+                <li><strong>Accuracy Not Guaranteed:</strong> AI-generated content may contain errors, inaccuracies, hallucinations, or omissions. We make no warranties regarding the accuracy, completeness, or reliability of any AI-generated content.</li>
+                <li><strong>Independent Verification Required:</strong> You are solely responsible for verifying the accuracy and appropriateness of any AI-generated content before relying on it for academic, professional, or any other purposes.</li>
+                <li><strong>No Liability for AI Errors:</strong> We disclaim all liability for any losses, damages, or consequences arising from your reliance on AI-generated content, including but not limited to academic or professional consequences.</li>
+                <li><strong>Technology Limitations:</strong> AI technology has inherent limitations and may misinterpret audio, generate false information, or produce content that does not accurately reflect the source material.</li>
+                <li><strong>User Responsibility:</strong> You agree to exercise your own judgment and critical thinking when using AI-generated content and to seek additional sources or expert review when accuracy is crucial.</li>
+              </ul>
+              <p className="mt-4">
+                BY USING OUR AI-POWERED SERVICES, YOU ACKNOWLEDGE THAT YOU UNDERSTAND THESE LIMITATIONS AND AGREE TO USE THE GENERATED CONTENT AT YOUR OWN RISK.
+              </p>
             </section>
 
             <section id="limitations-of-liability">
@@ -427,14 +470,8 @@ export default function TermsOfService() {
             <section id="contact-us">
               <h2 className="text-2xl font-semibold mb-4">25. CONTACT US</h2>
               <p>
-                In order to resolve a complaint regarding the Services or to receive further information regarding use of the Services, please contact us at:
-              </p>
-              <div className="mt-4">
-                <p><strong>EdNoteAI</strong></p>
-                <p>Chicago, IL 60640</p>
-                <p>United States</p>
-                <p>support@ednoteai.com</p>
-              </div>
+                In order to resolve a complaint regarding the Services or to receive further information regarding use of the Services, please contact us at: support@ednoteai.com.
+              </p>                
             </section>
           </div>
         </div>
@@ -455,6 +492,9 @@ export default function TermsOfService() {
             </Link>
             <Link href="/terms" className="hover:underline underline-offset-4">
               Terms of Service
+            </Link>
+            <Link href="/cookies" className="hover:underline underline-offset-4">
+              Cookies Policy
             </Link>
           </div>
         </div>

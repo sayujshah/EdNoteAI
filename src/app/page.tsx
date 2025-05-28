@@ -521,6 +521,9 @@ export default function LandingPage() {
             <Link href="/privacy" className="text-sm font-medium hover:underline underline-offset-4">
               Privacy
             </Link>
+            <Link href="/cookies" className="text-sm font-medium hover:underline underline-offset-4">
+              Cookies
+            </Link>
             <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
               Contact
             </Link>

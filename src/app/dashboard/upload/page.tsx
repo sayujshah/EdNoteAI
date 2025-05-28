@@ -423,12 +423,16 @@ export default function UploadPage() {
             <div className="mt-8 text-center text-sm text-muted-foreground">
               <p>
                 By uploading, you agree to our{" "}
-                <Link href="#" className="font-medium text-primary hover:underline">
+                <Link href="/terms" className="font-medium text-primary hover:underline">
                   Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="#" className="font-medium text-primary hover:underline">
+                </Link>
+                ,{" "}
+                <Link href="/privacy" className="font-medium text-primary hover:underline">
                   Privacy Policy
+                </Link>
+                , and{" "}
+                <Link href="/cookies" className="font-medium text-primary hover:underline">
+                  Cookies Policy
                 </Link>
                 .
               </p>

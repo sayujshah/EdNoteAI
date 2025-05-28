@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
+import { BookOpen, Search, Plus, FileText, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,16 +47,7 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {note.format === 'LaTeX' ? (
-              <Brain className="h-5 w-5 text-purple-600" />
-            ) : (
-              <FileText className="h-5 w-5 text-blue-600" />
-            )}
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-              {note.format}
-            </span>
-          </div>
+          <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
           <Button 
             variant="ghost" 
             size="sm" 
@@ -113,17 +104,7 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex items-center gap-2">
-              {note.format === 'LaTeX' ? (
-                <Brain className="h-4 w-4 text-purple-600" />
-              ) : (
-                <FileText className="h-4 w-4 text-blue-600" />
-              )}
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                {note.format}
-              </span>
-            </div>
-            
+            <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
             <Link href={`/dashboard/library/${note.id}`}>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate">
                 {note.title}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { UPLOAD_LIMITS, UPLOAD_ERROR_MESSAGES } from '@/lib/constants';
 
 interface FileUploadProps {
   lessonId: string; // Require lessonId to associate the uploaded video
@@ -15,7 +16,18 @@ export default function FileUpload({ lessonId }: FileUploadProps) {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      
+      // File size validation using shared constants
+      if (file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+        setUploadError(UPLOAD_ERROR_MESSAGES.FILE_TOO_LARGE(fileSizeMB, UPLOAD_LIMITS.MAX_FILE_SIZE_MB));
+        setSelectedFile(null);
+        setUploadSuccess(false);
+        return;
+      }
+      
+      setSelectedFile(file);
       setUploadError(null); // Clear previous errors
       setUploadSuccess(false); // Reset success message
     } else {
@@ -67,7 +79,11 @@ export default function FileUpload({ lessonId }: FileUploadProps) {
         onChange={handleFileChange}
         disabled={uploading}
         className="mb-2"
+        accept={UPLOAD_LIMITS.ACCEPTED_TYPES}
       />
+      <p className="text-xs text-gray-500 mb-2">
+        Supported formats: {UPLOAD_LIMITS.SUPPORTED_FORMATS.join(', ')}. Maximum file size: {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB
+      </p>
       <button
         type="button" // Explicitly set type to button to prevent form submission
         onClick={handleUpload}

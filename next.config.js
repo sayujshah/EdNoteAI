@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Allow larger file uploads
+    serverComponentsExternalPackages: [],
+  },
+  // Configure body parser for larger files
+  api: {
+    bodyParser: {
+      sizeLimit: '450mb', // Set slightly higher than 400MB limit to account for form data overhead
+    },
+  },
   async headers() {
     return [
       {

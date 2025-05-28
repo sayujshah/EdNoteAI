@@ -4,6 +4,7 @@ import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import createClient from '../../../lib/supabase/server'; // Import server-side client
 import { SubscriptionService } from '@/lib/services/subscriptionService';
+import { UPLOAD_LIMITS, UPLOAD_ERROR_MESSAGES } from '@/lib/constants';
 
 // Configure AWS S3 client (same as transcribe route)
 const s3Client = new S3Client({
@@ -56,6 +57,15 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json({ status: 'error', message: 'No file uploaded' }, { status: 400 });
+    }
+
+    // Server-side file size validation using shared constants
+    if (file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+      return NextResponse.json({ 
+        status: 'error', 
+        message: UPLOAD_ERROR_MESSAGES.FILE_TOO_LARGE(fileSizeMB, UPLOAD_LIMITS.MAX_FILE_SIZE_MB)
+      }, { status: 413 });
     }
 
     if (!lessonId) {

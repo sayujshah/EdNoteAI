@@ -11,8 +11,6 @@ import { FileUploadModal } from "@/components/file-upload-modal"
 import { LandingPricing } from "@/components/pricing/LandingPricing"
 
 export default function LandingPage() {
-  const auth = useAuth();
-
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

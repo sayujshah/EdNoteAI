@@ -23,7 +23,7 @@ interface MathSegment {
   index: number;
 }
 
-export default function NoteRenderer({ content, format = 'Markdown', className = "" }: NoteRendererProps) {
+export default function NoteRenderer({ content, className = "" }: NoteRendererProps) {
   // Clean up AI-generated code block wrappers
   const cleanContent = (rawContent: string): string => {
     return rawContent
@@ -35,7 +35,7 @@ export default function NoteRenderer({ content, format = 'Markdown', className =
   // Parse content into segments (text, inline math, block math)
   const parseContentSegments = (text: string): MathSegment[] => {
     const segments: MathSegment[] = [];
-    let currentIndex = 0;
+    let textStart = 0;
     
     // First pass: find all block math ($$...$$) - these are separate segments
     const blockMathMatches: Array<{start: number, end: number, content: string}> = [];
@@ -51,8 +51,6 @@ export default function NoteRenderer({ content, format = 'Markdown', className =
     }
     
     // Create segments, preserving block math as separate elements
-    let textStart = 0;
-    
     blockMathMatches.forEach(match => {
       // Add text before this block math (will contain inline math)
       if (match.start > textStart) {

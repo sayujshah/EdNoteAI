@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -210,7 +210,7 @@ export function LandingPricing({ className }: LandingPricingProps) {
         {/* Additional Information */}
         <div className="text-center text-sm text-muted-foreground mt-8">
           <p>All plans include secure payment processing and can be canceled anytime.</p>
-          <p className="mt-2">✨ Start with a free account and upgrade when you're ready.</p>
+          <p className="mt-2">✨ Start with a free account and upgrade when you&apos;re ready.</p>
         </div>
       </div>
     </section>

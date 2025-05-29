@@ -19,8 +19,6 @@ export function UsageDashboard({ limits, usage, className }: UsageDashboardProps
     ? -1 // Unlimited
     : Math.round((limits.credits_used_this_month / limits.monthly_credits) * 100);
   
-  const uploadPercentage = Math.round((usage.total_upload_minutes / limits.max_upload_duration_minutes) * 100);
-
   return (
     <div className={cn("space-y-6", className)}>
       {/* Plan Overview */}
@@ -140,7 +138,7 @@ export function UsageDashboard({ limits, usage, className }: UsageDashboardProps
               />
               {creditsPercentage > 90 && (
                 <p className="text-xs text-red-600 dark:text-red-400">
-                  You're running low on credits. Consider upgrading your plan.
+                  You&apos;re running low on credits. Consider upgrading your plan.
                 </p>
               )}
             </div>

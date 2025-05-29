@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { BookOpen, Search, Plus, FileText, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -161,10 +161,9 @@ export default function LibraryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalNotes, setTotalNotes] = useState(0);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -172,36 +171,29 @@ export default function LibraryPage() {
         sortField,
         sortDirection
       });
-      
-      // Format filter removed - all notes use unified Markdown+LaTeX format
-      
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim());
       }
-      
       const response = await fetch(`/api/library?${params.toString()}`);
-      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch notes');
       }
-      
       const data = await response.json();
       setNotes(data.notes);
       setTotalPages(data.pagination.totalPages);
       setTotalNotes(data.pagination.total);
-      
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching notes:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, sortField, sortDirection, searchQuery]);
 
   useEffect(() => {
     fetchNotes();
-  }, [currentPage, sortField, sortDirection, searchQuery]);
+  }, [fetchNotes]);
 
   const handleDelete = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {

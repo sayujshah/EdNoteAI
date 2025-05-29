@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { BookOpen, ArrowLeft, Edit3, Save, X, Tag, Calendar, FileText, Trash2 } from "lucide-react";
@@ -29,17 +29,11 @@ export default function NoteViewerPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchNote();
-  }, [id]);
-
-  const fetchNote = async () => {
+  const fetchNote = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const response = await fetch(`/api/library/${id}`);
-      
       if (!response.ok) {
         if (response.status === 404) {
           setError('Note not found');
@@ -49,18 +43,20 @@ export default function NoteViewerPage() {
         }
         return;
       }
-      
       const noteData: SavedNote = await response.json();
       setNote(noteData);
       setEditTitle(noteData.title);
       setEditTags([...noteData.tags]);
-      
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchNote();
+  }, [fetchNote]);
 
   const handleSave = async () => {
     if (!note || !editTitle.trim()) return;

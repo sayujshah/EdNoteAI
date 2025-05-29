@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AuthGuard from '../../components/AuthGuard'; // Adjust path as needed
 import NoteCard from '../../components/NoteCard'; // Import NoteCard component
 
@@ -59,11 +59,10 @@ export default function NotesLibraryPage() {
   const [sortBy, setSortBy] = useState<'created_at_desc' | 'created_at_asc' | 'title_asc' | 'title_desc'>('created_at_desc'); // State for sorting with more options
 
   // Function to fetch user's notes (videos with transcripts/segmented content)
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Construct query parameters based on filter and sort state
       const queryParams = new URLSearchParams();
       if (typeFilter !== 'all') {
         queryParams.append('type', typeFilter);
@@ -77,39 +76,33 @@ export default function NotesLibraryPage() {
       } else if (sortBy === 'title_desc') {
         queryParams.append('sortBy', 'title_desc');
       }
-
-      const response = await fetch(`/api/media?${queryParams.toString()}`); // Fetch data with query parameters
+      const response = await fetch(`/api/media?${queryParams.toString()}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch notes');
       }
-      const data: VideoDataFromApi[] = await response.json(); // Use 'any' for now, map to NoteCardData
-
-      // Map fetched data to NoteCardData structure
+      const data: VideoDataFromApi[] = await response.json();
       const formattedNotes: NoteCardData[] = data.map(video => ({
         id: video.id,
-        title: video.title || video.transcripts?.segmented_content?.title || `Video ${video.id}`, // Use video title or inferred title
-        description: video.transcripts?.segmented_content?.segments?.[0]?.summary || video.transcripts?.content?.substring(0, 150) + '...' || 'No description available.', // Use segment summary or transcript excerpt
-        tags: video.lessons?.tags || [], // Assuming tags are on lessons
+        title: video.title || video.transcripts?.segmented_content?.title || `Video ${video.id}`,
+        description: video.transcripts?.segmented_content?.segments?.[0]?.summary || video.transcripts?.content?.substring(0, 150) + '...' || 'No description available.',
+        tags: video.lessons?.tags || [],
         created_at: video.created_at,
-        type: video.url.includes('.mp4') ? 'video' : 'audio', // Infer type from URL (basic)
-        // Include other data needed for actions
+        type: video.url.includes('.mp4') ? 'video' : 'audio',
       }));
-
       setNotes(formattedNotes);
-
     } catch (error: any) {
       setError(error.message);
       console.error('Error fetching notes:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [typeFilter, sortBy]);
 
   // Fetch notes on component mount and when filter/sort state changes
   useEffect(() => {
     fetchNotes();
-  }, [typeFilter, sortBy, fetchNotes]); // Rerun effect when filter or sort changes
+  }, [fetchNotes]);
 
   // Event handlers for filtering and sorting
   const handleTypeFilterChange = (filter: 'all' | 'video' | 'audio') => {

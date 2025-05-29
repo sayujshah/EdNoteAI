@@ -3,7 +3,6 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Crown, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UserPlanLimits } from '@/lib/types/subscription';

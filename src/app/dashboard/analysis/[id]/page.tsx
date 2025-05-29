@@ -124,7 +124,7 @@ export default function AnalysisPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [id]); // Removed fetchData from dependency array
+  }, [id, fetchData]); // Removed fetchData from dependency array
 
 
   // Format time in MM:SS format

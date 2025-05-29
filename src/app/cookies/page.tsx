@@ -219,7 +219,7 @@ export default function CookiesPolicy() {
               <ul className="list-disc pl-6 space-y-2 mt-2">
                 <li><strong>Essential Cookies:</strong> Disabling these will prevent you from logging in and using our services</li>
                 <li><strong>Functional Cookies:</strong> Your preferences and settings will not be saved</li>
-                <li><strong>Analytics Cookies:</strong> We won't be able to improve our services based on usage patterns</li>
+                <li><strong>Analytics Cookies:</strong> We won&apos;t be able to improve our services based on usage patterns</li>
               </ul>
 
               <h3 className="text-lg font-semibold mb-2 mt-4">Opt-Out Options</h3>
@@ -227,7 +227,7 @@ export default function CookiesPolicy() {
                 For analytics and third-party cookies, you can opt out through:
               </p>
               <ul className="list-disc pl-6 space-y-2 mt-2">
-                <li>Your browser's "Do Not Track" setting</li>
+                <li>Your browser&apos;s &quot;Do Not Track&quot; setting</li>
                 <li>Individual third-party provider opt-out mechanisms</li>
                 <li>Industry-wide opt-out tools</li>
               </ul>
@@ -239,7 +239,7 @@ export default function CookiesPolicy() {
                 We may update this Cookies Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. We will notify you of any material changes by:
               </p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
-                <li>Posting the updated policy on this page with a new "Last updated" date</li>
+                <li>Posting the updated policy on this page with a new &quot;Last updated&quot; date</li>
                 <li>Sending you an email notification if you have an account with us</li>
                 <li>Displaying a prominent notice on our website</li>
               </ul>

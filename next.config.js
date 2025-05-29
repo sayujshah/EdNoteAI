@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Move serverComponentsExternalPackages to root level as serverExternalPackages
+  serverExternalPackages: [],
+  
   async headers() {
     return [
       {

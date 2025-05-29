@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Plus, FileText, Brain, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
+import { BookOpen, Search, Plus, FileText, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,16 +47,7 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {note.format === 'LaTeX' ? (
-              <Brain className="h-5 w-5 text-purple-600" />
-            ) : (
-              <FileText className="h-5 w-5 text-blue-600" />
-            )}
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-              {note.format}
-            </span>
-          </div>
+          <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
           <Button 
             variant="ghost" 
             size="sm" 
@@ -113,17 +104,7 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex items-center gap-2">
-              {note.format === 'LaTeX' ? (
-                <Brain className="h-4 w-4 text-purple-600" />
-              ) : (
-                <FileText className="h-4 w-4 text-blue-600" />
-              )}
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                {note.format}
-              </span>
-            </div>
-            
+            <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
             <Link href={`/dashboard/library/${note.id}`}>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate">
                 {note.title}
@@ -170,7 +151,7 @@ export default function LibraryPage() {
   
   // Filters and search
   const [searchQuery, setSearchQuery] = useState("");
-  const [formatFilter, setFormatFilter] = useState<'all' | 'Markdown' | 'LaTeX'>('all');
+  // formatFilter removed since all notes now use unified Markdown+LaTeX format
   const [sortField, setSortField] = useState<'created_at' | 'updated_at' | 'title'>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -180,10 +161,9 @@ export default function LibraryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalNotes, setTotalNotes] = useState(0);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -191,38 +171,29 @@ export default function LibraryPage() {
         sortField,
         sortDirection
       });
-      
-      if (formatFilter !== 'all') {
-        params.append('format', formatFilter);
-      }
-      
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim());
       }
-      
       const response = await fetch(`/api/library?${params.toString()}`);
-      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch notes');
       }
-      
       const data = await response.json();
       setNotes(data.notes);
       setTotalPages(data.pagination.totalPages);
       setTotalNotes(data.pagination.total);
-      
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching notes:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, sortField, sortDirection, searchQuery]);
 
   useEffect(() => {
     fetchNotes();
-  }, [currentPage, formatFilter, sortField, sortDirection, searchQuery]);
+  }, [fetchNotes]);
 
   const handleDelete = async (noteId: string) => {
     if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
@@ -321,20 +292,7 @@ export default function LibraryPage() {
               </div>
             </div>
 
-            {/* Format Filter */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Format</label>
-              <Select value={formatFilter} onValueChange={(value: 'all' | 'Markdown' | 'LaTeX') => setFormatFilter(value)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="Markdown">Markdown</SelectItem>
-                  <SelectItem value="LaTeX">LaTeX</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Note: Format filter removed since all notes now use unified Markdown+LaTeX format */}
 
             {/* Sort */}
             <div>
@@ -417,15 +375,15 @@ export default function LibraryPage() {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              {searchQuery || formatFilter !== 'all' ? 'No matching notes found' : 'No saved notes yet'}
+              {searchQuery ? 'No matching notes found' : 'No saved notes yet'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {searchQuery || formatFilter !== 'all' 
-                ? 'Try adjusting your search or filters'
+              {searchQuery 
+                ? 'Try adjusting your search'
                 : 'Upload media and generate notes to get started'
               }
             </p>
-            {!searchQuery && formatFilter === 'all' && (
+            {!searchQuery && (
               <Link href="/dashboard/upload">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />

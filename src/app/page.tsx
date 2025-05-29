@@ -11,8 +11,6 @@ import { FileUploadModal } from "@/components/file-upload-modal"
 import { LandingPricing } from "@/components/pricing/LandingPricing"
 
 export default function LandingPage() {
-  const auth = useAuth();
-
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -355,11 +353,11 @@ export default function LandingPage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
               <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
+              <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="inline-block rounded-lg bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-sm text-blue-700 dark:text-blue-300 font-medium">
                       Coming Soon
-                    </div>
+            </div>
                   </div>
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
                     <div className="flex items-center gap-2">
@@ -455,7 +453,7 @@ export default function LandingPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                </div>
                   </div>
                   
                   {/* Floating Elements */}
@@ -463,7 +461,7 @@ export default function LandingPage() {
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10 2L3 7v11h14V7l-7-5z"/>
                     </svg>
-                  </div>
+              </div>
                   <div className="absolute bottom-4 right-4 text-purple-500 dark:text-purple-400 opacity-60">
                     <Zap className="w-4 h-4" />
                   </div>
@@ -520,6 +518,9 @@ export default function LandingPage() {
             </Link>
             <Link href="/privacy" className="text-sm font-medium hover:underline underline-offset-4">
               Privacy
+            </Link>
+            <Link href="/cookies" className="text-sm font-medium hover:underline underline-offset-4">
+              Cookies
             </Link>
             <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
               Contact

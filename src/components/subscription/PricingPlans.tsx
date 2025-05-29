@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlanCard } from './PlanCard';
 import { cn } from '@/lib/utils';
 import type { SubscriptionPlan, BillingCycle, UserPlanLimits } from '@/lib/types/subscription';
@@ -72,12 +71,12 @@ export function PricingPlans({
 
       {/* Plans Grid */}
       <div className="grid gap-6 lg:grid-cols-3 max-w-6xl mx-auto">
-        {sortedPlans.map((plan, index) => (
+        {sortedPlans.map((plan) => (
           <PlanCard
             key={plan.id}
             plan={plan}
             isCurrentPlan={plan.name === currentLimits.plan_name}
-            isPopular={plan.name === 'Student'} // Mark Student plan as popular
+            isPopular={plan.name === 'Student'}
             billingCycle={billingCycle}
             onSelectPlan={handlePlanSelect}
             isLoading={isLoading}

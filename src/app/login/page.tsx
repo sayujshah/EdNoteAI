@@ -271,12 +271,16 @@ export default function AuthPage() {
                         />
                         <label htmlFor="terms" className="text-sm text-muted-foreground">
                           I agree to the{" "}
-                          <Link href="#" className="font-medium text-primary hover:underline">
+                          <Link href="/terms" className="font-medium text-primary hover:underline">
                             Terms of Service
-                          </Link>{" "}
-                          and{" "}
-                          <Link href="#" className="font-medium text-primary hover:underline">
+                          </Link>
+                          ,{" "}
+                          <Link href="/privacy" className="font-medium text-primary hover:underline">
                             Privacy Policy
+                          </Link>
+                          , and{" "}
+                          <Link href="/cookies" className="font-medium text-primary hover:underline">
+                            Cookies Policy
                           </Link>
                         </label>
                       </div>

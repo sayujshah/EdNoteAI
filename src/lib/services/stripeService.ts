@@ -1,9 +1,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@/utils/supabase/server';
 import type { 
-  CreateSubscriptionRequest, 
-  StripeWebhookEvent,
-  UserSubscription 
+  CreateSubscriptionRequest
 } from '@/lib/types/subscription';
 
 // =====================================================
@@ -25,8 +23,6 @@ export class StripeService {
     request: CreateSubscriptionRequest & { success_url: string; cancel_url: string }
   ): Promise<{ url: string }> {
     try {
-      const supabase = await createClient();
-
       // Get or create Stripe customer
       const customer = await this.getOrCreateCustomer(userId);
 
@@ -65,7 +61,6 @@ export class StripeService {
    */
   static async getOrCreateCustomer(userId: string): Promise<Stripe.Customer> {
     const supabase = await createClient();
-
     // Check if user already has a Stripe customer ID
     const { data: subscription } = await supabase
       .from('user_subscriptions')
@@ -199,16 +194,16 @@ export class StripeService {
    */
   private static async handleSubscriptionCreated(subscription: Stripe.Subscription): Promise<void> {
     const supabase = await createClient();
-    
-    const userId = subscription.metadata.user_id;
+    const sub = subscription as Stripe.Subscription;
+    const userId = sub.metadata.user_id;
     if (!userId) {
       console.error('No user_id in subscription metadata');
       return;
     }
 
     // Get plan information from price ID
-    const priceId = subscription.items.data[0].price.id;
-    const billingCycle = subscription.items.data[0].price.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+    const priceId = sub.items.data[0].price.id;
+    const billingCycle = sub.items.data[0].price.recurring?.interval === 'year' ? 'yearly' : 'monthly';
     
     // Find the plan that matches this price ID
     const { data: plan } = await supabase
@@ -228,13 +223,13 @@ export class StripeService {
       .upsert({
         user_id: userId,
         plan_id: plan.id,
-        status: subscription.status as any,
+        status: sub.status as any,
         billing_cycle: billingCycle,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
-        stripe_subscription_id: subscription.id,
-        stripe_customer_id: subscription.customer as string,
+        current_period_start: new Date((sub as any).current_period_start * 1000).toISOString(),
+        current_period_end: new Date((sub as any).current_period_end * 1000).toISOString(),
+        cancel_at_period_end: sub.cancel_at_period_end,
+        stripe_subscription_id: sub.id,
+        stripe_customer_id: sub.customer as string,
       }, {
         onConflict: 'user_id'
       });
@@ -249,16 +244,16 @@ export class StripeService {
    */
   private static async handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
     const supabase = await createClient();
-
+    const sub = subscription as Stripe.Subscription;
     const { error } = await supabase
       .from('user_subscriptions')
       .update({
-        status: subscription.status as any,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
+        status: sub.status as any,
+        current_period_start: new Date((sub as any).current_period_start * 1000).toISOString(),
+        current_period_end: new Date((sub as any).current_period_end * 1000).toISOString(),
+        cancel_at_period_end: sub.cancel_at_period_end,
       })
-      .eq('stripe_subscription_id', subscription.id);
+      .eq('stripe_subscription_id', sub.id);
 
     if (error) {
       console.error('Error updating subscription:', error);
@@ -270,7 +265,6 @@ export class StripeService {
    */
   private static async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
     const supabase = await createClient();
-
     const { error } = await supabase
       .from('user_subscriptions')
       .update({
@@ -287,15 +281,13 @@ export class StripeService {
    * Handle successful payment
    */
   private static async handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
+    if (!('subscription' in invoice) || !invoice.subscription) return;
     const supabase = await createClient();
-
-    if (!invoice.subscription) return;
-
     // Get subscription to find user
     const { data: subscription } = await supabase
       .from('user_subscriptions')
       .select('user_id')
-      .eq('stripe_subscription_id', invoice.subscription)
+      .eq('stripe_subscription_id', invoice.subscription as string)
       .single();
 
     if (!subscription) return;
@@ -305,7 +297,7 @@ export class StripeService {
       .from('payment_history')
       .insert({
         user_id: subscription.user_id,
-        stripe_payment_intent_id: invoice.payment_intent as string,
+        stripe_payment_intent_id: (invoice as any).payment_intent as string,
         stripe_invoice_id: invoice.id,
         amount: (invoice.amount_paid || 0) / 100, // Convert from cents
         currency: invoice.currency.toUpperCase(),
@@ -323,15 +315,13 @@ export class StripeService {
    * Handle failed payment
    */
   private static async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+    if (!('subscription' in invoice) || !invoice.subscription) return;
     const supabase = await createClient();
-
-    if (!invoice.subscription) return;
-
     // Get subscription to find user
     const { data: subscription } = await supabase
       .from('user_subscriptions')
       .select('user_id')
-      .eq('stripe_subscription_id', invoice.subscription)
+      .eq('stripe_subscription_id', invoice.subscription as string)
       .single();
 
     if (!subscription) return;

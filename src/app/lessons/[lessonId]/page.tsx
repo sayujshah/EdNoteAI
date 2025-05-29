@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation'; // Import useParams to get route parameters
 import Link from 'next/link'; // Import Link for navigation
 import FileUpload from '../../../components/FileUpload'; // Import FileUpload component
@@ -30,58 +30,46 @@ export default function LessonDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch lesson details and videos
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch lesson details (assuming an API route for single lesson exists or can be adapted)
-      // For now, let's assume we can fetch lessons by ID from the existing /api/lessons route
-      const lessonResponse = await fetch(`/api/lessons?id=${lessonId}`); // Assuming GET /api/lessons can take an ID query param
+      const lessonResponse = await fetch(`/api/lessons?id=${lessonId}`);
       if (!lessonResponse.ok) {
         const errorData = await lessonResponse.json();
         throw new Error(errorData.error || 'Failed to fetch lesson details');
       }
-      const lessonData: Lesson[] = await lessonResponse.json(); // Assuming it returns an array
-      setLesson(lessonData[0] || null); // Set the first item as the lesson
-
-      // Fetch videos for this lesson (assuming an API route for videos exists or can be adapted)
-      // Let's assume a new API route /api/videos or modify /api/lessons to include videos
-      // Fetch videos by lessonId from the /api/media route
-      const videosResponse = await fetch(`/api/media?lessonId=${lessonId}`); // Fetch videos from the new /api/media route
+      const lessonData: Lesson[] = await lessonResponse.json();
+      setLesson(lessonData[0] || null);
+      const videosResponse = await fetch(`/api/media?lessonId=${lessonId}`);
       if (!videosResponse.ok) {
         const errorData = await videosResponse.json();
         throw new Error(errorData.error || 'Failed to fetch videos');
       }
       const videosData: Video[] = await videosResponse.json();
       setVideos(videosData);
-
     } catch (error: any) {
       setError(error.message);
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [lessonId]);
 
-  // Fetch data on component mount and when lessonId changes
   useEffect(() => {
     if (lessonId) {
       fetchData();
     }
-  }, [lessonId, fetchData]); // Rerun effect when lessonId changes
+  }, [lessonId, fetchData]);
 
-  // Poll for video status updates (optional, for real-time feel)
   useEffect(() => {
     const interval = setInterval(() => {
       if (videos.some(video => video.transcription_status !== 'notes_generated' && video.transcription_status !== 'failed' && video.transcription_status !== 'transcribed_only')) {
-        fetchData(); // Refetch data if any video is still processing
+        fetchData();
       }
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval); // Clean up interval on component unmount
-  }, [videos, fetchData]); // Rerun effect when videos state changes
-
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [videos, fetchData]);
 
   if (loading) return <p>Loading lesson details...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;

@@ -4,13 +4,14 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { BookOpen, Upload, FileText, Loader2 } from "lucide-react"
+import { BookOpen, Upload, FileText, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Import Select components
 import { Input } from "@/components/ui/input" // Import Input component
 import { useAuth } from '@/contexts/AuthContext'
+import { UPLOAD_LIMITS, UPLOAD_ERROR_MESSAGES } from "@/lib/constants"
 
 // Define a type for lessons
 interface Lesson {
@@ -34,7 +35,6 @@ export default function UploadPage() {
   const [isCreatingNewLesson, setIsCreatingNewLesson] = useState(false); // State to toggle between selecting/creating lesson
   const [creatingLesson, setCreatingLesson] = useState(false); // State for creating lesson process
   const [createLessonError, setCreateLessonError] = useState<string | null>(null); // State for create lesson error
-  const [noteFormat, setNoteFormat] = useState<'Markdown' | 'LaTeX'>('Markdown'); // State for note format selection
 
   const auth = useAuth();
   const router = useRouter()
@@ -95,6 +95,13 @@ export default function UploadPage() {
   }
 
   const handleFile = (file: File) => {
+    // File size validation using shared constants
+    if (file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+      const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+      setUploadError(UPLOAD_ERROR_MESSAGES.FILE_TOO_LARGE(fileSizeMB, UPLOAD_LIMITS.MAX_FILE_SIZE_MB));
+      return;
+    }
+
     setFile(file)
     setUploadProgress(0);
     setUploadComplete(false);
@@ -170,7 +177,7 @@ export default function UploadPage() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('lessonId', lessonIdToUse); // Append the selected/new lessonId
-    formData.append('noteFormat', noteFormat); // Append the selected note format
+    formData.append('noteFormat', 'Markdown'); // Use unified Markdown+LaTeX format
 
     try {
       const response = await fetch('/api/upload', {
@@ -236,14 +243,48 @@ export default function UploadPage() {
 
             <div
               className={`relative mt-8 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center ${
-                dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+                uploadError 
+                  ? "border-red-300 bg-red-50/50" 
+                  : dragActive 
+                    ? "border-primary bg-primary/5" 
+                    : "border-muted-foreground/25"
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <input type="file" id="file-upload" className="hidden" onChange={handleChange} accept="audio/*,video/*" />
+              <input type="file" id="file-upload" className="hidden" onChange={handleChange} accept={UPLOAD_LIMITS.ACCEPTED_TYPES} />
+
+              {/* Error display area - always visible */}
+              {uploadError && (
+                <div className="mb-4 w-full max-w-md">
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-red-800 text-sm font-medium">
+                          Upload Error
+                        </p>
+                        <p className="text-red-700 text-sm mt-1">
+                          {uploadError}
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-3 text-red-700 border-red-300 hover:bg-red-100"
+                          onClick={() => {
+                            setUploadError(null);
+                            setFile(null);
+                          }}
+                        >
+                          Try Again
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {!file ? (
                 <div className="flex flex-col items-center gap-4">
@@ -254,6 +295,9 @@ export default function UploadPage() {
                     <h3 className="text-lg font-semibold">Drag and drop your file here</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Support for audio and video files (MP3, MP4, WAV, etc.)
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Maximum file size: {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB
                     </p>
                   </div>
                   <Button onClick={() => document.getElementById("file-upload")?.click()} className="mt-4">
@@ -332,24 +376,7 @@ export default function UploadPage() {
                     {createLessonError && <p className="text-red-500 text-sm">{createLessonError}</p>}
                   </div>
 
-                  {/* Note Format Selection */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Note Format</label>
-                    <select
-                      value={noteFormat}
-                      onChange={e => setNoteFormat(e.target.value as 'Markdown' | 'LaTeX')}
-                      className="border rounded p-2 w-full"
-                    >
-                      <option value="Markdown">Markdown (Standard)</option>
-                      <option value="LaTeX">LaTeX (Mathematical)</option>
-                    </select>
-                    <p className="text-xs text-muted-foreground">
-                      {noteFormat === 'Markdown'
-                        ? 'Standard formatting with bullet points, headers, and basic styling.'
-                        : 'Mathematical formatting with LaTeX support for equations and advanced typography.'
-                      }
-                    </p>
-                  </div>
+
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -389,12 +416,6 @@ export default function UploadPage() {
                       </div>
                     </div>
                   )}
-
-                  {uploadError && (
-                    <div className="mt-4 text-red-500 text-sm">
-                      Error: {uploadError}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -402,12 +423,16 @@ export default function UploadPage() {
             <div className="mt-8 text-center text-sm text-muted-foreground">
               <p>
                 By uploading, you agree to our{" "}
-                <Link href="#" className="font-medium text-primary hover:underline">
+                <Link href="/terms" className="font-medium text-primary hover:underline">
                   Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="#" className="font-medium text-primary hover:underline">
+                </Link>
+                ,{" "}
+                <Link href="/privacy" className="font-medium text-primary hover:underline">
                   Privacy Policy
+                </Link>
+                , and{" "}
+                <Link href="/cookies" className="font-medium text-primary hover:underline">
+                  Cookies Policy
                 </Link>
                 .
               </p>

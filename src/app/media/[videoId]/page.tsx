@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation'; // Import useParams to get route parameters
 import AuthGuard from '../../../components/AuthGuard'; // Import AuthGuard - Adjust path
 
@@ -27,12 +27,11 @@ export default function VideoDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch video and transcript data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/videos/${videoId}`); // Fetch data from the new API route
+      const response = await fetch(`/api/videos/${videoId}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch video data');
@@ -45,14 +44,13 @@ export default function VideoDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
 
-  // Fetch data on component mount and when videoId changes
   useEffect(() => {
     if (videoId) {
       fetchData();
     }
-  }, [videoId, fetchData]); // Rerun effect when videoId changes
+  }, [videoId, fetchData]);
 
   if (loading) return <p>Loading video data...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;

@@ -124,7 +124,7 @@ export default function AnalysisPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [id]); // Removed fetchData from dependency array
+  }, [id, fetchData]); // Removed fetchData from dependency array
 
 
   // Format time in MM:SS format
@@ -240,17 +240,14 @@ export default function AnalysisPage() {
     return null;
   };
 
-  // Helper to render notes based on format
+  // Helper to render notes with unified Markdown + LaTeX format
   const renderNotes = () => {
     const content = getGeneratedContent();
     if (!content) return null;
 
-    const noteFormat = media?.note_format || 'Markdown';
-
     return (
       <NoteRenderer 
         content={content} 
-        format={noteFormat}
         className="space-y-4"
       />
     );
@@ -414,7 +411,13 @@ export default function AnalysisPage() {
 
         {/* Right panel - Notes */}
         <div className="w-1/2 overflow-y-auto p-6">
-          <h2 className="text-2xl font-bold mb-6">Academic Notes</h2>
+          <h2 className="text-2xl font-bold mb-4">Academic Notes</h2>
+          
+          {/* AI Disclaimer */}
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            <strong>DISCLAIMER:</strong> By using this AI-generated content, you acknowledge that it may contain inaccuracies, errors, or hallucinations. Please verify all important information independently and exercise your own judgment when relying on this content for academic or professional purposes.
+          </p>
+
           {loading || (!getMarkdownContent() && !getGeneratedContent()) ? (
             <div className="space-y-3">
               <Skeleton className="h-6 w-1/2" />
@@ -441,7 +444,7 @@ export default function AnalysisPage() {
           onSave={handleSaveToLibrary}
           onSaveSuccess={handleSaveSuccess}
           content={getGeneratedContent()}
-          format={media.note_format || 'Markdown'}
+          format={'Markdown'}
           mediaId={media.id}
           mediaTitle={`Analysis ${media.id}`} // You could get a better title from media metadata
         />

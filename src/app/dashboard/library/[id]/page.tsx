@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { BookOpen, ArrowLeft, Edit3, Save, X, Tag, Calendar, FileText, Brain, Trash2 } from "lucide-react";
+import { BookOpen, ArrowLeft, Edit3, Save, X, Tag, Calendar, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,17 +29,11 @@ export default function NoteViewerPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchNote();
-  }, [id]);
-
-  const fetchNote = async () => {
+  const fetchNote = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
       const response = await fetch(`/api/library/${id}`);
-      
       if (!response.ok) {
         if (response.status === 404) {
           setError('Note not found');
@@ -49,18 +43,20 @@ export default function NoteViewerPage() {
         }
         return;
       }
-      
       const noteData: SavedNote = await response.json();
       setNote(noteData);
       setEditTitle(noteData.title);
       setEditTags([...noteData.tags]);
-      
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchNote();
+  }, [fetchNote]);
 
   const handleSave = async () => {
     if (!note || !editTitle.trim()) return;
@@ -366,18 +362,11 @@ export default function NoteViewerPage() {
                 <div>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      {note.format === 'LaTeX' ? (
-                        <Brain className="h-6 w-6 text-purple-600" />
-                      ) : (
-                        <FileText className="h-6 w-6 text-blue-600" />
-                      )}
+                      <FileText className="h-6 w-6 text-blue-600" />
                       <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {note.title}
                         </h1>
-                        <span className="text-sm font-medium px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                          {note.format} Format
-                        </span>
                       </div>
                     </div>
                     

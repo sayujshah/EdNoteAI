@@ -22,212 +22,244 @@ export default function PrivacyPolicy() {
       <main className="flex-1 container mx-auto py-12 max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
           <div>
-            <h1 className="text-4xl font-bold tracking-tighter mb-4">Privacy Policy</h1>
+            <h1 className="text-4xl font-bold tracking-tighter mb-4">PRIVACY POLICY</h1>
             <p className="text-muted-foreground text-lg">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              Last updated May 28, 2025
             </p>
           </div>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
             <section>
-              <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
               <p>
-                EdNoteAI ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we 
-                collect, use, disclose, and safeguard your information when you use our AI-powered transcription and note-taking service.
+                This Privacy Policy for <strong>EdNoteAI</strong> (<strong>we,</strong> <strong>us,</strong> or <strong>our</strong>) describes how and why we might access, collect, store, use, and/or share (<strong>process</strong>) your personal information when you use our services (<strong>Services</strong>), including when you:
               </p>
               <p className="mt-4">
-                By using EdNoteAI, you consent to the data practices described in this Privacy Policy.
+                <strong>Questions or concerns?</strong> Reading this Privacy Notice will help you understand your privacy rights and choices. We are responsible for making decisions about how your personal information is processed. If you do not agree with our policies and practices, please do not use our Services.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">2. Information We Collect</h2>
+              <h2 className="text-2xl font-semibold mb-4">SUMMARY OF KEY POINTS</h2>
+              <p className="italic mb-4">
+                <em>This summary provides key points from our Privacy Notice, but you can find out more details about any of these topics by clicking the link following each key point or by using our table of contents below to find the section you are looking for.</em>
+              </p>
+              <p>
+                <strong>What personal information do we process?</strong> When you visit, use, or navigate our Services, we may process personal information depending on how you interact with us and the Services, the choices you make, and the products and features you use. Learn more about personal information you disclose to us.
+              </p>
+              <p className="mt-4">
+                <strong>Do we process any sensitive personal information?</strong> Some of the information may be considered &quot;special&quot; or &quot;sensitive&quot; in certain jurisdictions, for example your racial or ethnic origins, sexual orientation, and religious beliefs. We do not process sensitive personal information.
+              </p>
+              <p className="mt-4">
+                <strong>Do we collect any information from third parties?</strong> We may collect information from public databases, marketing partners, social media platforms, and other outside sources. Learn more about information collected from other sources.
+              </p>
+              <p className="mt-4">
+                <strong>How do we process your information?</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law. We may also process your information for other purposes with your consent. We process your information only when we have a valid legal reason to do so. Learn more about how we process your information.
+              </p>
+              <p className="mt-4">
+                <strong>In what situations and with which parties do we share personal information?</strong> We may share information in specific situations and with specific third parties. Learn more about when and with whom we share your personal information.
+              </p>
+              <p className="mt-4">
+                <strong>What are your rights?</strong> Depending on where you are located geographically, the applicable privacy law may mean you have certain rights regarding your personal information. Learn more about your privacy rights.
+              </p>
+              <p className="mt-4">
+                <strong>How do you exercise your rights?</strong> The easiest way to exercise your rights is by submitting a data subject access request, or by contacting us. We will consider and act upon any request in accordance with applicable data protection laws.
+              </p>
+              <p className="mt-4">
+                Want to learn more about what we do with any information we collect? Review the Privacy Notice in full.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">TABLE OF CONTENTS</h2>
+              <ol className="list-decimal pl-6 space-y-1">
+                <li><a href="#what-information-do-we-collect" className="text-primary hover:underline">WHAT INFORMATION DO WE COLLECT?</a></li>
+                <li><a href="#how-do-we-process-your-information" className="text-primary hover:underline">HOW DO WE PROCESS YOUR INFORMATION?</a></li>
+                <li><a href="#when-and-with-whom-do-we-share-your-personal-information" className="text-primary hover:underline">WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</a></li>
+                <li><a href="#do-we-use-cookies-and-other-tracking-technologies" className="text-primary hover:underline">DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</a></li>
+                <li><a href="#how-do-we-handle-your-social-logins" className="text-primary hover:underline">HOW DO WE HANDLE YOUR SOCIAL LOGINS?</a></li>
+                <li><a href="#is-your-information-transferred-internationally" className="text-primary hover:underline">IS YOUR INFORMATION TRANSFERRED INTERNATIONALLY?</a></li>
+                <li><a href="#how-long-do-we-keep-your-information" className="text-primary hover:underline">HOW LONG DO WE KEEP YOUR INFORMATION?</a></li>
+                <li><a href="#do-we-collect-information-from-minors" className="text-primary hover:underline">DO WE COLLECT INFORMATION FROM MINORS?</a></li>
+                <li><a href="#what-are-your-privacy-rights" className="text-primary hover:underline">WHAT ARE YOUR PRIVACY RIGHTS?</a></li>
+                <li><a href="#controls-for-do-not-track-features" className="text-primary hover:underline">CONTROLS FOR DO-NOT-TRACK FEATURES</a></li>
+                <li><a href="#do-we-make-updates-to-this-notice" className="text-primary hover:underline">DO WE MAKE UPDATES TO THIS NOTICE?</a></li>
+                <li><a href="#how-can-you-contact-us-about-this-notice" className="text-primary hover:underline">HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</a></li>
+                <li><a href="#how-can-you-review-update-or-delete-the-data-we-collect-from-you" className="text-primary hover:underline">HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</a></li>
+              </ol>
+            </section>
+
+            <section id="what-information-do-we-collect">
+              <h2 className="text-2xl font-semibold mb-4">1. WHAT INFORMATION DO WE COLLECT?</h2>
               
-              <h3 className="text-xl font-medium mb-3">2.1 Information You Provide</h3>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Account Information:</strong> Email address, name, and password when you create an account</li>
-                <li><strong>Payment Information:</strong> Billing information processed securely through Stripe (we do not store credit card details)</li>
-                <li><strong>Content:</strong> Audio and video files you upload for transcription and note generation</li>
-                <li><strong>Communications:</strong> Messages you send to our support team</li>
-              </ul>
-
-              <h3 className="text-xl font-medium mb-3 mt-6">2.2 Information We Collect Automatically</h3>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Usage Data:</strong> How you interact with our service, features used, and time spent</li>
-                <li><strong>Device Information:</strong> Browser type, operating system, IP address, and device identifiers</li>
-                <li><strong>Log Data:</strong> Server logs including access times, pages viewed, and system activity</li>
-                <li><strong>Cookies:</strong> Small data files stored on your device to enhance your experience</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">3. How We Use Your Information</h2>
-              <p>We use the information we collect to:</p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Provide, maintain, and improve our transcription and note-taking services</li>
-                <li>Process your uploaded content using AI to generate transcriptions and notes</li>
-                <li>Manage your account and subscription billing</li>
-                <li>Send you important service updates and notifications</li>
-                <li>Provide customer support and respond to your inquiries</li>
-                <li>Analyze usage patterns to improve our AI models and service quality</li>
-                <li>Prevent fraud, abuse, and ensure security of our platform</li>
-                <li>Comply with legal obligations and enforce our Terms of Service</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">4. AI Processing and Content Handling</h2>
-              <p>
-                <strong>Your uploaded content is processed by our AI systems to provide transcription and note-taking services:</strong>
+              <h3 className="text-lg font-semibold mb-2">Personal information you disclose to us</h3>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We collect personal information that you provide to us.</em>
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Content is processed using secure cloud-based AI models</li>
-                <li>We may use your content to improve our AI models, but only in aggregated, anonymized form</li>
-                <li>Your original files and generated content are stored securely and associated with your account</li>
-                <li>We do not use your content for training third-party AI models without your explicit consent</li>
-                <li>Content processing may involve temporary storage on secure servers during transcription</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">5. Information Sharing and Disclosure</h2>
               <p>
-                We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:
+                We collect personal information that you voluntarily provide to us when you register on the Services, express an interest in obtaining information about us or our products and Services, when you participate in activities on the Services, or otherwise when you contact us.
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Service Providers:</strong> Trusted third parties who assist in operating our service (e.g., cloud hosting, payment processing)</li>
-                <li><strong>Legal Requirements:</strong> When required by law, regulation, legal process, or governmental request</li>
-                <li><strong>Safety and Security:</strong> To protect the rights, property, or safety of EdNoteAI, our users, or others</li>
-                <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of business assets</li>
-                <li><strong>Consent:</strong> When you provide explicit consent for sharing</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">6. Data Security</h2>
-              <p>
-                We implement appropriate technical and organizational measures to protect your information:
-              </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Encryption of data in transit and at rest</li>
-                <li>Secure cloud infrastructure with access controls</li>
-                <li>Regular security audits and vulnerability assessments</li>
-                <li>Employee training on data protection and privacy</li>
-                <li>Incident response procedures for potential security breaches</li>
-              </ul>
               <p className="mt-4">
-                However, no method of transmission over the internet or electronic storage is 100% secure. 
-                While we strive to protect your information, we cannot guarantee absolute security.
+                <strong>Sensitive Information.</strong> We do not process sensitive information.
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">7. Data Retention</h2>
-              <p>
-                We retain your information for as long as necessary to provide our services and fulfill the purposes outlined in this Privacy Policy:
-              </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Account Data:</strong> Retained while your account is active and for a reasonable period after deactivation</li>
-                <li><strong>Content:</strong> Your uploaded files and generated notes are retained as long as you maintain your account</li>
-                <li><strong>Usage Data:</strong> Aggregated usage statistics may be retained indefinitely for service improvement</li>
-                <li><strong>Legal Requirements:</strong> Some data may be retained longer to comply with legal obligations</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">8. Your Rights and Choices</h2>
-              <p>
-                Depending on your location, you may have the following rights regarding your personal information:
-              </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Access:</strong> Request access to your personal information we hold</li>
-                <li><strong>Correction:</strong> Request correction of inaccurate or incomplete information</li>
-                <li><strong>Deletion:</strong> Request deletion of your personal information (subject to legal requirements)</li>
-                <li><strong>Portability:</strong> Request a copy of your data in a machine-readable format</li>
-                <li><strong>Restriction:</strong> Request restriction of processing in certain circumstances</li>
-                <li><strong>Objection:</strong> Object to processing based on legitimate interests</li>
-                <li><strong>Withdrawal:</strong> Withdraw consent where processing is based on consent</li>
-              </ul>
               <p className="mt-4">
-                To exercise these rights, please contact us using the information provided in the Contact section.
+                All personal information that you provide to us must be true, complete, and accurate, and you must notify us of any changes to such personal information.
               </p>
-            </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">9. Cookies and Tracking Technologies</h2>
-              <p>
-                We use cookies and similar tracking technologies to enhance your experience:
+              <h3 className="text-lg font-semibold mb-2 mt-6">Information automatically collected</h3>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> Some information — such as your Internet Protocol (IP) address and/or browser and device characteristics — is collected automatically when you visit our Services.</em>
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Essential Cookies:</strong> Necessary for basic service functionality</li>
-                <li><strong>Performance Cookies:</strong> Help us understand how you use our service</li>
-                <li><strong>Functional Cookies:</strong> Remember your preferences and settings</li>
-              </ul>
+              <p>
+                We automatically collect certain information when you visit, use, or navigate the Services. This information does not reveal your specific identity (like your name or contact information) but may include device and usage information, such as your IP address, browser and device characteristics, operating system, language preferences, referring URLs, device name, country, location, information about how and when you use our Services, and other technical information. This information is primarily needed to maintain the security and operation of our Services, and for our internal analytics and reporting purposes.
+              </p>
               <p className="mt-4">
-                You can control cookies through your browser settings, but disabling certain cookies may affect service functionality.
+                Like many businesses, we also collect information through cookies and similar technologies.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">10. Third-Party Services</h2>
-              <p>
-                Our service integrates with third-party providers:
+            <section id="how-do-we-process-your-information">
+              <h2 className="text-2xl font-semibold mb-4">2. HOW DO WE PROCESS YOUR INFORMATION?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We process your information to provide, improve, and administer our Services, communicate with you, for security and fraud prevention, and to comply with law. We may also process your information for other purposes with your consent.</em>
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Stripe:</strong> For secure payment processing (subject to Stripe's privacy policy)</li>
-                <li><strong>Cloud Providers:</strong> For hosting and storage (with appropriate data protection agreements)</li>
-                <li><strong>AI Services:</strong> For transcription and note generation (with privacy safeguards)</li>
-              </ul>
+              <p>
+                We process your personal information for a variety of reasons, depending on how you interact with our Services, including:
+              </p>
+            </section>
+
+            <section id="when-and-with-whom-do-we-share-your-personal-information">
+              <h2 className="text-2xl font-semibold mb-4">3. WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We may share information in specific situations described in this section and/or with the following third parties.</em>
+              </p>
+              <p>
+                We may need to share your personal information in the following situations:
+              </p>
               <p className="mt-4">
-                These third parties have their own privacy policies, and we encourage you to review them.
+                <strong>Business Transfers.</strong> We may share or transfer your information in connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition of all or a portion of our business to another company.
               </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">11. International Data Transfers</h2>
-              <p>
-                Your information may be transferred to and processed in countries other than your own. 
-                When we transfer personal information internationally, we ensure appropriate safeguards are in place 
-                to protect your information in accordance with applicable data protection laws.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">12. Children's Privacy</h2>
-              <p>
-                EdNoteAI is not intended for children under 13 years of age. We do not knowingly collect 
-                personal information from children under 13. If we become aware that we have collected 
-                personal information from a child under 13, we will take steps to delete such information.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">13. Changes to This Privacy Policy</h2>
-              <p>
-                We may update this Privacy Policy from time to time. We will notify you of any material changes by:
-              </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Posting the updated Privacy Policy on our website</li>
-                <li>Sending you an email notification</li>
-                <li>Providing an in-service notification</li>
-              </ul>
               <p className="mt-4">
-                Your continued use of the service after any changes constitutes acceptance of the updated Privacy Policy.
+                <strong>Affiliates.</strong> We may share your information with our affiliates, in which case we will require those affiliates to honor this Privacy Notice. Affiliates include our parent company and any subsidiaries, joint venture partners, or other companies that we control or that are under common control with us.
+              </p>
+              <p className="mt-4">
+                <strong>Business Partners.</strong> We may share your information with our business partners to offer you certain products, services, or promotions.
               </p>
             </section>
 
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">14. Contact Us</h2>
-              <p>
-                If you have any questions about this Privacy Policy or our data practices, please contact us:
+            <section id="do-we-use-cookies-and-other-tracking-technologies">
+              <h2 className="text-2xl font-semibold mb-4">4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We may use cookies and other tracking technologies to collect and store your information.</em>
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Through our website contact form</li>
-                <li>Via our customer support channels</li>
-                <li>By email (contact information available on our website)</li>
-              </ul>
+              <p>
+                We may use cookies and similar tracking technologies (like web beacons and pixels) to gather information when you interact with our Services. Some online tracking technologies help us maintain the security of our Services, prevent crashes, fix bugs, save your preferences, and assist with basic site functions.
+              </p>
               <p className="mt-4">
-                We will respond to your inquiries and requests in accordance with applicable data protection laws.
+                We also permit third parties and service providers to use online tracking technologies on our Services for analytics and advertising, including to help manage and display advertisements, to tailor advertisements to your interests, or to send abandoned shopping cart reminders (depending on your communication preferences). The third parties and service providers use their technology to provide advertising about products and services tailored to your interests which may appear either on our Services or on other websites.
+              </p>
+              <p className="mt-4">
+                Specific information about how we use such technologies and how you can refuse certain cookies is set out in our <Link href="/cookies" className="text-primary hover:underline font-medium">Cookies Policy</Link>.
+              </p>
+            </section>
+
+            <section id="how-do-we-handle-your-social-logins">
+              <h2 className="text-2xl font-semibold mb-4">5. HOW DO WE HANDLE YOUR SOCIAL LOGINS?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> If you choose to register or log in to our Services using a social media account, we may have access to certain information about you.</em>
+              </p>
+              <p>
+                Our Services offer you the ability to register and log in using your third-party social media account details (like your Facebook or X logins). Where you choose to do this, we will receive certain profile information about you from your social media provider. The profile information we receive may vary depending on the social media provider concerned, but will often include your name, email address, friends list, and profile picture, as well as other information you choose to make public on such a social media platform.
+              </p>
+              <p className="mt-4">
+                We will use the information we receive only for the purposes that are described in this Privacy Notice or that are otherwise made clear to you on the relevant Services. Please note that we do not control, and are not responsible for, other uses of your personal information by your third-party social media provider. We recommend that you review their privacy notice to understand how they collect, use, and share your personal information, and how you can set your privacy preferences on their sites and apps.
+              </p>
+            </section>
+
+            <section id="is-your-information-transferred-internationally">
+              <h2 className="text-2xl font-semibold mb-4">6. IS YOUR INFORMATION TRANSFERRED INTERNATIONALLY?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We may transfer, store, and process your information in countries other than your own.</em>
+              </p>
+              <p>
+                Our servers are located in [location]. If you are accessing our Services from outside [location], please be aware that your information may be transferred to, stored by, and processed by us in our facilities and in the facilities of the third parties with whom we may share your personal information (see &quot;WHEN AND WITH WHOM DO WE SHARE YOUR PERSONAL INFORMATION?&quot; above), in [location] and other countries.
+              </p>
+              <p className="mt-4">
+                If you are a resident in the European Economic Area (EEA), United Kingdom (UK), or Switzerland, then these countries may not necessarily have data protection laws or other similar laws as comprehensive as those in your country. However, we will take all necessary measures to protect your personal information in accordance with this Privacy Notice and applicable law.
+              </p>
+            </section>
+
+            <section id="how-long-do-we-keep-your-information">
+              <h2 className="text-2xl font-semibold mb-4">7. HOW LONG DO WE KEEP YOUR INFORMATION?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We keep your information for as long as necessary to fulfill the purposes outlined in this Privacy Notice unless otherwise required by law.</em>
+              </p>
+              <p>
+                We will only keep your personal information for as long as it is necessary for the purposes set out in this Privacy Notice, unless a longer retention period is required or permitted by law (such as tax, accounting, or other legal requirements).
+              </p>
+              <p className="mt-4">
+                When we have no ongoing legitimate business need to process your personal information, we will either delete or anonymize such information, or, if this is not possible (for example, because your personal information has been stored in backup archives), then we will securely store your personal information and isolate it from any further processing until deletion is possible.
+              </p>
+            </section>
+
+            <section id="do-we-collect-information-from-minors">
+              <h2 className="text-2xl font-semibold mb-4">8. DO WE COLLECT INFORMATION FROM MINORS?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> We do not knowingly collect data from or market to children under 18 years of age.</em>
+              </p>
+              <p>
+                We do not knowingly collect, solicit data from, or market to children under 18 years of age, nor do we knowingly sell such personal information. By using the Services, you represent that you are at least 18 or that you are the parent or guardian of such a minor and consent to such minor dependent&apos;s use of the Services. If we learn that personal information from users less than 18 years of age has been collected, we will deactivate the account and take reasonable measures to promptly delete such data from our records. If you become aware of any data we may have collected from children under age 18, please contact us at support@ednoteai.com.
+              </p>
+            </section>
+
+            <section id="what-are-your-privacy-rights">
+              <h2 className="text-2xl font-semibold mb-4">9. WHAT ARE YOUR PRIVACY RIGHTS?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> You may review, change, or terminate your account at any time, depending on your country, province, or state of residence.</em>
+              </p>
+              <p>
+                <strong>Withdrawing your consent:</strong> If we are relying on your consent to process your personal information, which may be express and/or implied consent depending on the applicable law, you have the right to withdraw your consent at any time. You can withdraw your consent at any time by contacting us by using the contact details provided in the section &quot;HOW CAN YOU CONTACT US ABOUT THIS NOTICE?&quot; below.
+              </p>
+              <p className="mt-4">
+                However, please note that this will not affect the lawfulness of the processing before its withdrawal nor, when applicable law allows, will it affect the processing of your personal information conducted in reliance on lawful processing grounds other than consent.
+              </p>
+
+              <h3 className="text-lg font-semibold mb-2 mt-6">Account Information</h3>
+              <p>
+                If you would at any time like to review or change the information in your account or terminate your account, you can:
+              </p>
+              <p className="mt-4">
+                Upon your request to terminate your account, we will deactivate or delete your account and information from our active databases. However, we may retain some information in our files to prevent fraud, troubleshoot problems, assist with any investigations, enforce our legal terms and/or comply with applicable legal requirements.
+              </p>
+            </section>
+
+            <section id="controls-for-do-not-track-features">
+              <h2 className="text-2xl font-semibold mb-4">10. CONTROLS FOR DO-NOT-TRACK FEATURES</h2>
+              <p>
+                Most web browsers and some mobile operating systems and mobile applications include a Do-Not-Track (&quot;DNT&quot;) feature or setting you can activate to signal your privacy preference not to have data about your online browsing activities monitored and collected. At this stage, no uniform technology standard for recognizing and implementing DNT signals has been finalized. As such, we do not currently respond to DNT browser signals or any other mechanism that automatically communicates your choice not to be tracked online. If a standard for online tracking is adopted that we must follow in the future, we will inform you about that practice in a revised version of this Privacy Notice.
+              </p>
+            </section>
+
+            <section id="do-we-make-updates-to-this-notice">
+              <h2 className="text-2xl font-semibold mb-4">11. DO WE MAKE UPDATES TO THIS NOTICE?</h2>
+              <p className="italic mb-2">
+                <em><strong>In Short:</strong> Yes, we will update this notice as necessary to stay compliant with relevant laws.</em>
+              </p>
+              <p>
+                We may update this Privacy Notice from time to time. The updated version will be indicated by an updated &quot;Revised&quot; date at the top of this Privacy Notice. If we make material changes to this Privacy Notice, we may notify you either by prominently posting a notice of such changes or by directly sending you a notification. We encourage you to review this Privacy Notice frequently to be informed of how we are protecting your information.
+              </p>
+            </section>
+
+            <section id="how-can-you-contact-us-about-this-notice">
+              <h2 className="text-2xl font-semibold mb-4">12. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2>
+              <p>
+                If you have questions or comments about this notice, you may contact us at support@ednoteai.com.
+              </p>
+            </section>
+
+            <section id="how-can-you-review-update-or-delete-the-data-we-collect-from-you">
+              <h2 className="text-2xl font-semibold mb-4">13. HOW CAN YOU REVIEW, UPDATE, OR DELETE THE DATA WE COLLECT FROM YOU?</h2>
+              <p>
+                Based on the applicable laws of your country, you may have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a data subject access request.
               </p>
             </section>
           </div>
@@ -243,9 +275,17 @@ export default function PrivacyPolicy() {
               BETA
             </span>
           </Link>
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            © {new Date().getFullYear()} EdNoteAI. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/privacy" className="hover:underline underline-offset-4">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:underline underline-offset-4">
+              Terms of Service
+            </Link>
+            <Link href="/cookies" className="hover:underline underline-offset-4">
+              Cookies Policy
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

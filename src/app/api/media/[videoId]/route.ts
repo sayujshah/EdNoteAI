@@ -6,14 +6,14 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'; // Import GetObjectComman
 
 // Initialize AWS S3 client
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
+  region: process.env.REGION_AWS!,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
   },
 });
 
-const s3BucketName = process.env.AWS_S3_BUCKET_NAME!;
+const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
 
 // API route for managing a specific video by ID
 
@@ -170,7 +170,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ v
   if (videoData.s3_audio_key) {
     try {
       const deleteObjectCommand = new DeleteObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET_NAME!,
+        Bucket: process.env.S3_BUCKET_NAME_AWS!,
         Key: videoData.s3_audio_key,
       });
       await s3Client.send(deleteObjectCommand);

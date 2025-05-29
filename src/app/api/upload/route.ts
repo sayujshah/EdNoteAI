@@ -8,25 +8,25 @@ import { UPLOAD_LIMITS, UPLOAD_ERROR_MESSAGES } from '@/lib/constants';
 
 // Configure AWS S3 client (same as transcribe route)
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
+  region: process.env.REGION_AWS!,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
   },
 });
 
-const s3BucketName = process.env.AWS_S3_BUCKET_NAME!;
+const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
 
 // Configure AWS Lambda client (same as transcribe route)
 const lambdaClient = new LambdaClient({
-  region: process.env.AWS_REGION!, // Use the same region as S3
+  region: process.env.REGION_AWS!, // Use the same region as S3
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
   },
 });
 
-const transcriptionLambdaFunctionName = process.env.AWS_TRANSCRIPTION_LAMBDA_FUNCTION_NAME!;
+const transcriptionLambdaFunctionName = process.env.TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS!;
 
 // Helper function to get media duration (simplified for demo - you may want to use a media library)
 async function getMediaDurationMinutes(file: File): Promise<number> {

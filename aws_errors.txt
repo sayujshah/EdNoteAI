@@ -1,0 +1,157 @@
+2025-05-29T17:47:47.462Z [INFO]: # Build environment configured with Standard build compute type: 8GiB Memory, 4vCPUs, 128GB Disk Space
+
+1
+
+2025-05-29T17:47:47.933Z [INFO]: # Cloning repository: git@github.com:sayujshah/EdNoteAI.git
+
+2
+
+2025-05-29T17:47:48.973Z [INFO]: 
+
+3
+
+2025-05-29T17:47:48.974Z [INFO]: Cloning into 'EdNoteAI'...
+
+4
+
+2025-05-29T17:47:48.974Z [INFO]: # Switching to commit: d195c571eccc411068938e580cd6cbcdf79231b3
+
+5
+
+2025-05-29T17:47:48.994Z [INFO]: Note: switching to 'd195c571eccc411068938e580cd6cbcdf79231b3'.
+
+6
+
+                                 You are in 'detached HEAD' state. You can look around, make experimental
+
+7
+
+                                 changes and commit them, and you can discard any commits you make in this
+
+8
+
+                                 state without impacting any branches by switching back to a branch.
+
+9
+
+                                 If you want to create a new branch to retain commits you create, you may
+
+10
+
+                                 do so (now or later) by using -c with the switch command. Example:
+
+11
+
+                                 git switch -c <new-branch-name>
+
+12
+
+                                 Or undo this operation with:
+
+13
+
+                                 git switch -
+
+14
+
+                                 Turn off this advice by setting config variable advice.detachedHead to false
+
+15
+
+                                 HEAD is now at d195c57 Refactored AWS env variables
+
+16
+
+2025-05-29T17:47:49.046Z [INFO]: Successfully cleaned up Git credentials
+
+17
+
+2025-05-29T17:47:49.046Z [INFO]: # Checking for Git submodules at: /codebuild/output/src3110147417/src/EdNoteAI/.gitmodules
+
+18
+
+2025-05-29T17:47:49.055Z [INFO]: # Retrieving environment cache...
+
+19
+
+2025-05-29T17:47:49.089Z [WARNING]: ! Unable to write cache: {"code":"ERR_BAD_REQUEST","message":"Request failed with status code 404"})}
+
+20
+
+2025-05-29T17:47:49.089Z [INFO]: ---- Setting Up SSM Secrets ----
+
+21
+
+2025-05-29T17:47:49.089Z [INFO]: SSM params {"Path":"/amplify/d2pahlbtrv8t8h/main/","WithDecryption":true}
+
+22
+
+2025-05-29T17:47:50.047Z [INFO]: # No package override configuration found.
+
+23
+
+2025-05-29T17:47:50.049Z [INFO]: # Retrieving cache...
+
+24
+
+2025-05-29T17:47:50.083Z [INFO]: # Retrieved cache
+
+25
+
+2025-05-29T17:47:53.842Z [INFO]: ## Starting Backend Build
+
+26
+
+                                 # Starting phase: build
+
+27
+
+                                 # Executing command: npm ci --cache .npm --prefer-offline
+
+28
+
+2025-05-29T17:48:06.950Z [WARNING]: npm warn EBADENGINE Unsupported engine {
+
+29
+
+                                    npm warn EBADENGINE   package: 'glob@11.0.2',
+
+30
+
+                                    npm warn EBADENGINE   required: { node: '20 || >=22' },
+
+31
+
+                                    npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+
+32
+
+                                    npm warn EBADENGINE }
+
+33
+
+2025-05-29T17:48:06.957Z [WARNING]: npm warn EBADENGINE Unsupported engine {
+
+34
+
+                                    npm warn EBADENGINE   package: 'jackspeak@4.1.1',
+
+35
+
+                                    npm warn EBADENGINE   required: { node: '20 || >=22' },
+
+36
+
+                                    npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+
+37
+
+                                    npm warn EBADENGINE }
+
+38
+
+                                    npm warn EBADENGINE Unsupported engine {
+
+39
+
+                                    npm warn EBADENGINE   package: 'minimatch@10.0.1',

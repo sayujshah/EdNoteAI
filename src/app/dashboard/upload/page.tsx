@@ -224,6 +224,9 @@ export default function UploadPage() {
             <Link href="/dashboard/library" className="text-sm font-medium hover:text-primary">
               Library
             </Link>
+            <Link href="/dashboard/account" className="text-sm font-medium hover:text-primary">
+              Account
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>

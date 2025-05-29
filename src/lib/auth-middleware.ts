@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/utils/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function withAuth(
@@ -7,7 +6,7 @@ export async function withAuth(
 ) {
   return async (req: NextRequest) => {
     try {
-      const supabase = createServerComponentClient({ cookies })
+      const supabase = await createClient()
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error || !session) {
@@ -31,7 +30,7 @@ export async function withAuth(
 
 // Helper function to get current user in API routes
 export async function getCurrentUser() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createClient()
   const { data: { session } } = await supabase.auth.getSession()
   return session?.user || null
 } 

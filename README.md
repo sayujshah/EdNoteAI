@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EdNoteAI
 
-## Getting Started
+EdNoteAI is an AI-powered web application (and planned Chrome extension) designed to help students and professionals transform video and audio lectures into structured, academic-grade notes. The platform leverages state-of-the-art speech-to-text and language models to generate transcriptions, summaries, and key points, making learning and review more efficient.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 What Has Been Built
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Core Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **User Authentication:** Secure sign-up, login, and account management using Supabase Auth.
+- **File Upload:** Upload audio/video files via a dedicated dashboard page. Files are stored in AWS S3.
+- **Lesson Management:** Associate uploads with existing lessons or create new ones.
+- **Automated Transcription:** Uploaded media is transcribed using an AWS Lambda function powered by OpenAI Whisper.
+- **AI Note Generation:** Transcripts are processed by another Lambda function (using GPT-4o-mini) to generate segmented notes and markdown content.
+- **Realtime Updates:** The analysis page uses Supabase Realtime to update the UI as soon as processing is complete.
+- **Media Playback:** Users can play back uploaded audio and video files directly in the browser.
+- **Notes Display:** Transcriptions and AI-generated notes are rendered in markdown, with support for LaTeX formatting. Users can view summaries and key points.
+- **Library:** Users can view and manage all their uploaded media and generated notes in a searchable, filterable library.
+- **Pricing & Subscription UI:** Static pricing plans are displayed, with Stripe integration in progress.
+- **Modern UI:** Built with Next.js, React, Tailwind CSS, and a custom UI component library.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Technical Stack
 
-## Learn More
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, Supabase Client, `react-markdown`, `react-katex`
+- **Backend:** Next.js API Routes, Supabase (PostgreSQL, Auth, Realtime), AWS Lambda, AWS S3, OpenAI API
+- **Database:** Videos, transcripts, notes, lessons, and user settings are all managed in a relational schema with proper relationships and RLS (Row Level Security) policies.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ What's Left To Be Built
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### High Priority
 
-## Deploy on Vercel
+- **Chrome Extension:** Build and integrate a Chrome extension that allows users to transcribe audio directly from any video playing in their browser and save notes to their EdNoteAI library. This will enable seamless capture from platforms like YouTube, Coursera, Zoom, and more.
+- **Note Editing:** Add UI and backend logic for users to edit and customize generated notes directly in the app.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Additional Features (Planned)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Segment Boundary Adjustment:** Enable users to manually adjust concept segment boundaries in notes.
+- **Metadata Management:** Add, edit, and display metadata (course title, professor, date, tags) for each media item/lesson.
+- **Export Formats:** Complete backend logic for exporting notes in LaTeX, Markdown, Word (.docx), and plain text.
+- **Video Capture:** Add the ability to capture video directly from the browser (not just file uploads).
+- **Visual Context Extraction:** Analyze on-screen visuals and integrate descriptions into notes.
+- **Stripe Integration:** Complete payment processing for subscriptions and one-time billing.
+- **Granular Progress Feedback:** Add more detailed real-time progress indicators during upload and processing.
+- **Comprehensive Testing:** Implement thorough testing for all features.
+- **Automated Deployment:** Set up CI/CD and automated deployment (e.g., with AWS Amplify).
+- **Monitoring:** Add monitoring for the application and Lambda functions.
+
+---
+
+## 📝 Project Structure
+
+- `src/app/`: Next.js app directory (pages, API routes, dashboard, analysis, upload, etc.)
+- `src/components/`: Reusable UI components (buttons, cards, modals, etc.)
+- `src/lib/`: Utility functions and service integrations (Supabase, Stripe, etc.)
+- `lambda_function-audio_tran.py`: AWS Lambda for transcription (Python, managed in AWS)
+- `lambda_function-note_gen.py`: AWS Lambda for note generation (Python, managed in AWS)
+
+---
+
+## 🧭 Next Steps
+
+1. **Build and launch the Chrome Extension for browser-based video/audio capture and note saving.**
+2. **Add note editing and customization features to the web app.**
+3. **Continue to expand export, metadata, and progress feedback features.**
+4. **Complete Stripe integration and expand testing, deployment, and monitoring.**
+
+---
+
+## 🙌 Contributing
+
+Contributions are welcome! Please open issues or pull requests for bugs, feature requests, or improvements.
+
+---
+
+## 📄 License
+
+[MIT](LICENSE)

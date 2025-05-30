@@ -17,7 +17,7 @@ interface LandingPricingProps {
 // Static pricing plans for landing page
 const STATIC_PLANS = [
   {
-    id: 'free',
+    id: 'Free',
     name: 'Free',
     price_monthly: 0,
     price_yearly: 0,
@@ -29,7 +29,7 @@ const STATIC_PLANS = [
     ]
   },
   {
-    id: 'student',
+    id: 'Student',
     name: 'Student', 
     price_monthly: 9.99,
     price_yearly: 99.99,
@@ -41,7 +41,7 @@ const STATIC_PLANS = [
     ]
   },
   {
-    id: 'professional',
+    id: 'Professional',
     name: 'Professional',
     price_monthly: 19.99,
     price_yearly: 199.99,

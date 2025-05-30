@@ -193,7 +193,7 @@ export default function LandingPage() {
                     <FileText className="h-8 w-8 text-primary" />
                     <h3 className="text-xl font-bold">AI Transcription</h3>
                     <p className="text-muted-foreground">
-                      Using state-of-the-art LLMs,our AI transcribes your content with high accuracy, intelligently identifying key concepts.
+                      Using state-of-the-art LLMs, our AI agents transcribe your content with high accuracy, intelligently identifying key concepts.
                     </p>
                   </div>
                 </div>
@@ -322,7 +322,7 @@ export default function LandingPage() {
                         <h3 className="text-xl font-bold">Save 70% of Study Time</h3>
                       </div>
                       <p className="text-muted-foreground">
-                        Stop taking manual notes and rewatching videos. Our AI does the heavy lifting so you can focus on understanding.
+                        Stop taking manual notes and rewatching videos. Our AI agents do the heavy lifting so you can focus on understanding.
                       </p>
                     </div>
                   </li>

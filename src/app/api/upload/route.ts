@@ -51,9 +51,9 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File; // Assuming the file is sent with the key 'file'
-    const lessonId = formData.get('lessonId') as string; // Assuming lessonId is sent with the key 'lessonId'
-    const noteFormat = formData.get('noteFormat') as string || 'Markdown'; // Get note format, default to markdown
+    const file = formData.get('file') as File;
+    const lessonId = formData.get('lessonId') as string; // Optional lesson ID
+    const noteFormat = formData.get('noteFormat') as string || 'Markdown';
 
     if (!file) {
       return NextResponse.json({ status: 'error', message: 'No file uploaded' }, { status: 400 });
@@ -68,11 +68,41 @@ export async function POST(request: Request) {
       }, { status: 413 });
     }
 
+    // If no lessonId provided, create or find a default lesson
+    let finalLessonId = lessonId;
     if (!lessonId) {
-       return NextResponse.json({ status: 'error', message: 'lessonId is required for now' }, { status: 400 });
-    }
+      // Find or create a default lesson for the user
+      let { data: existingLesson, error: lessonFetchError } = await supabaseServer
+        .from('lessons')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', 'Default Lesson')
+        .single();
 
-    // Note: noteFormat is always 'Markdown' in the unified format (Markdown + LaTeX math)
+      if (lessonFetchError || !existingLesson) {
+        // Create a default lesson if it doesn't exist
+        const { data: newLesson, error: lessonCreateError } = await supabaseServer
+          .from('lessons')
+          .insert([{
+            user_id: user.id,
+            title: 'Default Lesson',
+            tags: []
+          }])
+          .select('id')
+          .single();
+
+        if (lessonCreateError) {
+          console.error('Error creating default lesson:', lessonCreateError);
+          return NextResponse.json({ status: 'error', message: 'Failed to create lesson' }, { status: 500 });
+        }
+        
+        finalLessonId = newLesson.id;
+        console.log(`Created default lesson for user ${user.id}: ${finalLessonId}`);
+      } else {
+        finalLessonId = existingLesson.id;
+        console.log(`Using existing default lesson for user ${user.id}: ${finalLessonId}`);
+      }
+    }
 
     // Get estimated duration for validation
     const estimatedDurationMinutes = await getMediaDurationMinutes(file);
@@ -118,7 +148,8 @@ export async function POST(request: Request) {
     const { data: videoData, error: videoError } = await supabaseServer
       .from('videos')
       .insert([{ 
-        lesson_id: lessonId, 
+        user_id: user.id, // Add user_id for ownership
+        lesson_id: finalLessonId, 
         file_url: fileKey, 
         transcription_status: 'pending', 
         s3_audio_key: fileKey, 
@@ -126,8 +157,8 @@ export async function POST(request: Request) {
         duration_minutes: estimatedDurationMinutes,
         credits_consumed: 1,
         uploaded_at: new Date().toISOString()
-      }]) // Save S3 key as file_url and note format
-      .select('id') // Select the ID of the newly created video
+      }])
+      .select('id')
       .single();
 
     if (videoError) {

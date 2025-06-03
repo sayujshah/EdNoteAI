@@ -6,18 +6,9 @@ import createClient from '../../../lib/supabase/server';
 import { SubscriptionService } from '@/lib/services/subscriptionService';
 import { UPLOAD_LIMITS } from '@/lib/constants';
 
-// Configure AWS S3 client
-const s3Client = new S3Client({
-  region: process.env.REGION_AWS!,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-  },
-});
-
-const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
-
 export async function POST(request: Request) {
+  console.log('=== DEBUG: Environment variables check ===');
+  
   // Validate required environment variables first
   const requiredEnvVars = {
     REGION_AWS: process.env.REGION_AWS,
@@ -26,22 +17,71 @@ export async function POST(request: Request) {
     S3_BUCKET_NAME_AWS: process.env.S3_BUCKET_NAME_AWS,
   };
 
+  // Log which variables are present/missing (without exposing values)
+  Object.entries(requiredEnvVars).forEach(([key, value]) => {
+    console.log(`${key}: ${value ? 'SET ✓' : 'MISSING ✗'}`);
+    if (value) {
+      console.log(`${key} length: ${value.length}`);
+      if (key === 'REGION_AWS' || key === 'S3_BUCKET_NAME_AWS') {
+        console.log(`${key} value: ${value}`); // Safe to log these
+      }
+    }
+  });
+
   const missingVars = Object.entries(requiredEnvVars)
     .filter(([_, value]) => !value)
     .map(([key]) => key);
 
   if (missingVars.length > 0) {
     console.error('Missing required environment variables:', missingVars);
+    console.error('NODE_ENV:', process.env.NODE_ENV);
+    console.error('Available env vars starting with REGION:', Object.keys(process.env).filter(k => k.includes('REGION')));
+    console.error('Available env vars starting with ACCESS:', Object.keys(process.env).filter(k => k.includes('ACCESS')));
+    console.error('Available env vars starting with SECRET:', Object.keys(process.env).filter(k => k.includes('SECRET')));
+    console.error('Available env vars starting with S3:', Object.keys(process.env).filter(k => k.includes('S3')));
+    
     return NextResponse.json({ 
       status: 'error', 
       message: 'Server configuration error. Please contact support.',
-      code: 'CONFIG_ERROR'
+      code: 'CONFIG_ERROR',
+      debug: {
+        missingVars,
+        nodeEnv: process.env.NODE_ENV,
+        availableAwsVars: Object.keys(process.env).filter(k => k.includes('AWS') || k.includes('REGION') || k.includes('S3'))
+      }
     }, { status: 500 });
   }
 
+  console.log('=== Environment variables check passed ===');
+
+  // Configure AWS S3 client after environment validation
+  const s3Client = new S3Client({
+    region: process.env.REGION_AWS!,
+    credentials: {
+      accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
+    },
+  });
+
+  const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
+
   // Get authenticated user
-  const supabaseServer = await createClient();
-  const { data: { user } } = await supabaseServer.auth.getUser();
+  let supabaseServer;
+  let user;
+  
+  try {
+    supabaseServer = await createClient();
+    const { data: { user: authUser } } = await supabaseServer.auth.getUser();
+    user = authUser;
+    console.log('User authentication:', user ? 'SUCCESS ✓' : 'FAILED ✗');
+  } catch (authError) {
+    console.error('Authentication error:', authError);
+    return NextResponse.json({ 
+      status: 'error', 
+      message: 'Authentication failed',
+      code: 'AUTH_ERROR'
+    }, { status: 500 });
+  }
 
   if (!user) {
     return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });

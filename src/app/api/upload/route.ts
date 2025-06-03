@@ -6,6 +6,10 @@ import createClient from '../../../lib/supabase/server'; // Import server-side c
 import { SubscriptionService } from '@/lib/services/subscriptionService';
 import { UPLOAD_LIMITS, UPLOAD_ERROR_MESSAGES } from '@/lib/constants';
 
+// Configure runtime and body size for this API route
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes timeout for large uploads
+
 // Configure AWS S3 client (same as transcribe route)
 const s3Client = new S3Client({
   region: process.env.REGION_AWS!,

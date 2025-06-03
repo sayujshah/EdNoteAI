@@ -1,7 +1,7 @@
 // File upload constants
 export const UPLOAD_LIMITS = {
-  MAX_FILE_SIZE_MB: 400,
-  MAX_FILE_SIZE_BYTES: 400 * 1024 * 1024,
+  MAX_FILE_SIZE_MB: 200,
+  MAX_FILE_SIZE_BYTES: 200 * 1024 * 1024,
   SUPPORTED_FORMATS: ['MP3', 'MP4', 'WAV', 'M4A', 'AAC', 'FLAC', 'OGG', 'WEBM', 'AVI', 'MOV', 'WMV'],
   ACCEPTED_TYPES: 'audio/*,video/*'
 } as const;

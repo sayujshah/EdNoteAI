@@ -27,6 +27,7 @@ export default function UploadPage() {
   const [uploadComplete, setUploadComplete] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>(''); // Add upload status message
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(true);
   const [lessonsError, setLessonsError] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export default function UploadPage() {
     setUploadComplete(false);
     setIsProcessing(false);
     setUploadError(null);
+    setUploadStatus('');
     setCreateLessonError(null); // Clear create lesson error on new file selection
   }
 
@@ -168,51 +170,110 @@ export default function UploadPage() {
         return;
     }
 
-
     setUploadProgress(0);
     setUploadComplete(false);
     setIsProcessing(true);
     setUploadError(null);
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('lessonId', lessonIdToUse); // Append the selected/new lessonId
-    formData.append('noteFormat', 'Markdown'); // Use unified Markdown+LaTeX format
+    setUploadStatus('Preparing upload...');
 
     try {
-      const response = await fetch('/api/upload', {
+      // Step 1: Get presigned URL for direct S3 upload
+      setUploadStatus('Getting upload URL...');
+      const uploadUrlResponse = await fetch('/api/upload-url', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          lessonId: lessonIdToUse
+        }),
       });
 
-      if (!response.ok) {
-        let errorMessage = 'File upload failed';
+      if (!uploadUrlResponse.ok) {
+        let errorMessage = 'Failed to prepare upload';
         try {
-          const errorData = await response.json();
+          const errorData = await uploadUrlResponse.json();
           errorMessage = errorData.message || errorMessage;
         } catch (jsonError) {
-          // If JSON parsing fails, use the status text
-          errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
-          console.error('Failed to parse error response as JSON:', jsonError);
+          errorMessage = `Upload preparation failed: ${uploadUrlResponse.status} ${uploadUrlResponse.statusText}`;
+          console.error('Failed to parse upload URL error response as JSON:', jsonError);
         }
         throw new Error(errorMessage);
       }
 
-      let result;
+      let uploadUrlData;
       try {
-        result = await response.json();
+        uploadUrlData = await uploadUrlResponse.json();
       } catch (jsonError) {
-        console.error('Failed to parse success response as JSON:', jsonError);
-        throw new Error('Upload may have succeeded but received invalid response. Please check your uploads or try again.');
+        console.error('Failed to parse upload URL response as JSON:', jsonError);
+        throw new Error('Failed to prepare upload. Please try again.');
       }
-      
-      setUploadComplete(true);
-      const mediaId = result.mediaId;
 
-      router.push(`/dashboard/analysis/${mediaId}`);
+      setUploadProgress(10); // URL obtained
+
+      // Step 2: Upload directly to S3 using presigned URL
+      setUploadStatus('Uploading file to cloud storage...');
+      const s3Response = await fetch(uploadUrlData.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+        // Add progress tracking if needed
+      });
+
+      if (!s3Response.ok) {
+        throw new Error(`S3 upload failed: ${s3Response.status} ${s3Response.statusText}`);
+      }
+
+      setUploadProgress(80); // S3 upload complete
+      setUploadStatus('Starting transcription processing...');
+
+      // Step 3: Notify server that upload is complete and start processing
+      const completeResponse = await fetch('/api/upload-complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mediaId: uploadUrlData.mediaId,
+          fileKey: uploadUrlData.fileKey
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        let errorMessage = 'Upload completed but failed to start processing';
+        try {
+          const errorData = await completeResponse.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = `Processing failed: ${completeResponse.status} ${completeResponse.statusText}`;
+          console.error('Failed to parse completion response as JSON:', jsonError);
+        }
+        throw new Error(errorMessage);
+      }
+
+      let completeData;
+      try {
+        completeData = await completeResponse.json();
+      } catch (jsonError) {
+        console.error('Failed to parse completion response as JSON:', jsonError);
+        throw new Error('Upload completed but received invalid response. Please check your uploads.');
+      }
+
+      setUploadProgress(100);
+      setUploadComplete(true);
+      setUploadStatus('Upload complete! Redirecting...');
+      
+      // Redirect to analysis page
+      router.push(`/dashboard/analysis/${uploadUrlData.mediaId}`);
 
     } catch (error: any) {
       setUploadError(error.message);
+      setUploadStatus('');
       console.error('Upload error:', error);
     } finally {
       setIsProcessing(false);
@@ -294,6 +355,7 @@ export default function UploadPage() {
                           className="mt-3 text-red-700 border-red-300 hover:bg-red-100"
                           onClick={() => {
                             setUploadError(null);
+                            setUploadStatus('');
                             setFile(null);
                           }}
                         >
@@ -399,7 +461,13 @@ export default function UploadPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span>{uploadComplete ? "Upload complete" : isProcessing ? "Uploading..." : "Ready to upload"}</span>
+                      <span>
+                        {uploadComplete 
+                          ? "Upload complete" 
+                          : isProcessing 
+                            ? uploadStatus || "Processing..." 
+                            : "Ready to upload"}
+                      </span>
                       <span>{uploadComplete ? "100%" : `${uploadProgress}%`}</span>
                     </div>
                     <Progress value={isProcessing ? (uploadComplete ? 100 : uploadProgress) : 0} className="h-2 w-full" />
@@ -415,6 +483,7 @@ export default function UploadPage() {
                           setUploadComplete(false)
                           setIsProcessing(false)
                           setUploadError(null)
+                          setUploadStatus('')
                           setCreateLessonError(null)
                         }}
                       >

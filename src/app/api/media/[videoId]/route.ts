@@ -35,7 +35,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   // Select the s3_audio_key to construct the public URL
   const { data: videoData, error: videoError } = await supabaseServer
     .from('videos')
-    .select('*, transcripts(*, notes(*)), lessons(user_id), s3_audio_key, note_format') // Select s3_audio_key and note_format
+    .select(`
+      *,
+      lessons(user_id),
+      transcripts(
+        id,
+        content,
+        video_id,
+        created_at,
+        notes(*)
+      )
+    `) // Simplified query with explicit transcript content selection
     .eq('id', videoId)
     .single(); // Assuming one video per ID
 
@@ -46,6 +56,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
 
   if (!videoData || videoData.lessons?.user_id !== user.id) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
+  }
+
+  // If transcripts are empty, try fetching them separately
+  if (!videoData.transcripts || videoData.transcripts.length === 0) {
+    console.log('No transcripts found in nested query, fetching separately...');
+    const { data: transcriptData, error: transcriptError } = await supabaseServer
+      .from('transcripts')
+      .select(`
+        id,
+        content,
+        video_id,
+        created_at,
+        notes(*)
+      `)
+      .eq('video_id', videoId);
+
+    if (transcriptError) {
+      console.error('Error fetching transcripts separately:', transcriptError);
+    } else {
+      console.log('Separate transcript query result:', JSON.stringify(transcriptData, null, 2));
+      videoData.transcripts = transcriptData || [];
+    }
   }
 
   // Construct a signed S3 object URL using the s3_audio_key

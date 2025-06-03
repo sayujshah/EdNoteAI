@@ -186,11 +186,26 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'File upload failed');
+        let errorMessage = 'File upload failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (jsonError) {
+          // If JSON parsing fails, use the status text
+          errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+          console.error('Failed to parse error response as JSON:', jsonError);
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse success response as JSON:', jsonError);
+        throw new Error('Upload may have succeeded but received invalid response. Please check your uploads or try again.');
+      }
+      
       setUploadComplete(true);
       const mediaId = result.mediaId;
 
@@ -199,6 +214,7 @@ export default function UploadPage() {
     } catch (error: any) {
       setUploadError(error.message);
       console.error('Upload error:', error);
+    } finally {
       setIsProcessing(false);
     }
   };

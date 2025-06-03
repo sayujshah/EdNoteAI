@@ -39,6 +39,28 @@ async function getMediaDurationMinutes(file: File): Promise<number> {
 
 // POST /api/upload - Handle file uploads for transcription
 export async function POST(request: Request) {
+  // Validate required environment variables first
+  const requiredEnvVars = {
+    REGION_AWS: process.env.REGION_AWS,
+    ACCESS_KEY_ID_AWS: process.env.ACCESS_KEY_ID_AWS,
+    SECRET_ACCESS_KEY_AWS: process.env.SECRET_ACCESS_KEY_AWS,
+    S3_BUCKET_NAME_AWS: process.env.S3_BUCKET_NAME_AWS,
+    TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS: process.env.TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS
+  };
+
+  const missingVars = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    console.error('Missing required environment variables:', missingVars);
+    return NextResponse.json({ 
+      status: 'error', 
+      message: 'Server configuration error. Please contact support.',
+      code: 'CONFIG_ERROR'
+    }, { status: 500 });
+  }
+
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();
@@ -109,7 +131,17 @@ export async function POST(request: Request) {
     console.log(`Estimated file duration: ${estimatedDurationMinutes} minutes`);
 
     // Validate upload against user's subscription limits
-    const validation = await SubscriptionService.validateUpload(user.id, estimatedDurationMinutes);
+    let validation;
+    try {
+      validation = await SubscriptionService.validateUpload(user.id, estimatedDurationMinutes);
+    } catch (subscriptionError) {
+      console.error('Subscription validation failed:', subscriptionError);
+      return NextResponse.json({ 
+        status: 'error', 
+        message: 'Unable to validate subscription. Please try again.',
+        code: 'SUBSCRIPTION_ERROR'
+      }, { status: 500 });
+    }
     
     if (!validation.canUpload) {
       const errorMessages = {
@@ -141,8 +173,17 @@ export async function POST(request: Request) {
       Body: Buffer.from(await file.arrayBuffer()), // Convert stream to Buffer for S3 upload
     });
 
-    await s3Client.send(uploadCommand);
-    console.log(`File uploaded to S3: ${fileKey}`);
+    try {
+      await s3Client.send(uploadCommand);
+      console.log(`File uploaded to S3: ${fileKey}`);
+    } catch (s3Error) {
+      console.error('S3 upload failed:', s3Error);
+      return NextResponse.json({ 
+        status: 'error', 
+        message: 'Failed to upload file to storage. Please try again.',
+        code: 'S3_UPLOAD_ERROR'
+      }, { status: 500 });
+    }
 
     // Create a new video record in Supabase with duration tracking
     const { data: videoData, error: videoError } = await supabaseServer
@@ -170,17 +211,27 @@ export async function POST(request: Request) {
     const newVideoId = videoData.id; // Get the ID of the newly created video
 
     // Consume user credits
-    const creditsConsumed = await SubscriptionService.consumeCredits(user.id, 1);
-    if (!creditsConsumed) {
-      console.error('Failed to consume credits after successful upload');
-      // In production, you might want to delete the video record and S3 file here
+    try {
+      const creditsConsumed = await SubscriptionService.consumeCredits(user.id, 1);
+      if (!creditsConsumed) {
+        console.error('Failed to consume credits after successful upload');
+        // In production, you might want to delete the video record and S3 file here
+      }
+    } catch (creditsError) {
+      console.error('Error consuming credits:', creditsError);
+      // Don't fail the upload if credits consumption fails
     }
 
     // Update usage statistics
-    await SubscriptionService.updateUsage(user.id, {
-      uploadMinutes: estimatedDurationMinutes,
-      transcriptionsCount: 1
-    });
+    try {
+      await SubscriptionService.updateUsage(user.id, {
+        uploadMinutes: estimatedDurationMinutes,
+        transcriptionsCount: 1
+      });
+    } catch (usageError) {
+      console.error('Error updating usage statistics:', usageError);
+      // Don't fail the upload if usage update fails
+    }
 
     console.log(`Attempting to trigger Lambda function: ${transcriptionLambdaFunctionName}`); // Added logging
     // Trigger the transcription Lambda function
@@ -190,8 +241,14 @@ export async function POST(request: Request) {
       Payload: JSON.stringify({ s3Key: fileKey, bucketName: s3BucketName, videoId: newVideoId, userId: user.id, noteFormat: noteFormat }), // Pass necessary info to Lambda including note format
     });
 
-    await lambdaClient.send(invokeCommand);
-    console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`); // Added logging
+    try {
+      await lambdaClient.send(invokeCommand);
+      console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`); // Added logging
+    } catch (lambdaError) {
+      console.error('Lambda invocation failed:', lambdaError);
+      // Don't fail the entire upload if Lambda fails - the file is already uploaded
+      console.warn('Continuing with upload despite Lambda failure - file is uploaded to S3');
+    }
 
     // Include the newVideoId in the successful response
     return NextResponse.json({ status: 'processing', fileKey, mediaId: newVideoId });

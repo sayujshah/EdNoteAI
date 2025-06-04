@@ -43,28 +43,6 @@ async function getMediaDurationMinutes(file: File): Promise<number> {
 
 // POST /api/upload - Handle file uploads for transcription
 export async function POST(request: Request) {
-  // Validate required environment variables first
-  const requiredEnvVars = {
-    REGION_AWS: process.env.REGION_AWS,
-    ACCESS_KEY_ID_AWS: process.env.ACCESS_KEY_ID_AWS,
-    SECRET_ACCESS_KEY_AWS: process.env.SECRET_ACCESS_KEY_AWS,
-    S3_BUCKET_NAME_AWS: process.env.S3_BUCKET_NAME_AWS,
-    TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS: process.env.TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS
-  };
-
-  const missingVars = Object.entries(requiredEnvVars)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
-
-  if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars);
-    return NextResponse.json({ 
-      status: 'error', 
-      message: 'Server configuration error. Please contact support.',
-      code: 'CONFIG_ERROR'
-    }, { status: 500 });
-  }
-
   // Get authenticated user
   const supabaseServer = await createClient();
   const { data: { user } } = await supabaseServer.auth.getUser();

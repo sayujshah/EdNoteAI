@@ -28,30 +28,6 @@ export async function POST(request: Request) {
     }
   });
 
-  const missingVars = Object.entries(requiredEnvVars)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key);
-
-  if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars);
-    console.error('NODE_ENV:', process.env.NODE_ENV);
-    console.error('Available env vars starting with REGION:', Object.keys(process.env).filter(k => k.includes('REGION')));
-    console.error('Available env vars starting with ACCESS:', Object.keys(process.env).filter(k => k.includes('ACCESS')));
-    console.error('Available env vars starting with SECRET:', Object.keys(process.env).filter(k => k.includes('SECRET')));
-    console.error('Available env vars starting with S3:', Object.keys(process.env).filter(k => k.includes('S3')));
-    
-    return NextResponse.json({ 
-      status: 'error', 
-      message: 'Server configuration error. Please contact support.',
-      code: 'CONFIG_ERROR',
-      debug: {
-        missingVars,
-        nodeEnv: process.env.NODE_ENV,
-        availableAwsVars: Object.keys(process.env).filter(k => k.includes('AWS') || k.includes('REGION') || k.includes('S3'))
-      }
-    }, { status: 500 });
-  }
-
   console.log('=== Environment variables check passed ===');
 
   // Configure AWS S3 client after environment validation

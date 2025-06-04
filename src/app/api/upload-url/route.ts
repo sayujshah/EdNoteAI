@@ -33,10 +33,6 @@ export async function POST(request: Request) {
   // Configure AWS S3 client after environment validation
   const s3Client = new S3Client({
     region: process.env.REGION_AWS!,
-    credentials: {
-      accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-      secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-    },
   });
 
   const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;

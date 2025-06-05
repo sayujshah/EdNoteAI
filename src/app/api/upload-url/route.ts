@@ -7,37 +7,8 @@ import { SubscriptionService } from '@/lib/services/subscriptionService';
 import { UPLOAD_LIMITS } from '@/lib/constants';
 
 export async function POST(request: Request) {
-  console.log('=== DEBUG: Environment variables check ===');
-  
-  // Validate required environment variables first
-  const requiredEnvVars = {
-    REGION_AWS: process.env.REGION_AWS,
-    ACCESS_KEY_ID_AWS: process.env.ACCESS_KEY_ID_AWS,
-    SECRET_ACCESS_KEY_AWS: process.env.SECRET_ACCESS_KEY_AWS,
-    S3_BUCKET_NAME_AWS: process.env.S3_BUCKET_NAME_AWS,
-  };
-
-  // Log which variables are present/missing (without exposing values)
-  Object.entries(requiredEnvVars).forEach(([key, value]) => {
-    console.log(`${key}: ${value ? 'SET ✓' : 'MISSING ✗'}`);
-    if (value) {
-      console.log(`${key} length: ${value.length}`);
-      if (key === 'REGION_AWS' || key === 'S3_BUCKET_NAME_AWS') {
-        console.log(`${key} value: ${value}`); // Safe to log these
-      }
-    }
-  });
-
-  console.log('=== Environment variables check passed ===');
-
   // Configure AWS S3 client after environment validation
-  const s3Client = new S3Client({
-    region: process.env.REGION_AWS!,
-    credentials: {
-      accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-      secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-    },
-  });
+  const s3Client = new S3Client({ region: process.env.REGION_AWS! });
 
   const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
 

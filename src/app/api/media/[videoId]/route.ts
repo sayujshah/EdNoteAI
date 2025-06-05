@@ -5,13 +5,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // Import getSigne
 import { GetObjectCommand } from '@aws-sdk/client-s3'; // Import GetObjectCommand
 
 // Initialize AWS S3 client
-const s3Client = new S3Client({
-  region: process.env.REGION_AWS!,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-  },
-});
+const s3Client = new S3Client({ region: process.env.REGION_AWS! });
 
 const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
 

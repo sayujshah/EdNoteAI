@@ -3,13 +3,14 @@ import { createClient } from '@/utils/supabase/server';
 import type { 
   CreateSubscriptionRequest
 } from '@/lib/types/subscription';
+import { secret } from '@aws-amplify/backend';
 
 // =====================================================
 // Stripe Service
 // =====================================================
 
 // Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(secret('STRIPE_SECRET_KEY'), {
   apiVersion: '2025-05-28.basil',
 });
 
@@ -155,7 +156,7 @@ export class StripeService {
     signature: string
   ): Promise<{ received: boolean }> {
     try {
-      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+      const endpointSecret = secret('STRIPE_WEBHOOK_SECRET');
       
       // Verify webhook signature
       const event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
@@ -376,4 +377,4 @@ export class StripeService {
       throw new Error('Failed to create portal session');
     }
   }
-} 
+}

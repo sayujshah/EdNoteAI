@@ -11,24 +11,12 @@ export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes timeout for large uploads
 
 // Configure AWS S3 client (same as transcribe route)
-const s3Client = new S3Client({
-  region: process.env.REGION_AWS!,
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-  },
-});
+const s3Client = new S3Client({ region: process.env.REGION_AWS! });
 
 const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
 
 // Configure AWS Lambda client (same as transcribe route)
-const lambdaClient = new LambdaClient({
-  region: process.env.REGION_AWS!, // Use the same region as S3
-  credentials: {
-    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
-  },
-});
+const lambdaClient = new LambdaClient({ region: process.env.REGION_AWS! });
 
 const transcriptionLambdaFunctionName = process.env.TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS!;
 

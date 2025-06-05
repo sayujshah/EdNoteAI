@@ -156,7 +156,7 @@ export class StripeService {
     signature: string
   ): Promise<{ received: boolean }> {
     try {
-      const endpointSecret = secret('STRIPE_WEBHOOK_SECRET');
+      const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
       
       // Verify webhook signature
       const event = stripe.webhooks.constructEvent(body, signature, endpointSecret);

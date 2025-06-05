@@ -176,4 +176,4 @@ export async function POST(request: Request) {
       message: 'Failed to generate upload URL' 
     }, { status: 500 });
   }
-} 
+}

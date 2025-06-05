@@ -124,9 +124,6 @@ export default function UploadPage() {
     try {
       const response = await fetch('/api/lessons', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ title: newLessonTitle }),
       });
 
@@ -181,9 +178,6 @@ export default function UploadPage() {
       setUploadStatus('Getting upload URL...');
       const uploadUrlResponse = await fetch('/api/upload-url', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           fileName: file.name,
           fileSize: file.size,
@@ -218,11 +212,7 @@ export default function UploadPage() {
       setUploadStatus('Uploading file to cloud storage...');
       const s3Response = await fetch(uploadUrlData.uploadUrl, {
         method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-        // Add progress tracking if needed
+        body: file
       });
 
       if (!s3Response.ok) {
@@ -235,9 +225,6 @@ export default function UploadPage() {
       // Step 3: Notify server that upload is complete and start processing
       const completeResponse = await fetch('/api/upload-complete', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           mediaId: uploadUrlData.mediaId,
           fileKey: uploadUrlData.fileKey

@@ -3,14 +3,13 @@ import { createClient } from '@/utils/supabase/server';
 import type { 
   CreateSubscriptionRequest
 } from '@/lib/types/subscription';
-import { secret } from '@aws-amplify/backend';
 
 // =====================================================
 // Stripe Service
 // =====================================================
 
 // Initialize Stripe with secret key
-const stripe = new Stripe(secret('STRIPE_SECRET_KEY'), {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil',
 });
 

@@ -33,6 +33,10 @@ export async function POST(request: Request) {
   // Configure AWS S3 client after environment validation
   const s3Client = new S3Client({
     region: process.env.REGION_AWS!,
+    credentials: {
+      accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+      secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
+    },
   });
 
   const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;
@@ -116,13 +120,20 @@ export async function POST(request: Request) {
     // Generate unique S3 key
     const fileExtension = fileName.split('.').pop();
     const fileKey = `uploads/${uuidv4()}.${fileExtension}`;
-
+    
     // Generate presigned URL for direct upload
     const command = new PutObjectCommand({
       Bucket: s3BucketName,
       Key: fileKey,
       ContentType: fileType,
     });
+
+    if (!command) {
+      return NextResponse.json({ 
+        status: 'error', 
+        message: 'Failed to create S3 command' 
+      }, { status: 500 });
+    }
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiry
 

@@ -76,20 +76,30 @@ export async function POST(request: Request) {
     let finalLessonId = lessonId;
     if (!lessonId) {
       // Find or create a default lesson for the user
-      let { data: existingLesson, error: lessonFetchError } = await supabaseServer
+      let { data: existingLessons, error: lessonFetchError } = await supabaseServer
         .from('lessons')
-        .select('id')
+        .select('id, title')
         .eq('user_id', user.id)
-        .eq('title', 'Default Lesson')
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (lessonFetchError || !existingLesson) {
-        // Create a default lesson if it doesn't exist
+      if (lessonFetchError) {
+        console.error('Error fetching lessons:', lessonFetchError);
+        return NextResponse.json({ status: 'error', message: 'Failed to fetch lessons' }, { status: 500 });
+      }
+
+      if (existingLessons && existingLessons.length > 0) {
+        // Use the most recent lesson
+        finalLessonId = existingLessons[0].id;
+        console.log(`Using existing recent lesson for user ${user.id}: ${finalLessonId} (${existingLessons[0].title})`);
+      } else {
+        // Create a new default lesson if user has no lessons
+        const currentDate = new Date().toLocaleDateString();
         const { data: newLesson, error: lessonCreateError } = await supabaseServer
           .from('lessons')
           .insert([{
             user_id: user.id,
-            title: 'Default Lesson',
+            title: `My Lessons - ${currentDate}`,
             tags: []
           }])
           .select('id')
@@ -101,10 +111,7 @@ export async function POST(request: Request) {
         }
         
         finalLessonId = newLesson.id;
-        console.log(`Created default lesson for user ${user.id}: ${finalLessonId}`);
-      } else {
-        finalLessonId = existingLesson.id;
-        console.log(`Using existing default lesson for user ${user.id}: ${finalLessonId}`);
+        console.log(`Created new default lesson for user ${user.id}: ${finalLessonId}`);
       }
     }
 

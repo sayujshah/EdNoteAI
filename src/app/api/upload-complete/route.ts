@@ -4,7 +4,13 @@ import createClient from '../../../lib/supabase/server';
 import { SubscriptionService } from '@/lib/services/subscriptionService';
 
 // Configure AWS Lambda client
-const lambdaClient = new LambdaClient({ region: process.env.REGION_AWS! });
+const lambdaClient = new LambdaClient({
+  region: process.env.REGION_AWS!,
+  credentials: {
+    accessKeyId: process.env.ACCESS_KEY_ID_AWS!,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY_AWS!,
+  },
+});
 
 const transcriptionLambdaFunctionName = process.env.TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS!;
 const s3BucketName = process.env.S3_BUCKET_NAME_AWS!;

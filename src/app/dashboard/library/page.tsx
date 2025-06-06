@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { FileUploadModal } from "@/components/file-upload-modal";
 import type { SavedNote } from '@/lib/types/library';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -149,6 +150,9 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Modal state
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  
   // Filters and search
   const [searchQuery, setSearchQuery] = useState("");
   // formatFilter removed since all notes now use unified Markdown+LaTeX format
@@ -284,12 +288,10 @@ export default function LibraryPage() {
               }
             </p>
           </div>
-          <Link href="/dashboard/upload">
-            <Button className="gap-2">
-              <Upload className="h-4 w-4" />
-              Upload Media
-            </Button>
-          </Link>
+          <Button className="gap-2" onClick={() => setIsUploadModalOpen(true)}>
+            <Upload className="h-4 w-4" />
+            Upload Media
+          </Button>
         </div>
 
         {/* Filters and Search */}
@@ -401,12 +403,10 @@ export default function LibraryPage() {
               }
             </p>
             {!searchQuery && (
-              <Link href="/dashboard/upload">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Upload Your First Media
-                </Button>
-              </Link>
+              <Button onClick={() => setIsUploadModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Upload Your First Media
+              </Button>
             )}
           </div>
         ) : (
@@ -476,6 +476,12 @@ export default function LibraryPage() {
           </>
         )}
       </main>
+
+      {/* File Upload Modal */}
+      <FileUploadModal 
+        isOpen={isUploadModalOpen} 
+        onClose={() => setIsUploadModalOpen(false)} 
+      />
     </div>
   );
 } 

@@ -557,6 +557,9 @@ function HeaderActions() {
   if (auth.isAuthenticated) {
     return (
       <div className="flex items-center gap-4">
+        <Link href="/dashboard/upload" className="text-sm font-medium hover:underline underline-offset-4">
+          Upload
+        </Link>
         <Link href="/dashboard/library" className="text-sm font-medium hover:underline underline-offset-4">
           Library
         </Link>

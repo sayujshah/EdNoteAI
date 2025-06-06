@@ -56,7 +56,6 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const lessonId = formData.get('lessonId') as string; // Optional lesson ID
     const noteFormat = formData.get('noteFormat') as string || 'Markdown';
 
     if (!file) {
@@ -70,49 +69,6 @@ export async function POST(request: Request) {
         status: 'error', 
         message: UPLOAD_ERROR_MESSAGES.FILE_TOO_LARGE(fileSizeMB, UPLOAD_LIMITS.MAX_FILE_SIZE_MB)
       }, { status: 413 });
-    }
-
-    // If no lessonId provided, create or find a default lesson
-    let finalLessonId = lessonId;
-    if (!lessonId) {
-      // Find or create a default lesson for the user
-      let { data: existingLessons, error: lessonFetchError } = await supabaseServer
-        .from('lessons')
-        .select('id, title')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (lessonFetchError) {
-        console.error('Error fetching lessons:', lessonFetchError);
-        return NextResponse.json({ status: 'error', message: 'Failed to fetch lessons' }, { status: 500 });
-      }
-
-      if (existingLessons && existingLessons.length > 0) {
-        // Use the most recent lesson
-        finalLessonId = existingLessons[0].id;
-        console.log(`Using existing recent lesson for user ${user.id}: ${finalLessonId} (${existingLessons[0].title})`);
-      } else {
-        // Create a new default lesson if user has no lessons
-        const currentDate = new Date().toLocaleDateString();
-        const { data: newLesson, error: lessonCreateError } = await supabaseServer
-          .from('lessons')
-          .insert([{
-            user_id: user.id,
-            title: `My Lessons - ${currentDate}`,
-            tags: []
-          }])
-          .select('id')
-          .single();
-
-        if (lessonCreateError) {
-          console.error('Error creating default lesson:', lessonCreateError);
-          return NextResponse.json({ status: 'error', message: 'Failed to create lesson' }, { status: 500 });
-        }
-        
-        finalLessonId = newLesson.id;
-        console.log(`Created new default lesson for user ${user.id}: ${finalLessonId}`);
-      }
     }
 
     // Get estimated duration for validation
@@ -179,7 +135,6 @@ export async function POST(request: Request) {
       .from('videos')
       .insert([{ 
         user_id: user.id, // Add user_id for ownership
-        lesson_id: finalLessonId, 
         file_url: fileKey, 
         transcription_status: 'pending', 
         s3_audio_key: fileKey, 
@@ -222,7 +177,6 @@ export async function POST(request: Request) {
       // Don't fail the upload if usage update fails
     }
 
-    console.log(`Attempting to trigger Lambda function: ${transcriptionLambdaFunctionName}`); // Added logging
     // Trigger the transcription Lambda function
     const invokeCommand = new InvokeCommand({
       FunctionName: transcriptionLambdaFunctionName,
@@ -232,7 +186,6 @@ export async function POST(request: Request) {
 
     try {
       await lambdaClient.send(invokeCommand);
-      console.log(`Transcription Lambda function triggered for S3 key: ${fileKey}`); // Added logging
     } catch (lambdaError) {
       console.error('Lambda invocation failed:', lambdaError);
       // Don't fail the entire upload if Lambda fails - the file is already uploaded

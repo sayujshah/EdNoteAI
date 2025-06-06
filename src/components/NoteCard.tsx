@@ -8,7 +8,7 @@ interface NoteCardProps {
     id: string; // Media ID
     title: string; // Media title (or inferred from notes)
     description: string; // Short description/excerpt (inferred from notes)
-    tags: string[]; // Tags (from lessons or inferred)
+    tags: string[]; // Tags (inferred from content)
     created_at: string; // Media creation date
     type: 'video' | 'audio'; // Media type
     // Include other data needed for actions (download, delete)

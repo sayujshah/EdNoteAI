@@ -28,11 +28,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
   // Fetch the video and its associated transcript and segmented content
   const { data: videoData, error: fetchError } = await supabaseServer
     .from('videos')
-    .select('title, lessons(user_id), transcripts(*)') // Select video title, lesson user_id, and transcript
+    .select('title, transcripts(*)') // Select video title and transcript
     .eq('id', videoId)
+    .eq('user_id', user.id) // Filter by user ownership directly
     .single();
 
-  if (fetchError || !videoData || videoData.lessons?.[0]?.user_id !== user.id) {
+  if (fetchError || !videoData) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 

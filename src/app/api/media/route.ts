@@ -19,31 +19,17 @@ export async function GET(request: Request) {
 
   console.log(`Fetching videos for user: ${user.id}, Filter: ${typeFilter}, Sort: ${sortBy}`);
 
-  // First, get the lesson IDs owned by the user
-  const { data: lessonIds, error: lessonError } = await supabaseServer
-    .from('lessons')
-    .select('id')
-    .eq('user_id', user.id);
-
-  if (lessonError) {
-    console.error('Error fetching lesson IDs:', lessonError);
-    return NextResponse.json({ error: lessonError.message }, { status: 500 });
-  }
-
-  // Extract the IDs into an array
-  const userLessonIds = lessonIds.map(lesson => lesson.id);
-
-  // Then, query videos that are in the user's lesson IDs
+  // Query videos directly by user_id
   let query = supabaseServer
     .from('videos')
-    .select('*, transcripts(*), lessons(tags)')
-    .in('lesson_id', userLessonIds); // Filter videos by lesson ownership
+    .select('*, transcripts(*)')
+    .eq('user_id', user.id); // Filter videos by user ownership
 
   // Apply type filter
   if (typeFilter === 'video') {
-    query = query.like('url', '%.mp4'); // Basic filtering by file extension
+    query = query.like('file_url', '%.mp4'); // Basic filtering by file extension
   } else if (typeFilter === 'audio') {
-    query = query.not('url', 'like', '%.mp4'); // Basic filtering by file extension (not mp4)
+    query = query.not('file_url', 'like', '%.mp4'); // Basic filtering by file extension (not mp4)
   }
 
   // Apply sorting

@@ -90,8 +90,6 @@ export default function AnalysisPage() {
   useEffect(() => {
     if (id) {
       fetchData(); // Initial data fetch
-
-      console.log(`Attempting to subscribe to Realtime channel for media ID: ${id}`); // Added logging
       // Set up Realtime subscription
       const channel = supabase
         .channel(`media_status_changes_${id}`) // Unique channel name for this media item
@@ -104,24 +102,17 @@ export default function AnalysisPage() {
             filter: `id=eq.${id}`, // Filter for the specific media item ID
           },
           (payload) => {
-            console.log('Realtime update received:', payload); // Added logging
             // Check if the transcription status has changed to 'completed'
             if (payload.new.transcription_status === 'completed') {
-               console.log('Media status updated to completed, refetching data.'); // Added logging
                fetchData(); // Refetch data when status is completed
-            } else {
-                console.log('Realtime update received, but status is not completed:', payload.new.transcription_status); // Added logging
             }
           }
         )
-        .subscribe((status) => {
-            console.log(`Realtime subscription status for channel media_status_changes_${id}: ${status}`); // Added logging
-        }); // Subscribe to the channel
+        .subscribe(); // Subscribe to the channel
 
       // Clean up subscription on component unmount
       return () => {
-        console.log(`Removing Realtime channel media_status_changes_${id}`); // Added logging
-        supabase.removeChannel(channel);
+        supabase.removeChannel(channel)
       };
     }
   }, [id, fetchData]); // Removed fetchData from dependency array

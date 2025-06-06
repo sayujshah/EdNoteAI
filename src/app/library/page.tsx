@@ -25,19 +25,13 @@ interface TranscriptData {
   created_at: string;
 }
 
-interface LessonData {
-    tags?: string[]; // Assuming tags are an array of strings
-}
-
 interface VideoDataFromApi {
   id: string;
-  lesson_id: string;
   url: string;
   transcription_status: string;
   created_at: string;
   title?: string; // Video title might be stored here
   transcripts: TranscriptData | null; // Assuming one transcript per video
-  lessons: LessonData | null; // Assuming one lesson per video
 }
 
 // Interface for data used in NoteCard component
@@ -45,7 +39,7 @@ interface NoteCardData {
   id: string; // Video ID
   title: string; // Video title (or inferred from notes)
   description: string; // Short description/excerpt (inferred from notes)
-  tags: string[]; // Tags (from lessons or inferred)
+  tags: string[]; // Tags (inferred from content)
   created_at: string; // Video creation date
   type: 'video' | 'audio'; // Media type
   // Include other data needed for actions (download, delete)
@@ -86,7 +80,7 @@ export default function NotesLibraryPage() {
         id: video.id,
         title: video.title || video.transcripts?.segmented_content?.title || `Video ${video.id}`,
         description: video.transcripts?.segmented_content?.segments?.[0]?.summary || video.transcripts?.content?.substring(0, 150) + '...' || 'No description available.',
-        tags: video.lessons?.tags || [],
+        tags: [],
         created_at: video.created_at,
         type: video.url.includes('.mp4') ? 'video' : 'audio',
       }));

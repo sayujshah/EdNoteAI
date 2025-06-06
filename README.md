@@ -10,7 +10,6 @@ EdNoteAI is an AI-powered web application (and planned Chrome extension) designe
 
 - **User Authentication:** Secure sign-up, login, and account management using Supabase Auth.
 - **File Upload:** Upload audio/video files via a dedicated dashboard page. Files are stored in AWS S3.
-- **Lesson Management:** Associate uploads with existing lessons or create new ones.
 - **Automated Transcription:** Uploaded media is transcribed using an AWS Lambda function powered by OpenAI Whisper.
 - **AI Note Generation:** Transcripts are processed by another Lambda function (using GPT-4o-mini) to generate segmented notes and markdown content.
 - **Realtime Updates:** The analysis page uses Supabase Realtime to update the UI as soon as processing is complete.
@@ -24,7 +23,7 @@ EdNoteAI is an AI-powered web application (and planned Chrome extension) designe
 
 - **Frontend:** Next.js (App Router), React, Tailwind CSS, Supabase Client, `react-markdown`, `react-katex`
 - **Backend:** Next.js API Routes, Supabase (PostgreSQL, Auth, Realtime), AWS Lambda, AWS S3, OpenAI API
-- **Database:** Videos, transcripts, notes, lessons, and user settings are all managed in a relational schema with proper relationships and RLS (Row Level Security) policies.
+- **Database:** Videos, transcripts, notes, and user settings are all managed in a relational schema with proper relationships and RLS (Row Level Security) policies.
 
 ---
 
@@ -38,7 +37,7 @@ EdNoteAI is an AI-powered web application (and planned Chrome extension) designe
 ### Additional Features (Planned)
 
 - **Segment Boundary Adjustment:** Enable users to manually adjust concept segment boundaries in notes.
-- **Metadata Management:** Add, edit, and display metadata (course title, professor, date, tags) for each media item/lesson.
+- **Metadata Management:** Add, edit, and display metadata (course title, professor, date, tags) for each media item.
 - **Export Formats:** Complete backend logic for exporting notes in LaTeX, Markdown, Word (.docx), and plain text.
 - **Video Capture:** Add the ability to capture video directly from the browser (not just file uploads).
 - **Visual Context Extraction:** Analyze on-screen visuals and integrate descriptions into notes.

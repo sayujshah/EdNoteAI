@@ -37,7 +37,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
     .from('videos')
     .select(`
       *,
-      lessons(user_id),
       transcripts(
         id,
         content,
@@ -47,6 +46,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
       )
     `) // Simplified query with explicit transcript content selection
     .eq('id', videoId)
+    .eq('user_id', user.id) // Filter by user ownership directly
     .single(); // Assuming one video per ID
 
   if (videoError) {
@@ -54,7 +54,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ vide
     return NextResponse.json({ error: videoError.message }, { status: 500 });
   }
 
-  if (!videoData || videoData.lessons?.user_id !== user.id) {
+  if (!videoData) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 
@@ -119,13 +119,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ vide
   // Check if the video belongs to the user before updating
   const { data: videoData, error: fetchError } = await supabaseServer
     .from('videos')
-    .select('lessons(user_id)')
+    .select('id')
     .eq('id', videoId)
+    .eq('user_id', user.id) // Filter by user ownership directly
     .single();
 
   // Check if the video belongs to the user before proceeding
-  // Access user_id from the nested lessons object, handling potential array return
-  if (fetchError || !videoData || !videoData.lessons || videoData.lessons[0]?.user_id !== user.id) {
+  if (fetchError || !videoData) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 
@@ -163,13 +163,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ v
   // Check if the video belongs to the user before deleting
   const { data: videoData, error: fetchError } = await supabaseServer
     .from('videos')
-    .select('lessons(user_id), s3_audio_key') // Also get s3_audio_key for S3 deletion
+    .select('s3_audio_key') // Also get s3_audio_key for S3 deletion
     .eq('id', videoId)
+    .eq('user_id', user.id) // Filter by user ownership directly
     .single();
 
   // Check if the video belongs to the user before deleting
-  // Access user_id from the nested lessons object, handling potential array return
-  if (fetchError || !videoData || !videoData.lessons || videoData.lessons[0]?.user_id !== user.id) {
+  if (fetchError || !videoData) {
     return NextResponse.json({ error: 'Video not found or user does not own it' }, { status: 404 });
   }
 

@@ -6,7 +6,6 @@ import AuthGuard from '../../../components/AuthGuard'; // Import AuthGuard - Adj
 
 interface VideoData {
   id: string;
-  lesson_id: string;
   url: string;
   transcription_status: string;
   created_at: string;

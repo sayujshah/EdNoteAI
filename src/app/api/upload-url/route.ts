@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { fileName, fileSize, fileType, lessonId } = await request.json();
+    const { fileName, fileSize, fileType } = await request.json();
 
     if (!fileName || !fileSize || !fileType) {
       return NextResponse.json({ 
@@ -119,7 +119,6 @@ export async function POST(request: Request) {
       .from('videos')
       .insert([{ 
         user_id: user.id,
-        lesson_id: lessonId, 
         file_url: fileKey, 
         transcription_status: 'pending',
         s3_audio_key: fileKey, 

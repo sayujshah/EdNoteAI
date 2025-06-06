@@ -161,6 +161,23 @@ export default function LibraryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalNotes, setTotalNotes] = useState(0);
 
+  // Guard: redirect free users to subscription page
+  useEffect(() => {
+    const checkPlan = async () => {
+      if (!auth.user) return;
+      try {
+        const res = await fetch('/api/subscription/status', { credentials: 'include' });
+        if (res.ok) {
+          const status = await res.json();
+          if (status.limits?.plan_name?.toLowerCase() === 'free') {
+            router.replace('/#pricing');
+          }
+        }
+      } catch {}
+    };
+    checkPlan();
+  }, [auth.user, router]);
+  
   const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError(null);

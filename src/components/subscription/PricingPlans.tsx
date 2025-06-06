@@ -117,23 +117,23 @@ export function PricingPlans({
                   )}
                 />
                 <FeatureRow
-                  feature="Save to Library"
-                  values={sortedPlans.map(plan => plan.can_save_notes)}
+                  feature="Chrome Extension"
+                  values={sortedPlans.map(plan => plan.name === plan.name)}
                 />
                 <FeatureRow
-                  feature="LaTeX Support"
-                  values={sortedPlans.map(plan => plan.can_save_notes)}
+                  feature="Notes Library Access"
+                  values={sortedPlans.map(plan => plan.name !== 'Free')}
                 />
                 <FeatureRow
-                  feature="Priority Processing"
-                  values={sortedPlans.map(plan => plan.name === 'Professional')}
+                  feature="Edit Notes"
+                  values={sortedPlans.map(plan => plan.name !== 'Free')}
                 />
                 <FeatureRow
                   feature="Priority Support"
                   values={sortedPlans.map(plan => plan.name !== 'Free')}
                 />
                 <FeatureRow
-                  feature="API Access"
+                  feature="Priority Processing"
                   values={sortedPlans.map(plan => plan.name === 'Professional')}
                 />
               </tbody>

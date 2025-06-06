@@ -169,10 +169,13 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
             <BookOpen className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">EdNoteAI</span>
+            <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+              BETA
+            </span>
           </Link>
           <Link href="/" className="flex items-center gap-1 text-sm font-medium hover:text-primary">
             <ArrowLeft className="h-4 w-4" />
@@ -181,7 +184,7 @@ export default function AuthPage() {
         </div>
       </header>
       <main className="flex-1">
-        <div className="container flex items-center justify-center py-12 md:py-24">
+        <div className="container mx-auto flex items-center justify-center py-12 md:py-24">
           <div className="w-full max-w-md space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-3xl font-bold">Welcome to EdNoteAI</h1>

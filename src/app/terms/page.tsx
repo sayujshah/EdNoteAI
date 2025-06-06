@@ -487,11 +487,11 @@ export default function TermsOfService() {
             </span>
           </Link>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/privacy" className="hover:underline underline-offset-4">
-              Privacy Policy
-            </Link>
             <Link href="/terms" className="hover:underline underline-offset-4">
               Terms of Service
+            </Link>
+            <Link href="/privacy" className="hover:underline underline-offset-4">
+              Privacy Policy
             </Link>
             <Link href="/cookies" className="hover:underline underline-offset-4">
               Cookies Policy

@@ -285,12 +285,7 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                     </div>
                   )}
 
-                  {isProcessing && !uploadComplete && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-blue-600">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Processing your file...</span>
-                    </div>
-                  )}
+                  {isProcessing && !uploadComplete}
                 </div>
               </div>
 

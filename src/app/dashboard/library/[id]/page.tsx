@@ -172,7 +172,7 @@ export default function NoteViewerPage() {
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex items-center gap-8">
               <BookOpen className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">EdNoteAI</span>
               <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
@@ -244,14 +244,16 @@ export default function NoteViewerPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">EdNoteAI</span>
-            <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
-              BETA
-            </span>
-            <span className="text-sm text-muted-foreground ml-2">/ Note</span>
-          </Link>
+          <div className="flex items-center gap-8">
+            <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <BookOpen className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">EdNoteAI</span>
+              <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
+                BETA
+              </span>
+            </Link>
+            <span className="text-sm text-muted-foreground">/ Note</span>
+          </div>
           <nav className="flex items-center gap-6">
             <Link href="/dashboard/library" className="text-sm font-medium hover:text-primary">
               Library
@@ -404,9 +406,6 @@ export default function NoteViewerPage() {
                     </div>
                     {note.updated_at !== note.created_at && (
                       <span>Updated {formatDate(note.updated_at)}</span>
-                    )}
-                    {note.original_media_title && (
-                      <span className="truncate">From: {note.original_media_title}</span>
                     )}
                   </div>
                 </div>

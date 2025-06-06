@@ -20,12 +20,17 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("signin")
+  const [showResend, setShowResend] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setShowResend(false)
+    setResendMessage(null)
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -35,10 +40,33 @@ export default function AuthPage() {
 
       if (error) {
         setError(error.message)
+        const msg = error.message.toLowerCase();
+        if (
+          msg.includes('not confirmed') ||
+          msg.includes('confirm your email') ||
+          msg.includes('must confirm')
+        ) {
+          setShowResend(true)
+        }
         console.error("Login error:", error)
       } else {
-        // Redirect to the dashboard library after successful login
-        router.push("/dashboard/library")
+        // After successful login, check subscription status
+        try {
+          const res = await fetch('/api/subscription/status', { credentials: 'include' });
+          if (res.ok) {
+            const status = await res.json();
+            if (status.limits?.plan_name?.toLowerCase() === 'free') {
+              router.push('/dashboard/upload');
+            } else {
+              router.push('/dashboard/library');
+            }
+          } else {
+            // Fallback: go to upload if status check fails
+            router.push('/dashboard/upload');
+          }
+        } catch {
+          router.push('/dashboard/upload');
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.")
@@ -111,6 +139,29 @@ export default function AuthPage() {
     }
   }
 
+  const handleResendConfirmation = async () => {
+    setResendLoading(true)
+    setResendMessage(null)
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: window.location.origin + '/auth/callback',
+        },
+      })
+      if (error) {
+        setResendMessage('Failed to resend confirmation email. Please try again.')
+      } else {
+        setResendMessage('A new confirmation email has been sent. Please check your inbox.')
+      }
+    } catch (err) {
+      setResendMessage('An unexpected error occurred. Please try again.')
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
   const dismissError = () => {
     setError(null)
   }
@@ -140,6 +191,25 @@ export default function AuthPage() {
             {error && (
               <Alert variant="destructive" dismissible onDismiss={dismissError}>
                 <AlertDescription>{error}</AlertDescription>
+                {showResend && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendConfirmation}
+                      disabled={resendLoading}
+                    >
+                      {resendLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+                      ) : (
+                        'Resend Confirmation Email'
+                      )}
+                    </Button>
+                    {resendMessage && (
+                      <span className="text-xs text-muted-foreground">{resendMessage}</span>
+                    )}
+                  </div>
+                )}
               </Alert>
             )}
 

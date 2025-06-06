@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, User, CreditCard, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings, SubscriptionManager } from '@/components/subscription';
-import { useAuth } from '@/contexts/AuthContext';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import { useRouter } from 'next/navigation';
 
 export default function AccountPage() {
@@ -19,7 +19,8 @@ export default function AccountPage() {
 function AccountPageContent() {
   const auth = useAuth();
   const router = useRouter();
-
+  const [isModalOpen, setModalOpen] = useState(false)
+  
   const handleSignOut = async () => {
     try {
       await auth.signOut();
@@ -106,50 +107,50 @@ function AccountPageContent() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Security Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-medium">Change Password</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Update your account password
-                        </p>
-                      </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
-                        Change
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-medium">Two-Factor Authentication</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Add an extra layer of security to your account
-                        </p>
-                      </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
-                        Enable
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-medium">Active Sessions</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Manage devices that are signed in to your account
-                        </p>
-                      </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
-                        View
-                      </button>
-                    </div>
+                  <Settings className="h-5 w-5" />
+                    Security & Privacy
+                </CardTitle>
+                <CardDescription>
+                  Manage your account security settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-medium">Password</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Last updated: Not available
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <Button variant="outline" size="sm" onClick={() => setModalOpen(true)} className="px-3 py-1 text-sm border rounded hover:bg-muted">
+                    Change Password
+                  </Button>
+                </div>
+              </CardContent>
+
+              <ChangePasswordModal
+                isOpen={isModalOpen}
+                onClose={() => setModalOpen(false)}
+              />
+
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-destructive rounded-lg">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-medium">Delete Account</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all associated data
+                      <br />
+                      <span className="text-xs text-muted-foreground">
+                        NOTE: This action is irreversible and cannot be undone.
+                      </span>
+                    </p>
+                  </div>
+                  <Button variant="destructive" size="sm">
+                    Delete Account
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             </TabsContent>
 
             {/* Preferences Tab */}

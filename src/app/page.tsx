@@ -455,16 +455,6 @@ export default function LandingPage() {
                       </div>
                 </div>
                   </div>
-                  
-                  {/* Floating Elements */}
-                  <div className="absolute top-4 left-4 text-blue-500 dark:text-blue-400 opacity-60">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 2L3 7v11h14V7l-7-5z"/>
-                    </svg>
-              </div>
-                  <div className="absolute bottom-4 right-4 text-purple-500 dark:text-purple-400 opacity-60">
-                    <Zap className="w-4 h-4" />
-                  </div>
                 </div>
               </div>
             </div>

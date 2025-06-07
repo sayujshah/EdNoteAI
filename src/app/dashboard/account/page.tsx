@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings, SubscriptionManager } from '@/components/subscription';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -189,21 +190,7 @@ function AccountPageContent() {
                           Choose your preferred theme (light, dark, or system)
                         </p>
                       </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
-                        Change
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-medium">Default Note Format</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Set your preferred note generation format
-                        </p>
-                      </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
-                        Set
-                      </button>
+                      <ThemeSelector />
                     </div>
                   </div>
                 </CardContent>

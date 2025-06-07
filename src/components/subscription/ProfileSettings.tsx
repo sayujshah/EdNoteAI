@@ -148,9 +148,9 @@ export function ProfileSettings({ className }: ProfileSettingsProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">User ID</Label>
+              <Label className="text-sm font-medium text-muted-foreground">User ID: </Label>
               <span className="text-sm font-mono text-muted-foreground">
-                {auth.user.id?.slice(0, 8)}...
+                {auth.user.id}
               </span>
             </div>
           </div>

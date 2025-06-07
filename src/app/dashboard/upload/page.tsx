@@ -77,7 +77,7 @@ export default function UploadPage() {
 
     try {
       // Step 1: Get presigned URL for direct S3 upload
-      setUploadStatus('Getting upload URL...');
+      setUploadStatus('Uploading...');
       const uploadUrlResponse = await fetch('/api/upload-url', {
         method: 'POST',
         body: JSON.stringify({
@@ -110,8 +110,6 @@ export default function UploadPage() {
       setUploadProgress(10); // URL obtained
 
       // Step 2: Upload directly to S3 using presigned URL with progress tracking
-      setUploadStatus('Uploading file to cloud storage...');
-      
       const s3Response = await fetch(uploadUrlData.uploadUrl, {
         method: 'PUT',
         body: file
@@ -122,7 +120,7 @@ export default function UploadPage() {
       }
 
       setUploadProgress(80); // S3 upload complete
-      setUploadStatus('Starting transcription processing...');
+      setUploadStatus('Preparing transcription processing...');
 
       // Step 3: Notify server that upload is complete and start processing
       const completeResponse = await fetch('/api/upload-complete', {
@@ -352,6 +350,10 @@ export default function UploadPage() {
                 , and{" "}
                 <Link href="/cookies" className="font-medium text-primary hover:underline">
                   Cookies Policy
+                </Link>
+                . Need help?{" "}
+                <Link href="/contact" className="font-medium text-primary hover:underline">
+                  Contact us
                 </Link>
                 .
               </p>

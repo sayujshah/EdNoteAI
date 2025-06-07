@@ -522,7 +522,7 @@ export default function LandingPage() {
             <Link href="/cookies" className="text-sm font-medium hover:underline underline-offset-4">
               Cookies
             </Link>
-            <Link href="#" className="text-sm font-medium hover:underline underline-offset-4">
+            <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
               Contact
             </Link>
           </nav>

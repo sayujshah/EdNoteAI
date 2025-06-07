@@ -319,7 +319,7 @@ export default function AnalysisPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel - Media player */}
-        <div className="flex w-1/2 flex-col border-r">
+        <div className="flex w-1/3 flex-col border-r">
           <div className="relative flex-1 bg-black">
             {loading ? (
               <div className="flex items-center justify-center h-full text-white">Loading media...</div>
@@ -401,7 +401,7 @@ export default function AnalysisPage() {
         </div>
 
         {/* Right panel - Notes */}
-        <div className="w-1/2 overflow-y-auto p-6">
+        <div className="w-2/3 overflow-y-auto p-6">
           <h2 className="text-2xl font-bold mb-4">Academic Notes</h2>
           
           {/* AI Disclaimer */}

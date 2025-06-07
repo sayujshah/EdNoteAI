@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings, SubscriptionManager } from '@/components/subscription';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import DeleteAccountSupportModal from '@/components/DeleteAccountSupportModal';
 import { ThemeSelector } from '@/components/ui/theme-selector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ function AccountPageContent() {
   const auth = useAuth();
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false)
+  const [isDeleteSupportModalOpen, setDeleteSupportModalOpen] = useState(false)
   
   const handleSignOut = async () => {
     try {
@@ -140,6 +142,11 @@ function AccountPageContent() {
                 onClose={() => setModalOpen(false)}
               />
 
+              <DeleteAccountSupportModal
+                isOpen={isDeleteSupportModalOpen}
+                onClose={() => setDeleteSupportModalOpen(false)}
+              />
+
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-destructive rounded-lg">
                   <div className="space-y-1">
@@ -152,7 +159,11 @@ function AccountPageContent() {
                       </span>
                     </p>
                   </div>
-                  <Button variant="destructive" size="sm">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => setDeleteSupportModalOpen(true)}
+                  >
                     Delete Account
                   </Button>
                 </div>

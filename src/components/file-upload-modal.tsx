@@ -335,6 +335,10 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <Link href="/cookies" className="font-medium text-primary hover:underline">
                 Cookies Policy
               </Link>
+              . Need help?{" "}
+              <Link href="/contact" className="font-medium text-primary hover:underline">
+                Contact us
+              </Link>
               .
             </p>
           </div>

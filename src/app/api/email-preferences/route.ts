@@ -124,6 +124,8 @@ export async function POST(request: NextRequest) {
         product_updates,
         security_notifications: true, // Always force security notifications to true
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
       })
 
     if (upsertError) {

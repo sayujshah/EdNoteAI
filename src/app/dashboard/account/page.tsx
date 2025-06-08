@@ -138,22 +138,6 @@ function AccountPageContent() {
                   </Button>
                 </div>
               </CardContent>
-
-              <ChangePasswordMFAModal
-                isOpen={isModalOpen}
-                onClose={() => setModalOpen(false)}
-              />
-
-              <DeleteAccountMFAModal
-                isOpen={isDeleteMFAModalOpen}
-                onClose={() => setDeleteMFAModalOpen(false)}
-              />
-
-              <EmailPreferencesModal
-                isOpen={isEmailPreferencesModalOpen}
-                onClose={() => setEmailPreferencesModalOpen(false)}
-              />
-
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-destructive rounded-lg">
                   <div className="space-y-1">
@@ -220,6 +204,22 @@ function AccountPageContent() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Modals - render outside of tabs so they can be triggered from any tab */}
+          <ChangePasswordMFAModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+          />
+
+          <DeleteAccountMFAModal
+            isOpen={isDeleteMFAModalOpen}
+            onClose={() => setDeleteMFAModalOpen(false)}
+          />
+
+          <EmailPreferencesModal
+            isOpen={isEmailPreferencesModalOpen}
+            onClose={() => setEmailPreferencesModalOpen(false)}
+          />
         </div>
       </main>
     </div>

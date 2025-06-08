@@ -10,6 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/lib/supabase"
 
+// Force dynamic rendering - disable static generation
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -40,9 +44,6 @@ export default function ResetPasswordPage() {
         } else if (session?.user) {
           // Check if user has a session - they might be in recovery mode
           setValidSession(true)
-        } else {
-          // No valid session for password reset
-          setValidSession(false)
         }
       })
 
@@ -51,23 +52,33 @@ export default function ResetPasswordPage() {
 
     const unsubscribe = handleAuthStateChange()
     
-    // Also check initial session
+    // Check initial session state
     const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setValidSession(true)
-      } else {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          setValidSession(true)
+        } else {
+          // If no session and not in recovery flow, redirect to login after a delay
+          setTimeout(() => {
+            if (validSession === null) {
+              setValidSession(false)
+            }
+          }, 3000)
+        }
+      } catch (error) {
+        console.error("Error checking session:", error)
         setValidSession(false)
       }
     }
-    
-    checkInitialSession()
-    
-    // Cleanup function
-    return () => {
-      if (unsubscribe) unsubscribe()
+
+    // Only run if we're in the browser
+    if (typeof window !== 'undefined') {
+      checkInitialSession()
     }
-  }, [router])
+
+    return () => unsubscribe()
+  }, [router, validSession])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -330,7 +330,6 @@ export default function AnalysisPage() {
                 ref={videoRef}
                 className="h-full w-full object-contain"
                 src={media.file_url} // Use actual file URL
-                poster="/placeholder.svg?height=720&width=1280" // Keep placeholder poster for now
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onError={handleVideoError} // Added error listener
@@ -379,9 +378,9 @@ export default function AnalysisPage() {
             </div>
           </div>
 
-          <div className="border-t p-4">
+          <div className="border-t p-4 flex-1 flex flex-col min-h-0">
             <h2 className="mb-2 text-lg font-semibold">Transcription</h2>
-            <div className="rounded-lg bg-muted/30 p-4 text-sm overflow-y-auto max-h-[200px]">
+            <div className="flex-1 rounded-lg bg-muted/30 p-4 text-sm overflow-y-auto min-h-0">
               {loading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-3/4" />
@@ -392,9 +391,9 @@ export default function AnalysisPage() {
               ) : error ? (
                 <p className="text-red-500">Error loading transcription: {error}</p>
               ) : getTranscriptionText() ? (
-                <p>{getTranscriptionText()}</p> // Display actual transcription
+                <p className="whitespace-pre-wrap leading-relaxed">{getTranscriptionText()}</p>
               ) : (
-                <p>Transcription not available yet.</p> // Placeholder if no transcription
+                <p className="text-muted-foreground italic">Transcription not available yet.</p>
               )}
             </div>
           </div>

@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings, SubscriptionManager } from '@/components/subscription';
-import ChangePasswordModal from '@/components/ChangePasswordModal';
-import DeleteAccountSupportModal from '@/components/DeleteAccountSupportModal';
+import ChangePasswordMFAModal from '@/components/ChangePasswordMFAModal';
+import DeleteAccountMFAModal from '@/components/DeleteAccountMFAModal';
+import EmailPreferencesModal from '@/components/EmailPreferencesModal';
 import { ThemeSelector } from '@/components/ui/theme-selector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -23,7 +24,8 @@ function AccountPageContent() {
   const auth = useAuth();
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false)
-  const [isDeleteSupportModalOpen, setDeleteSupportModalOpen] = useState(false)
+  const [isDeleteMFAModalOpen, setDeleteMFAModalOpen] = useState(false)
+  const [isEmailPreferencesModalOpen, setEmailPreferencesModalOpen] = useState(false)
   
   const handleSignOut = async () => {
     try {
@@ -137,14 +139,19 @@ function AccountPageContent() {
                 </div>
               </CardContent>
 
-              <ChangePasswordModal
+              <ChangePasswordMFAModal
                 isOpen={isModalOpen}
                 onClose={() => setModalOpen(false)}
               />
 
-              <DeleteAccountSupportModal
-                isOpen={isDeleteSupportModalOpen}
-                onClose={() => setDeleteSupportModalOpen(false)}
+              <DeleteAccountMFAModal
+                isOpen={isDeleteMFAModalOpen}
+                onClose={() => setDeleteMFAModalOpen(false)}
+              />
+
+              <EmailPreferencesModal
+                isOpen={isEmailPreferencesModalOpen}
+                onClose={() => setEmailPreferencesModalOpen(false)}
               />
 
               <CardContent className="space-y-4">
@@ -162,7 +169,7 @@ function AccountPageContent() {
                   <Button 
                     variant="destructive" 
                     size="sm"
-                    onClick={() => setDeleteSupportModalOpen(true)}
+                    onClick={() => setDeleteMFAModalOpen(true)}
                   >
                     Delete Account
                   </Button>
@@ -189,9 +196,14 @@ function AccountPageContent() {
                           Receive email updates about your account and transcriptions
                         </p>
                       </div>
-                      <button className="px-3 py-1 text-sm border rounded hover:bg-muted">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setEmailPreferencesModalOpen(true)}
+                        className="px-3 py-1 text-sm border rounded hover:bg-muted"
+                      >
                         Configure
-                      </button>
+                      </Button>
                     </div>
                     
                     <div className="flex items-center justify-between p-4 border rounded-lg">

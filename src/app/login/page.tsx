@@ -23,6 +23,8 @@ export default function AuthPage() {
   const [showResend, setShowResend] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
+  const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -162,8 +164,37 @@ export default function AuthPage() {
     }
   }
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setResetPasswordMessage('Please enter your email address first.')
+      return
+    }
+
+    setResetPasswordLoading(true)
+    setResetPasswordMessage(null)
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      })
+      
+      if (error) {
+        setResetPasswordMessage('Failed to send reset email. Please try again.')
+        console.error('Password reset error:', error)
+      } else {
+        setResetPasswordMessage('Password reset email sent! Please check your inbox.')
+      }
+    } catch (err) {
+      setResetPasswordMessage('An unexpected error occurred. Please try again.')
+      console.error('Password reset error:', err)
+    } finally {
+      setResetPasswordLoading(false)
+    }
+  }
+
   const dismissError = () => {
     setError(null)
+    setResetPasswordMessage(null)
   }
 
   return (
@@ -267,10 +298,22 @@ export default function AuthPage() {
                             Remember me
                           </label>
                         </div>
-                        <Link href="#" className="text-sm font-medium text-primary hover:underline">
-                          Forgot password?
-                        </Link>
+                        <button
+                          type="button"
+                          onClick={handleResetPassword}
+                          disabled={resetPasswordLoading}
+                          className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                        >
+                          {resetPasswordLoading ? 'Sending...' : 'Forgot password?'}
+                        </button>
                       </div>
+                      {resetPasswordMessage && (
+                        <div className="text-sm text-center">
+                          <span className={resetPasswordMessage.includes('sent') ? 'text-green-600' : 'text-red-600'}>
+                            {resetPasswordMessage}
+                          </span>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter>
                       <Button className="w-full" type="submit" disabled={loading}>

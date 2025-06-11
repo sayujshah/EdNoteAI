@@ -12,6 +12,7 @@ import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import SaveToLibraryModal from '@/components/ui/SaveToLibraryModal'; // Import save modal
 import type { SaveNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer'; // Import shared renderer
+import { useS3Cleanup } from '@/hooks/useS3Cleanup'; // Import S3 cleanup hook
 
 // Define types for media data, transcription, and notes
 interface Media {
@@ -61,6 +62,16 @@ export default function AnalysisPage() {
   // Save to Library state
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Check if processing is complete (transcription and notes are done)
+  const isProcessingComplete = media?.transcription_status === 'completed';
+
+  // Set up S3 cleanup hook
+  const { manualCleanup } = useS3Cleanup({
+    videoId: id,
+    isProcessingComplete,
+    enabled: true
+  });
 
   // Function to fetch media data, wrapped in useCallback
   const fetchData = useCallback(async () => {
@@ -271,6 +282,10 @@ export default function AnalysisPage() {
   // Handle successful save - show success briefly then navigate
   const handleSaveSuccess = () => {
     setTimeout(() => {
+      // Trigger manual cleanup before navigating away
+      if (isProcessingComplete) {
+        manualCleanup();
+      }
       router.push('/dashboard/library');
     }, 1500); // Navigate after 1.5 seconds
   };
@@ -286,10 +301,6 @@ export default function AnalysisPage() {
           </span>
         </Link>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span>Customize Notes</span>
-          </Button>
           <Button 
             variant="outline" 
             size="sm" 

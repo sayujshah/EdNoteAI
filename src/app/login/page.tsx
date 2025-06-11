@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/lib/supabase"
+import PasswordResetModal from "@/components/PasswordResetModal"
 
 function AuthPageContent() {
   const [email, setEmail] = useState("")
@@ -24,8 +25,7 @@ function AuthPageContent() {
   const [showResend, setShowResend] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMessage, setResendMessage] = useState<string | null>(null)
-  const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
-  const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null)
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -174,37 +174,12 @@ function AuthPageContent() {
     }
   }
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setResetPasswordMessage('Please enter your email address first.')
-      return
-    }
-
-    setResetPasswordLoading(true)
-    setResetPasswordMessage(null)
-    
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-      })
-      
-      if (error) {
-        setResetPasswordMessage('Failed to send reset email. Please try again.')
-        console.error('Password reset error:', error)
-      } else {
-        setResetPasswordMessage('Password reset email sent! Please check your inbox.')
-      }
-    } catch (err) {
-      setResetPasswordMessage('An unexpected error occurred. Please try again.')
-      console.error('Password reset error:', err)
-    } finally {
-      setResetPasswordLoading(false)
-    }
+  const handlePasswordResetSuccess = () => {
+    setSuccessMessage('Password reset successful! You can now sign in with your new password.')
   }
 
   const dismissError = () => {
     setError(null)
-    setResetPasswordMessage(null)
     setSuccessMessage(null)
   }
 
@@ -317,20 +292,12 @@ function AuthPageContent() {
                         </div>
                         <button
                           type="button"
-                          onClick={handleResetPassword}
-                          disabled={resetPasswordLoading}
+                          onClick={() => setShowPasswordResetModal(true)}
                           className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
                         >
-                          {resetPasswordLoading ? 'Sending...' : 'Forgot password?'}
+                          Forgot password?
                         </button>
                       </div>
-                      {resetPasswordMessage && (
-                        <div className="text-sm text-center">
-                          <span className={resetPasswordMessage.includes('sent') ? 'text-green-600' : 'text-red-600'}>
-                            {resetPasswordMessage}
-                          </span>
-                        </div>
-                      )}
                     </CardContent>
                     <CardFooter>
                       <Button className="w-full" type="submit" disabled={loading}>
@@ -481,6 +448,12 @@ function AuthPageContent() {
           </div>
         </div>
       </main>
+
+      <PasswordResetModal
+        isOpen={showPasswordResetModal}
+        onClose={() => setShowPasswordResetModal(false)}
+        onSuccess={handlePasswordResetSuccess}
+      />
     </div>
   )
 }

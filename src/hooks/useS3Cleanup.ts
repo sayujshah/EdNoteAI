@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface UseS3CleanupOptions {
   videoId: string;
@@ -9,6 +10,8 @@ interface UseS3CleanupOptions {
 export function useS3Cleanup({ videoId, isProcessingComplete, enabled = true }: UseS3CleanupOptions) {
   const cleanupTriggeredRef = useRef(false);
   const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackCleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const triggerCleanup = async (reason: string) => {
     // Prevent multiple cleanup calls
@@ -69,6 +72,24 @@ export function useS3Cleanup({ videoId, isProcessingComplete, enabled = true }: 
     }
   };
 
+  const scheduleFallbackCleanup = () => {
+    if (fallbackCleanupTimeoutRef.current) {
+      clearTimeout(fallbackCleanupTimeoutRef.current);
+    }
+
+    // Schedule fallback cleanup after 5 minutes of being on the analysis page
+    fallbackCleanupTimeoutRef.current = setTimeout(() => {
+      triggerCleanup('fallback timeout after processing complete');
+    }, 5 * 60 * 1000); // 5 minutes
+  };
+
+  const cancelFallbackCleanup = () => {
+    if (fallbackCleanupTimeoutRef.current) {
+      clearTimeout(fallbackCleanupTimeoutRef.current);
+      fallbackCleanupTimeoutRef.current = null;
+    }
+  };
+
   useEffect(() => {
     if (!enabled || !videoId) return;
 
@@ -76,7 +97,9 @@ export function useS3Cleanup({ videoId, isProcessingComplete, enabled = true }: 
       // For immediate navigation away or tab close
       if (isProcessingComplete) {
         // Use sendBeacon for reliability during page unload
-        navigator.sendBeacon(`/api/media/${videoId}/cleanup`, JSON.stringify({}));
+        const data = JSON.stringify({});
+        const blob = new Blob([data], { type: 'application/json' });
+        navigator.sendBeacon(`/api/media/${videoId}/cleanup`, blob);
       }
     };
 
@@ -99,21 +122,47 @@ export function useS3Cleanup({ videoId, isProcessingComplete, enabled = true }: 
       }
     };
 
+    // Handle browser back/forward/refresh navigation
+    const handlePopState = () => {
+      if (isProcessingComplete) {
+        triggerCleanup('browser navigation');
+      }
+    };
+
     // Set up event listeners
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('popstate', handlePopState);
 
     return () => {
       // Cleanup event listeners
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('popstate', handlePopState);
       
       // Cancel any scheduled cleanup
       cancelScheduledCleanup();
+      cancelFallbackCleanup();
     };
   }, [videoId, isProcessingComplete, enabled]);
+
+  // Schedule fallback cleanup when processing completes
+  useEffect(() => {
+    if (!enabled || !videoId) return;
+
+    if (isProcessingComplete) {
+      console.log(`Processing complete for video ${videoId}, scheduling fallback cleanup`);
+      scheduleFallbackCleanup();
+    } else {
+      cancelFallbackCleanup();
+    }
+
+    return () => {
+      cancelFallbackCleanup();
+    };
+  }, [isProcessingComplete, enabled, videoId]);
 
   // Manual cleanup function for explicit calls
   const manualCleanup = () => {

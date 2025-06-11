@@ -290,16 +290,35 @@ export default function AnalysisPage() {
     }, 1500); // Navigate after 1.5 seconds
   };
 
+  // Handle closing analysis page - trigger cleanup before navigation
+  const handleCloseAnalysis = () => {
+    if (isProcessingComplete) {
+      manualCleanup();
+    }
+    router.push('/dashboard/library');
+  };
+
+  // Handle navigating to home - trigger cleanup before navigation
+  const handleNavigateHome = () => {
+    if (isProcessingComplete) {
+      manualCleanup();
+    }
+    router.push('/');
+  };
+
   return (
     <div className="flex h-screen flex-col">
       <header className="flex h-16 items-center justify-between border-b px-6">
-        <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <button 
+          onClick={handleNavigateHome}
+          className="relative flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <BookOpen className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold">EdNoteAI</h1>
           <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
             BETA
           </span>
-        </Link>
+        </button>
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
@@ -320,11 +339,9 @@ export default function AnalysisPage() {
               </>
             )}
           </Button>
-          <Link href="/dashboard/library">
-            <Button variant="ghost" size="icon">
-              <X className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={handleCloseAnalysis}>
+            <X className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 

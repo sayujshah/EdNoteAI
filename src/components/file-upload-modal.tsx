@@ -77,7 +77,7 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
 
     try {
       // Step 1: Get presigned URL for direct S3 upload
-      setUploadStatus('Getting upload URL...');
+      setUploadStatus('Preparing upload...');
       const uploadUrlResponse = await fetch('/api/upload-url', {
         method: 'POST',
         body: JSON.stringify({
@@ -110,7 +110,7 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       setUploadProgress(10); // URL obtained
 
       // Step 2: Upload directly to S3 using presigned URL with progress tracking
-      setUploadStatus('Uploading file to cloud storage...');
+      setUploadStatus('Uploading...');
       
       const s3Response = await fetch(uploadUrlData.uploadUrl, {
         method: 'PUT',
@@ -118,11 +118,11 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       });
 
       if (!s3Response.ok) {
-        throw new Error(`S3 upload failed: ${s3Response.status} ${s3Response.statusText}`);
+        throw new Error(`Upload failed: ${s3Response.status} ${s3Response.statusText}`);
       }
 
       setUploadProgress(80); // S3 upload complete
-      setUploadStatus('Starting transcription processing...');
+      setUploadStatus('Preparing transcription processing...');
 
       // Step 3: Notify server that upload is complete and start processing
       const completeResponse = await fetch('/api/upload-complete', {
@@ -164,7 +164,7 @@ export function FileUploadModal({ isOpen, onClose }: { isOpen: boolean; onClose:
 
     } catch (error: any) {
       console.error('Upload error:', error);
-      setUploadError(error.message || 'Upload failed. Please try again.');
+      setUploadError(error.message || 'Upload failed. Please try again or contact support.');
       setIsProcessing(false);
       setUploadProgress(0);
       setUploadStatus('');

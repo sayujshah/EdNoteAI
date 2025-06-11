@@ -3,93 +3,155 @@ description: Background context for the project so far
 globs: 
 alwaysApply: false
 ---
-Background context for the project so far
+# EdNoteAI Project Recap
 
-Task
+## Project Overview
+EdNoteAI is an AI-powered note-taking application that transforms video and audio content into structured, searchable notes. Users can upload media files, which are automatically transcribed and converted into AI-generated notes in various formats (Markdown/LaTeX). The application provides a comprehensive workflow from upload to analysis to library management.
 
-1. Current Work: The project aims to build a unified web app and Chrome extension for video-based lectures, featuring audio/video capture, transcription, AI note generation, and various output formats. **MAJOR MILESTONE: The core web application has been successfully deployed to production with a fully functional upload system, direct S3 uploads, and end-to-end processing pipeline.**
+## Technology Stack
+- **Frontend**: Next.js with TypeScript, Tailwind CSS, Radix UI components
+- **Backend**: Supabase (PostgreSQL database, real-time subscriptions, authentication)
+- **File Storage**: AWS S3 with signed URLs for secure access
+- **Processing**: AWS Lambda functions for transcription and AI note generation
+- **Deployment**: Next.js app with serverless architecture
 
-Key implemented and production-ready features include:
+---
 
-- **Advanced File Upload System:** Fully functional upload page (`/dashboard/upload`) with direct browser-to-S3 upload capability, supporting files up to 200MB. Includes fallback mechanisms and proper error handling.
-- **Direct S3 Upload Pipeline:** Implemented presigned URL generation (`/api/upload-url`) and post-upload processing (`/api/upload-complete`) for efficient large file handling that bypasses server size limits.
-- **Robust Database Layer:** Supabase backend with proper Row Level Security (RLS) policies, user authentication, and real-time subscriptions. All security vulnerabilities have been identified and fixed.
-- **AWS Lambda Integration:** Fully functional transcription (OpenAI Whisper) and AI note generation (OpenAI GPT-4o-mini) Lambda functions with proper error handling and status tracking.
-- **Production Deployment:** Successfully deployed to AWS Amplify with all environment variables properly configured and CORS policies correctly set up.
-- **Real-time Analysis Page:** Dynamic analysis page (`/dashboard/analysis/[id]`) with live updates via Supabase Realtime, media playback, transcription display, and markdown-formatted notes.
-- **Complete Database Schema:** Optimized schema with `videos`, `transcripts`, `notes`, `lessons`, and `user_settings` tables, including proper relationships and data flow.
+## Work Completed Prior to Current Session
 
-2. Key Technical Concepts:
+### Core Application Infrastructure
+- **User Authentication System**: Complete signup/login flow with Supabase Auth
+- **Database Schema**: Tables for users, videos, transcripts, notes, and library management
+- **File Upload Pipeline**: Direct S3 upload with presigned URLs
+- **Transcription Pipeline**: Lambda-based audio/video transcription service
+- **AI Note Generation**: Automated conversion of transcripts to structured notes
+- **Analysis Page**: Media player with transcript and notes display
+- **Library System**: Save, organize, and manage generated notes
+- **Dashboard**: User interface for file management and navigation
 
-- **Frontend:** Next.js 14 (App Router, API Routes, Server/Client Components), React (State, Hooks), `react-markdown`, Supabase Client (`@supabase/supabase-js`, `@supabase/ssr`), Direct S3 uploads with XMLHttpRequest, Progress tracking, CORS handling.
-- **Backend:** Next.js API Routes, Supabase (Auth, PostgreSQL with RLS, Realtime), AWS S3 (direct uploads, presigned URLs), AWS Lambda (Python), AWS SDKs (`@aws-sdk/client-s3`, `@aws-sdk/client-lambda`), OpenAI API integration.
-- **Database:** PostgreSQL with Row Level Security policies, proper user data isolation, enum constraints, foreign key relationships, and real-time subscriptions.
-- **Infrastructure:** AWS Amplify (production hosting), S3 CORS configuration, IAM permissions, Lambda environment variables, Supabase project configuration.
+### Advanced Features
+- **Real-time Updates**: Supabase subscriptions for live status updates during processing
+- **Multiple Note Formats**: Support for Markdown and LaTeX output
+- **Media Player**: Custom video/audio player with seek, volume, and playback controls
+- **Responsive Design**: Mobile-friendly interface with dark mode support
+- **Note Rendering**: Advanced rendering system supporting LaTeX equations and Markdown formatting
 
-3. Relevant Files and Code Structure:
+---
 
-- `src/app/api/upload-url/route.ts`: **PRODUCTION-READY** - Generates presigned S3 URLs with comprehensive environment variable validation and error handling.
-- `src/app/api/upload-complete/route.ts`: **PRODUCTION-READY** - Handles post-upload processing, Lambda invocation, and credit consumption.
-- `src/app/api/upload/route.ts`: **LEGACY/FALLBACK** - Original server upload route, maintained as fallback for CORS issues.
-- `src/app/api/media/[videoId]/route.ts`: **PRODUCTION-READY** - Fetches media data with transcripts and notes, includes proper S3 URL generation.
-- `src/app/dashboard/upload/page.tsx`: **PRODUCTION-READY** - Advanced upload interface with direct S3 upload, progress tracking, and lesson management.
-- `src/app/dashboard/analysis/[id]/page.tsx`: **PRODUCTION-READY** - Real-time analysis page with media playback, transcription, and markdown notes display.
-- `lambda_function-audio_tran.py`: **PRODUCTION-READY** - Transcription Lambda with error handling and status updates.
-- `lambda_function-note_gen.py`: **PRODUCTION-READY** - Note generation Lambda with segmented content and markdown output.
+## Issues Resolved in Current Session
 
-4. Major Problem Solving Achievements:
+### 1. Password Reset Modal Dark Mode Fix
+**Problem**: Password reset modal appeared with white background and barely visible white/grey text in dark mode, making it unusable.
 
-- **Fixed Upload Size Limits:** Implemented direct S3 uploads to bypass 50MB server limits, now supporting 200MB files.
-- **Resolved JSON Parsing Errors:** Fixed 413 error handling and response parsing in upload system.
-- **Database Security Overhaul:** Fixed Row Level Security policies across all tables, preventing unauthorized data access.
-- **Environment Variable Management:** Implemented comprehensive validation and debugging for AWS credentials in production.
-- **CORS Configuration:** Properly configured S3 bucket CORS policies and Next.js API headers for cross-origin requests.
-- **Production Deployment:** Successfully resolved AWS Amplify environment variable loading and S3 permissions issues.
-- **Database Enum Constraints:** Fixed enum value mismatches in processing status fields.
-- **Real-time Updates:** Implemented Supabase Realtime for live status updates during processing.
+**Root Cause**: Modal was using custom CSS instead of the established UI component library and lacked proper dark mode classes.
 
-5. Production Environment:
+**Solution Implemented**:
+- Investigated existing modal patterns (`ChangePasswordMFAModal`, `DeleteAccountMFAModal`)
+- Replaced custom CSS with UI component library (`Button`, `Input`, `Alert`)
+- Added comprehensive dark mode styling:
+  - Background: `bg-white dark:bg-gray-900`
+  - Text: `text-gray-900 dark:text-gray-100`
+  - Backdrop: `bg-black/50 backdrop-blur-sm`
+  - Alert variants for error/success states with dark mode support
+  - Icon containers with proper dark mode colors
 
-- **Hosting:** AWS Amplify with automatic deployments
-- **Environment Variables:** All AWS, Supabase, and Stripe credentials properly configured
-- **File Storage:** Direct S3 uploads with proper CORS and IAM permissions
-- **Database:** Supabase with RLS policies and real-time subscriptions
-- **Processing:** AWS Lambda functions for transcription and note generation
-- **Status:** **FULLY OPERATIONAL** ✅
+### 2. Major S3 Storage Cost Optimization
+**Problem**: Uploaded video/audio files remained permanently in S3 bucket after transcription/note generation completed, when they should only be temporary storage for processing. This was causing significant ongoing storage costs.
 
-6. Current State and Next Steps:
+**Current Flow Analysis**: File uploaded to S3 → Lambda processes for transcription/notes → User views on analysis page → File stays in S3 permanently
 
-**✅ COMPLETED CORE FEATURES:**
-- File upload system with direct S3 uploads (up to 200MB)
-- User authentication and authorization
-- Database with proper security policies
-- Transcription pipeline (OpenAI Whisper)
-- AI note generation (GPT-4o-mini)
-- Real-time analysis page with media playback
-- Markdown-formatted note display
-- Production deployment on AWS Amplify
+**Comprehensive Solution Implemented**:
 
-**🔄 NEXT PRIORITY FEATURES:**
-- **Note Customization/Editing:** Add UI and backend for users to edit generated notes
-- **Enhanced Notes Display:** Improve "Summary" and "Key Points" tab logic beyond placeholder content
-- **Metadata Management:** Implement course title, professor, date, and tags for lessons
-- **Export Formats:** Complete LaTeX, Word (.docx), and plain text export functionality
-- **Video Capture:** Direct browser-based video recording capability
-- **Progress Indicators:** More granular real-time feedback during processing
+#### Database Enhancements
+- Added to `videos` table: `s3_cleaned_up BOOLEAN DEFAULT FALSE`, `s3_cleanup_at TIMESTAMP`
+- Enhanced `password_change_requests` table with `request_type` and `request_email` for improved password reset flow
 
-**🚀 FUTURE ENHANCEMENTS:**
-- **Chrome Extension:** Browser extension for direct lecture platform integration
-- **Visual Context Extraction:** Analyze on-screen visuals and integrate descriptions
-- **Stripe Integration:** Payment processing for subscriptions and billing
-- **Advanced Analytics:** Usage tracking and performance monitoring
-- **Mobile Optimization:** Responsive design improvements
-- **Collaboration Features:** Note sharing and collaborative editing
+#### API Endpoints Created
+- `POST /api/media/[videoId]/cleanup` - Individual file cleanup with safety checks
+- `POST /api/cleanup/batch` - Authenticated batch cleanup service (`CLEANUP_SERVICE_KEY`)
+- `GET /api/cleanup/batch` - Cleanup statistics and monitoring
 
-**🔧 TECHNICAL DEBT:**
-- Refactor legacy upload route (currently kept as fallback)
-- Optimize database queries for larger datasets
-- Implement comprehensive error logging and monitoring
-- Add automated testing suite
-- Improve TypeScript coverage
+#### Smart Cleanup Hook (`src/hooks/useS3Cleanup.ts`)
+- **Multi-event Detection**: beforeunload, pagehide, visibilitychange, focus, blur
+- **Smart Delay System**: 30-second delay for tab switching (allows user return)
+- **Reliable Cleanup**: Uses `sendBeacon` for cleanup during page unload
+- **Duplicate Prevention**: Prevents multiple cleanup calls for same file
+- **Comprehensive Logging**: Debug tracking for all cleanup triggers
 
-The project has achieved a significant milestone with a fully functional production web application. The core video upload, transcription, and note generation pipeline is working end-to-end. The next phase focuses on user experience enhancements and advanced features to differentiate the product in the educational technology market.
+#### UI Integration
+- **Processing Status Indicator**: "✓ Processing Complete" vs "⏳ Processing..."
+- **Automatic Cleanup**: Integrated cleanup hook in analysis page
+- **Manual Triggers**: Cleanup on button clicks and navigation events
+
+#### Safety & Reliability Features
+- **Completion Check**: Only cleans files where `transcription_status = 'completed'`
+- **Authentication**: Required for batch cleanup service
+- **Error Handling**: Retry logic and graceful failure handling
+- **Batch Processing**: Controlled processing with delays to avoid S3 rate limits
+
+### 3. Real-time Notes Population Fix
+**Problem**: Generated notes were not automatically populating on the analysis page after transcription completion.
+
+**Root Cause**: The `useEffect` managing real-time subscriptions had `fetchData` in its dependency array, causing the subscription to be recreated on every render and preventing proper real-time updates.
+
+**Solution Implemented**:
+- **Fixed Dependency Array**: Removed `fetchData` from useEffect dependencies, keeping only `[id]`
+- **Enhanced Logging**: Added debugging to track real-time updates and data fetching
+- **Subscription Stability**: Ensured real-time subscription persists throughout component lifecycle
+
+**Before Fix**:
+```typescript
+}, [id, fetchData]); // Caused constant re-subscriptions
+```
+
+**After Fix**:
+```typescript
+}, [id]); // Stable subscription, only recreated when video ID changes
+```
+
+---
+
+## Current System State
+
+### S3 Storage Cost Solution
+✅ **Complete**: Comprehensive cleanup system treating S3 as truly temporary storage
+- Automatic cleanup on page exit (any method)
+- Backup batch cleanup service for missed files
+- Significant reduction in ongoing storage costs
+
+### User Experience Improvements
+✅ **Dark Mode Consistency**: All modals now properly support dark theme
+✅ **Real-time Updates**: Notes automatically populate when processing completes
+✅ **Processing Indicators**: Clear status feedback during transcription/generation
+
+### Safety & Reliability
+✅ **Data Integrity**: Only completed files are cleaned up
+✅ **Error Handling**: Comprehensive error handling and retry logic
+✅ **User Authentication**: Secure access to all cleanup operations
+✅ **Monitoring**: Batch cleanup statistics and logging
+
+---
+
+## Next Development Priorities
+
+1. **User Experience Enhancements**
+   - Note customization options (format preferences, styling)
+   - Advanced search and filtering in library
+   - Bulk operations for library management
+
+2. **Performance Optimizations**
+   - Implement proper caching strategies
+   - Optimize media loading and streaming
+   - Database query optimization
+
+3. **Feature Additions**
+   - Export functionality (PDF, Word, etc.)
+   - Collaboration features (sharing notes)
+   - Integration with external note-taking apps
+
+4. **Analytics & Monitoring**
+   - User usage analytics
+   - Processing performance metrics
+   - Cost tracking and optimization
+
+The application now has a solid foundation with major cost optimization completed, reliable real-time updates, and consistent user experience across all themes. The codebase is well-structured for future enhancements and scaling.

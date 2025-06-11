@@ -77,7 +77,6 @@ export default function UploadPage() {
 
     try {
       // Step 1: Get presigned URL for direct S3 upload
-      setUploadStatus('Uploading...');
       const uploadUrlResponse = await fetch('/api/upload-url', {
         method: 'POST',
         body: JSON.stringify({
@@ -108,6 +107,7 @@ export default function UploadPage() {
       }
 
       setUploadProgress(10); // URL obtained
+      setUploadStatus('Uploading...');
 
       // Step 2: Upload directly to S3 using presigned URL with progress tracking
       const s3Response = await fetch(uploadUrlData.uploadUrl, {

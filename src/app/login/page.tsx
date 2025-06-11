@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, BookOpen, Mail, Lock, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,12 +13,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { supabase } from "@/lib/supabase"
 
-export default function AuthPage() {
+function AuthPageContent() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("signin")
   const [showResend, setShowResend] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
@@ -26,6 +27,15 @@ export default function AuthPage() {
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
   const [resetPasswordMessage, setResetPasswordMessage] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Check for URL parameters on page load
+  useEffect(() => {
+    const message = searchParams.get('message')
+    if (message === 'password_reset_success') {
+      setSuccessMessage('Password reset successful! You can now sign in with your new password.')
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -195,6 +205,7 @@ export default function AuthPage() {
   const dismissError = () => {
     setError(null)
     setResetPasswordMessage(null)
+    setSuccessMessage(null)
   }
 
   return (
@@ -244,6 +255,12 @@ export default function AuthPage() {
                     )}
                   </div>
                 )}
+              </Alert>
+            )}
+
+            {successMessage && (
+              <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+                <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
 
@@ -465,5 +482,13 @@ export default function AuthPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthPageContent />
+    </Suspense>
   )
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, BookOpen, Lock, Loader2, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -24,47 +24,21 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [validSession, setValidSession] = useState<boolean | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if we have the necessary tokens/session for password reset
-    const handleAuthStateChange = () => {
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log("Auth state change:", event, session?.user?.id)
-        
-        if (event === "PASSWORD_RECOVERY") {
-          // User clicked the reset link, they can now set a new password
-          console.log("Password recovery event detected")
-          setValidSession(true)
-        } else if (event === "SIGNED_OUT") {
-          // If user gets signed out, redirect to login
-          router.push("/login")
-        } else if (session?.user) {
-          // Check if user has a session - they might be in recovery mode
-          setValidSession(true)
-        }
-      })
-
-      return () => subscription.unsubscribe()
-    }
-
-    const unsubscribe = handleAuthStateChange()
-    
-    // Check initial session state
+    // For password reset, we always want to show the form
+    // Users only arrive here through password reset links
     const checkInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        console.log("Reset password page - session check:", session?.user?.id)
+        
         if (session?.user) {
+          // User has a valid session from the reset link - show the form
           setValidSession(true)
         } else {
-          // If no session and not in recovery flow, redirect to login after a delay
-          setTimeout(() => {
-            if (validSession === null) {
-              setValidSession(false)
-            }
-          }, 3000)
+          // No session means invalid/expired link
+          setValidSession(false)
         }
       } catch (error) {
         console.error("Error checking session:", error)
@@ -72,13 +46,22 @@ export default function ResetPasswordPage() {
       }
     }
 
+    // Listen for auth state changes (optional, mainly for cleanup)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change on reset page:", event)
+      
+      if (event === "SIGNED_OUT") {
+        router.push("/login")
+      }
+    })
+
     // Only run if we're in the browser
     if (typeof window !== 'undefined') {
       checkInitialSession()
     }
 
-    return () => unsubscribe()
-  }, [router, validSession])
+    return () => subscription.unsubscribe()
+  }, [router])
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,23 +82,30 @@ export default function ResetPasswordPage() {
     }
 
     try {
+      console.log("Attempting to update password...")
+      
       const { error } = await supabase.auth.updateUser({
         password: password
       })
 
       if (error) {
-        setError(error.message)
         console.error("Password reset error:", error)
+        setError(error.message)
       } else {
+        console.log("Password updated successfully")
         setSuccess(true)
+        
+        // Sign out the user after password reset to force fresh login
+        await supabase.auth.signOut()
+        
         // Redirect to login after a short delay
         setTimeout(() => {
-          router.push("/login")
+          router.push("/login?message=password_reset_success")
         }, 3000)
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.")
       console.error("Password reset error:", err)
+      setError("An unexpected error occurred. Please try again.")
     } finally {
       setLoading(false)
     }

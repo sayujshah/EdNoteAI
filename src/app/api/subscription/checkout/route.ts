@@ -32,6 +32,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if user already has an active subscription
+    const { data: existingSubscription } = await supabase
+      .from('user_subscriptions')
+      .select('status, current_period_end, stripe_subscription_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingSubscription?.status === 'active' && existingSubscription.stripe_subscription_id) {
+      // Check if subscription is not expired and has a real Stripe subscription
+      const now = new Date();
+      const periodEnd = new Date(existingSubscription.current_period_end);
+      
+      if (periodEnd > now) {
+        return NextResponse.json(
+          { error: 'You already have an active subscription. Please manage it through your account settings.' }, 
+          { status: 400 }
+        );
+      }
+    }
+
     console.log(`Creating checkout session for user ${user.id}, price: ${price_id}, cycle: ${billing_cycle}`);
 
     // Create checkout session

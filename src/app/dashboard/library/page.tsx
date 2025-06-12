@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Plus, FileText, Grid3X3, List, SortAsc, SortDesc, Upload } from "lucide-react";
+import { BookOpen, Search, Plus, FileText, Grid3X3, List, SortAsc, SortDesc, Upload, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { FileUploadModal } from "@/components/file-upload-modal";
 import type { SavedNote } from '@/lib/types/library';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // Note Card Component
 interface NoteCardProps {
@@ -146,9 +146,14 @@ function NoteCard({ note, onDelete, viewMode }: NoteCardProps) {
 export default function LibraryPage() {
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [notes, setNotes] = useState<SavedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Subscription success state
+  const [showSubscriptionSuccess, setShowSubscriptionSuccess] = useState(false);
+  const [subscriptionPlan, setSubscriptionPlan] = useState('');
   
   // Modal state
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -164,6 +169,31 @@ export default function LibraryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalNotes, setTotalNotes] = useState(0);
+
+  // Handle subscription success
+  useEffect(() => {
+    const subscribed = searchParams.get('subscribed');
+    if (subscribed === 'true') {
+      // Check subscription status to get plan name
+      const checkSubscription = async () => {
+        try {
+          const res = await fetch('/api/subscription/status');
+          if (res.ok) {
+            const status = await res.json();
+            if (status.isActive && status.planName !== 'Free') {
+              setSubscriptionPlan(status.planName);
+              setShowSubscriptionSuccess(true);
+              // Clear the URL parameter
+              router.replace('/dashboard/library', { scroll: false });
+            }
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      };
+      checkSubscription();
+    }
+  }, [searchParams, router]);
 
   // Guard: redirect free users to subscription page
   useEffect(() => {
@@ -283,6 +313,33 @@ export default function LibraryPage() {
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Subscription Success Banner */}
+        {showSubscriptionSuccess && (
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-green-800 dark:text-green-200">
+                    🎉 Welcome to {subscriptionPlan}!
+                  </h3>
+                  <p className="text-green-700 dark:text-green-300 text-sm mt-1">
+                    Your subscription is now active. You can now upload longer files, generate unlimited notes, and access your complete notes library.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSubscriptionSuccess(false)}
+                className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Your Notes Library</h1>

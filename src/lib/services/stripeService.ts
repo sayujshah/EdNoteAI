@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import type { 
   CreateSubscriptionRequest
 } from '@/lib/types/subscription';
@@ -13,6 +13,31 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil',
 });
 
+// Create Supabase service role client for admin operations
+const createServiceClient = () => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+};
+
+// Validate Stripe configuration on module load
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('STRIPE_SECRET_KEY environment variable is not set');
+  throw new Error('Stripe configuration missing');
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('SUPABASE_SERVICE_ROLE_KEY environment variable is not set');
+  throw new Error('Supabase service role key missing');
+}
+
 export class StripeService {
 
   /**
@@ -23,8 +48,11 @@ export class StripeService {
     request: CreateSubscriptionRequest & { success_url: string; cancel_url: string }
   ): Promise<{ url: string }> {
     try {
+      console.log(`Creating checkout session for user ${userId}`);
+      
       // Get or create Stripe customer
       const customer = await this.getOrCreateCustomer(userId);
+      console.log(`Using Stripe customer ${customer.id} for user ${userId}`);
 
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
@@ -43,16 +71,34 @@ export class StripeService {
           user_id: userId,
           billing_cycle: request.billing_cycle,
         },
+        subscription_data: {
+          metadata: {
+            user_id: userId,
+            billing_cycle: request.billing_cycle,
+          },
+        },
       });
 
       if (!session.url) {
         throw new Error('Failed to create checkout session URL');
       }
 
+      console.log(`Checkout session created: ${session.id}`);
       return { url: session.url };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      throw new Error('Failed to create checkout session');
+      
+      // Provide more specific error messages
+      if (error.type === 'StripeInvalidRequestError') {
+        if (error.code === 'resource_missing') {
+          throw new Error('Invalid price or customer information. Please try again.');
+        }
+        if (error.code === 'parameter_invalid_empty') {
+          throw new Error('Missing required subscription information.');
+        }
+      }
+      
+      throw new Error(`Failed to create checkout session: ${error.message}`);
     }
   }
 
@@ -60,25 +106,42 @@ export class StripeService {
    * Get or create a Stripe customer for a user
    */
   static async getOrCreateCustomer(userId: string): Promise<Stripe.Customer> {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
+    
     // Check if user already has a Stripe customer ID
     const { data: subscription } = await supabase
-      .from('user_subscriptions')
+      .from('user_subscriptions_test')
       .select('stripe_customer_id')
       .eq('user_id', userId)
       .single();
 
-    if (subscription?.stripe_customer_id) {
-      // Return existing customer
-      return await stripe.customers.retrieve(subscription.stripe_customer_id) as Stripe.Customer;
+    // Check if we have a valid (non-manual) customer ID
+    if (subscription?.stripe_customer_id && !subscription.stripe_customer_id.startsWith('manual_customer_')) {
+      try {
+        // Try to retrieve the existing customer
+        const customer = await stripe.customers.retrieve(subscription.stripe_customer_id) as Stripe.Customer;
+        if (!customer.deleted) {
+          return customer;
+        }
+      } catch (error) {
+        console.log(`Customer ${subscription.stripe_customer_id} not found in Stripe, creating new one`);
+        // Continue to create new customer if retrieval fails
+      }
     }
 
     // Get user email from auth
-    const { data: { user } } = await supabase.auth.admin.getUserById(userId);
+    const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+    
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      throw new Error(`Failed to fetch user: ${userError.message}`);
+    }
     
     if (!user?.email) {
       throw new Error('User email not found');
     }
+
+    console.log(`Creating new Stripe customer for user ${userId} with email ${user.email}`);
 
     // Create new Stripe customer
     const customer = await stripe.customers.create({
@@ -88,6 +151,19 @@ export class StripeService {
       },
     });
 
+    // Update the database with the real Stripe customer ID
+    if (subscription) {
+      // Update existing subscription record
+      await supabase
+        .from('user_subscriptions_test')
+        .update({ stripe_customer_id: customer.id })
+        .eq('user_id', userId);
+    } else {
+      // This case shouldn't happen in normal checkout flow, but handle it gracefully
+      console.log(`No subscription record found for user ${userId}, will be created by webhook`);
+    }
+
+    console.log(`Created Stripe customer ${customer.id} for user ${userId}`);
     return customer;
   }
 
@@ -163,6 +239,9 @@ export class StripeService {
       console.log('Processing Stripe webhook:', event.type);
 
       switch (event.type) {
+        case 'checkout.session.completed':
+          await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
         case 'customer.subscription.created':
           await this.handleSubscriptionCreated(event.data.object as Stripe.Subscription);
           break;
@@ -190,14 +269,53 @@ export class StripeService {
   }
 
   /**
+   * Handle checkout session completed event
+   */
+  private static async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
+    console.log(`Checkout session completed: ${session.id}`);
+    
+    // For subscription mode, the subscription will be handled by subscription.created event
+    if (session.mode === 'subscription' && session.subscription) {
+      console.log(`Subscription ${session.subscription} created from checkout session ${session.id}`);
+      // The subscription.created webhook will handle the database update
+    }
+  }
+
+  /**
    * Handle subscription created event
    */
   private static async handleSubscriptionCreated(subscription: Stripe.Subscription): Promise<void> {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
     const sub = subscription as Stripe.Subscription;
-    const userId = sub.metadata.user_id;
+    let userId = sub.metadata.user_id;
+    
+    // If no user_id in metadata, try to find user by customer email
     if (!userId) {
-      console.error('No user_id in subscription metadata');
+      console.log('No user_id in subscription metadata, attempting to find user by customer email');
+      
+      try {
+        // Get customer from Stripe
+        const customer = await stripe.customers.retrieve(sub.customer as string) as Stripe.Customer;
+        
+        if (customer.email) {
+          // Find user by email in auth.users
+          const { data: user, error: userError } = await supabase.auth.admin.listUsers();
+          
+          if (!userError && user?.users) {
+            const foundUser = user.users.find(u => u.email === customer.email);
+            if (foundUser) {
+              userId = foundUser.id;
+              console.log(`Found user ${userId} for email ${customer.email}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error finding user by customer email:', error);
+      }
+    }
+    
+    if (!userId) {
+      console.error('Could not determine user_id for subscription');
       return;
     }
 
@@ -216,6 +334,8 @@ export class StripeService {
       console.error('No plan found for price ID:', priceId);
       return;
     }
+
+    console.log(`Processing subscription for user ${userId}, plan ${plan.name} (${billingCycle})`);
 
     // Create or update user subscription
     const { error } = await supabase
@@ -236,6 +356,8 @@ export class StripeService {
 
     if (error) {
       console.error('Error saving subscription:', error);
+    } else {
+      console.log(`Successfully processed subscription ${sub.id} for user ${userId}`);
     }
   }
 
@@ -243,7 +365,7 @@ export class StripeService {
    * Handle subscription updated event
    */
   private static async handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
     const sub = subscription as Stripe.Subscription;
     const { error } = await supabase
       .from('user_subscriptions')
@@ -264,7 +386,7 @@ export class StripeService {
    * Handle subscription deleted event
    */
   private static async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
     const { error } = await supabase
       .from('user_subscriptions')
       .update({
@@ -282,7 +404,7 @@ export class StripeService {
    */
   private static async handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
     if (!('subscription' in invoice) || !invoice.subscription) return;
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
     // Get subscription to find user
     const { data: subscription } = await supabase
       .from('user_subscriptions')
@@ -316,7 +438,7 @@ export class StripeService {
    */
   private static async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     if (!('subscription' in invoice) || !invoice.subscription) return;
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
     // Get subscription to find user
     const { data: subscription } = await supabase
       .from('user_subscriptions')

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ednoteai.com/sitemap.xml 

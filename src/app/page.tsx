@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { ArrowRight, Atom, BookOpen, Chrome, GraduationCap, FileText, FileVideo2, SquareFunction, Upload, Workflow, Zap } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -11,12 +11,94 @@ import { FileUploadModal } from "@/components/file-upload-modal"
 import { LandingPricing } from "@/components/pricing/LandingPricing"
 
 export default function LandingPage() {
+  useEffect(() => {
+    // Inject FAQPage and Product schema for SEO
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is AI transcription?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AI transcription uses artificial intelligence to automatically convert audio or video into accurate, searchable text. We then take that transcription and generate optimized academic-style notes in markdown or LaTeX format automatically for you."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How accurate is EdNoteAI's transcription?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "EdNoteAI delivers 98%+ accuracy for transcriptions in multiple languages and accents."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use EdNoteAI for note taking during lectures or meetings?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! EdNoteAI is designed for students and professionals to transcribe and take notes from lectures, meetings, and more."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my data secure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, your files and notes are encrypted and never shared."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does EdNoteAI cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "EdNoteAI offers affordable puts students first to make sure our plans are affordable for all students and professionals. We have a \"Beat Their Price Guarantee\" so we don't just match our competitors, we beat them! If you find a similar service at a cheaper price, send us their info to support@ednoteai.com and we'll lower our prices for ALL our customers! See the Pricing section for more details."
+          }
+        }
+      ]
+    };
+    const productSchema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "EdNoteAI",
+      "description": "AI-powered transcription and note taking for students and professionals.",
+      "brand": {
+        "@type": "Brand",
+        "name": "EdNoteAI"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "9.99",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "120"
+      }
+    };
+    const faqScript = document.createElement('script');
+    faqScript.type = 'application/ld+json';
+    faqScript.innerHTML = JSON.stringify(faqSchema);
+    document.head.appendChild(faqScript);
+    const productScript = document.createElement('script');
+    productScript.type = 'application/ld+json';
+    productScript.innerHTML = JSON.stringify(productSchema);
+    document.head.appendChild(productScript);
+    return () => {
+      document.head.removeChild(faqScript);
+      document.head.removeChild(productScript);
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BookOpen className="h-6 w-6 text-primary" />
+          <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="EdNoteAI Home">
+            <BookOpen className="h-6 w-6 text-primary" aria-label="EdNoteAI Logo" />
             <span className="text-xl font-bold">EdNoteAI</span>
             <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
               BETA
@@ -47,11 +129,10 @@ export default function LandingPage() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    Transform Your Learning with AI-Powered Notes
+                    AI Transcription & Note Taking for Students and Professionals
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Upload any video or audio file and receive detailed transcriptions with academic-style notes to
-                    enhance your learning experience.
+                    Upload any video or audio file and receive detailed, accurate transcriptions with academic-style notes. Perfect for lectures, meetings, and research.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -114,7 +195,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-primary px-3 py-1 text-sm text-primary-foreground">
-                  Key Features
+                  Key Features of AI Transcription & Note Taking
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
                   Everything You Need for Better Learning
@@ -293,7 +374,7 @@ export default function LandingPage() {
                     Benefits
                   </div>
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                    Learn Faster, Remember Longer
+                    Benefits of AI-Powered Transcription & Notes
                   </h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed">
                     EdNoteAI is designed to optimize your learning process and help you retain information more effectively.
@@ -346,7 +427,45 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <LandingPricing />
+        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight mb-6 text-center">
+              Affordable Pricing for Students & Professionals
+            </h2>
+            <LandingPricing />
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section id="faq" className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight mb-6 text-center">
+              Frequently Asked Questions
+            </h2>
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold">What is AI transcription?</h3>
+                <p className="text-muted-foreground">AI transcription uses artificial intelligence to automatically convert audio or video into accurate, searchable text. We then take that transcription and generate optimized academic-style notes in markdown or LaTeX format automatically for you.</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">How accurate is EdNoteAI's transcription?</h3>
+                <p className="text-muted-foreground">EdNoteAI delivers 98%+ accuracy for transcriptions in multiple languages and accents.</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">Can I use EdNoteAI for note taking during lectures or meetings?</h3>
+                <p className="text-muted-foreground">Yes! EdNoteAI is designed for students and professionals to transcribe and take notes from lectures, meetings, and more.</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">Is my data secure?</h3>
+                <p className="text-muted-foreground">Yes, your files and notes are encrypted and never shared.</p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">How much does EdNoteAI cost?</h3>
+                <p className="text-muted-foreground">EdNoteAI offers affordable puts students first to make sure our plans are affordable for all students and professionals. We have a "Beat Their Price Guarantee" so we don't just match our competitors, we beat them! If you find a similar service at a cheaper price, send us their info to support@ednoteai.com and we'll lower our prices for ALL our customers! See the Pricing section for more details.</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Chrome Extension Section */}
         <section className="w-full bg-muted/50 py-12 md:py-24 lg:py-32">
@@ -490,34 +609,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-      <footer className="w-full border-t bg-background">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 py-10 px-4 sm:px-6 lg:px-8 md:h-24 md:flex-row md:py-0">
-          <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold">EdNoteAI</span>
-            <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
-              BETA
-            </span>
-          </Link>
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            © {new Date().getFullYear()} EdNoteAI. All rights reserved.
-          </p>
-          <nav className="flex gap-4 sm:gap-6">
-            <Link href="/terms" className="text-sm font-medium hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="/privacy" className="text-sm font-medium hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="/cookies" className="text-sm font-medium hover:underline underline-offset-4">
-              Cookies
-            </Link>
-            <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
-        </div>
-      </footer>
     </div>
   )
 }

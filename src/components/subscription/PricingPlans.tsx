@@ -153,6 +153,10 @@ export function PricingPlans({
             answer="Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately."
           />
           <FAQItem
+            question="How do I cancel my subscription?"
+            answer="You can cancel your subscription anytime by clicking 'Manage Billing' in your account settings, which will take you to the secure Stripe Customer Portal."
+          />
+          <FAQItem
             question="What happens if I exceed my limits?"
             answer="If you exceed your upload duration or credit limits, you'll need to upgrade your plan to continue using the service."
           />
@@ -163,6 +167,10 @@ export function PricingPlans({
           <FAQItem
             question="What payment methods do you accept?"
             answer="We accept all major credit cards and debit cards through Stripe's secure payment processing."
+          />
+          <FAQItem
+            question="Do you guys price match?"
+            answer="We don't just price match, we beat it! If you find a similar service at a cheaper price, send us their info to support@ednoteai.com and we'll lower our prices for ALL our customers! Our main goal is to make sure students can learn faster at affordable rates."
           />
         </CardContent>
       </Card>

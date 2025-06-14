@@ -130,9 +130,8 @@ export function SubscriptionManager({ className }: SubscriptionManagerProps) {
       setIsProcessing(true);
       setError(null);
 
-      // This would typically create a Stripe Customer Portal session
-      // For now, we'll show a placeholder
-      setSuccess('Billing management coming soon! You can cancel anytime by contacting support.');
+      // Redirect directly to the provided Stripe customer portal link
+      window.location.href = 'https://billing.stripe.com/p/login/cNi6oGeIr5WW8Ad8zt33W00';
     } catch (err: any) {
       console.error('Error opening billing portal:', err);
       setError(err.message || 'Failed to open billing portal');

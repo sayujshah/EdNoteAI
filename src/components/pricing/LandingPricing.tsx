@@ -96,7 +96,7 @@ export function LandingPricing({ className }: LandingPricingProps) {
               Simple, Transparent Pricing
             </h2>
             <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-              Choose the plan that fits your learning needs
+              Pricing with students in mind to fit any budget. If you find a similar service at a cheaper price, we'll beat it!
             </p>
           </div>
 

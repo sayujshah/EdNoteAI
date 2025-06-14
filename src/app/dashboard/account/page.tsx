@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BookOpen, User, CreditCard, Settings, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import DeleteAccountMFAModal from '@/components/DeleteAccountMFAModal';
 import EmailPreferencesModal from '@/components/EmailPreferencesModal';
 import { ThemeSelector } from '@/components/ui/theme-selector';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AccountPage() {
   return (
@@ -23,9 +23,21 @@ export default function AccountPage() {
 function AccountPageContent() {
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isModalOpen, setModalOpen] = useState(false)
   const [isDeleteMFAModalOpen, setDeleteMFAModalOpen] = useState(false)
   const [isEmailPreferencesModalOpen, setEmailPreferencesModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile');
+
+  // Handle URL parameters for section switching
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section === 'billing') {
+      setActiveTab('subscription');
+      // Clean up URL without triggering navigation
+      window.history.replaceState(null, '', '/dashboard/account');
+    }
+  }, [searchParams]);
   
   const handleSignOut = async () => {
     try {
@@ -77,7 +89,7 @@ function AccountPageContent() {
           </div>
           
           {/* Main Content with Tabs */}
-          <Tabs defaultValue="profile" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 max-w-2xl">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />

@@ -1,0 +1,99 @@
+# EdNoteAI Project Recap (as of June 2024)
+
+## Project Overview
+EdNoteAI is an AI-powered note-taking and transcription platform designed for students and professionals. It transforms video and audio content into structured, searchable, and academic-grade notes. Users can upload media files, which are transcribed and converted into notes (Markdown/LaTeX), with a focus on accuracy, speed, and educational value. The platform is optimized for complex lectures and multi-speaker environments.
+
+## Technology Stack
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, Radix UI
+- **Backend:** Supabase (PostgreSQL, Auth, Realtime)
+- **File Storage:** AWS S3 (presigned URLs)
+- **Processing:** AWS Lambda (transcription, AI note generation)
+- **Deployment:** Serverless Next.js
+
+## Database Schema (Core Tables)
+- **users:** Authenticated users (via Supabase Auth)
+- **videos:** Uploaded media files (fields: id, user_id, s3_key, status, s3_cleaned_up, s3_cleanup_at, etc.)
+- **transcripts:** Transcription results for each video
+- **notes:** AI-generated notes (Markdown/LaTeX, linked to videos)
+- **library:** User's saved/generated notes
+- **subscription_plans:** Stripe-linked plans (monthly/yearly, product/price IDs)
+- **user_subscriptions:** User's current plan, status, period, etc.
+- **stripe_customers/stripe_subscriptions:** Stripe sync tables for billing
+- **password_change_requests:** For secure password reset flows
+
+## Major Features & Completed Work
+
+### Core Application
+- **User Authentication:** Signup/login, secure session management
+- **File Upload Pipeline:** Direct S3 upload with presigned URLs, size validation
+- **Transcription Pipeline:** Lambda-based, supports multiple languages/accents
+- **AI Note Generation:** Converts transcripts to academic-style notes, supports Markdown and LaTeX
+- **Analysis Page:** Media player with transcript and notes display, real-time updates
+- **Library System:** Save, organize, search, and manage notes
+- **Dashboard:** Central hub for uploads, library, account, and subscription management
+
+### Advanced Features
+- **Real-time Updates:** Supabase subscriptions for live status during processing
+- **Multiple Note Formats:** Markdown and LaTeX output, with advanced rendering
+- **Responsive Design:** Mobile-friendly, dark mode support
+- **Note Rendering:** LaTeX equations, Markdown formatting, code blocks
+- **Usage Limits:** Plan-based restrictions (upload duration, features)
+
+### Subscription & Billing
+- **Stripe Integration:** Monthly/yearly plans, live/test mode, webhooks
+- **Automatic Sync:** Triggers/functions keep user_subscriptions in sync with Stripe
+- **Customer Portal:** "Manage Billing" button links to Stripe portal for self-service
+- **RLS Bypass:** SECURITY DEFINER functions for triggers to work with Row Level Security
+
+### Cost Optimization
+- **S3 Cleanup System:**
+  - Automatic cleanup of media files after processing (to minimize storage costs)
+  - Smart client hook (useS3Cleanup) for reliable deletion on page exit
+  - Batch cleanup API for missed files
+  - Database fields for tracking cleanup status
+- **Safety:** Only completed files are cleaned, with error handling and retry logic
+
+### SEO & Marketing
+- **SEO Optimization:**
+  - Meta tags, Open Graph, Twitter Card, JSON-LD structured data (SoftwareApplication, Product, FAQPage)
+  - Sitemap.xml and robots.txt (public directory)
+  - Canonical URLs, mobile-friendly, fast loading
+- **Blog System:**
+  - Markdown-based blog (`src/content/blog/`), dynamic routing, SEO-optimized posts
+  - Blog index and post pages, with navigation links in header/footer
+  - First post focused on value for students and AI for complex lectures
+- **Navigation:**
+  - Global sticky header and footer (consistent across all pages except landing)
+  - Conditional nav links (Features, Pricing, etc. only on landing page)
+  - No duplicate headers/footers on any page
+
+### User Experience & UI
+- **Dark Mode Consistency:** All modals and UI components support dark theme
+- **Processing Indicators:** Clear status feedback during transcription/generation
+- **Accessibility:** Semantic HTML, alt text, ARIA labels where appropriate
+- **Error Handling:** User-friendly error messages, retry logic
+
+### Security & Reliability
+- **RLS (Row Level Security):** All triggers and sync functions use SECURITY DEFINER
+- **Auth Checks:** All sensitive endpoints require authentication
+- **Monitoring:** Batch cleanup stats, error logging
+
+## What Is Still Left To Be Worked On
+- **Chrome Extension:**
+  - Hands-free transcription and note-taking for any lecture/video playing in the browser (YouTube, Coursera, Zoom, etc.)
+  - Automatic note sync to EdNoteAI library
+  - UI/UX for extension onboarding and settings
+- **Planned Enhancements:**
+  - Note customization (format preferences, styling)
+  - Advanced search/filtering in library
+  - Bulk operations for library management
+  - Export functionality (PDF, Word, etc.)
+  - Collaboration/sharing features
+  - Analytics & usage metrics
+  - Further performance and cost optimizations
+
+## Current System State
+- **Production-ready** for core workflow: upload → transcribe → generate notes → manage library → billing
+- **Highly optimized** for cost, SEO, and user experience
+- **Well-structured** for future enhancements and scaling
+

@@ -3,7 +3,7 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
-import Head from "next/head"
+
 import Link from "next/link"
 import { BookOpen } from "lucide-react"
 import { HeaderNav } from "@/components/HeaderNav"
@@ -15,6 +15,53 @@ export const metadata = {
   title: "EdNoteAI: AI Transcription & Note Taking Service",
   description:
     "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI. Fast, secure, and affordable AI transcription and note taking for students and professionals.",
+  keywords: "ai transcription, ai note taking, automatic transcription, meeting transcription, audio to text, AI note taker, lecture transcription, voice notes AI, transcription service, AI meeting notes, best ai transcription for students, ai note taking for professionals, secure ai transcription, affordable ai transcription, real-time ai transcription",
+  robots: "index, follow",
+  canonical: "https://ednoteai.com/",
+  openGraph: {
+    type: "website",
+    url: "https://ednoteai.com/",
+    title: "EdNoteAI: AI Transcription & Note Taking Service",
+    description: "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI.",
+    images: [
+      {
+        url: "https://ednoteai.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "EdNoteAI - AI Transcription & Note Taking Service",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EdNoteAI: AI Transcription & Note Taking Service",
+    description: "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI.",
+    images: ["https://ednoteai.com/og-image.png"],
+  },
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/apple-icon.png',
+  },
+  other: {
+    'application/ld+json': JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "EdNoteAI",
+      "url": "https://ednoteai.com/",
+      "applicationCategory": "Productivity",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "9.99",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "120"
+      }
+    })
+  },
 }
 
 function Footer() {
@@ -60,49 +107,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Head>
-        {/* Primary Meta Tags */}
-        <title>EdNoteAI: AI Transcription & Note Taking Service</title>
-        <meta name="description" content="Transform your meetings, lectures, and audio into accurate notes with EdNoteAI. Fast, secure, and affordable AI transcription and note taking for students and professionals." />
-        <meta name="keywords" content="ai transcription, ai note taking, automatic transcription, meeting transcription, audio to text, AI note taker, lecture transcription, voice notes AI, transcription service, AI meeting notes, best ai transcription for students, ai note taking for professionals, secure ai transcription, affordable ai transcription, real-time ai transcription" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://ednoteai.com/" />
-
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ednoteai.com/" />
-        <meta property="og:title" content="EdNoteAI: AI Transcription & Note Taking Service" />
-        <meta property="og:description" content="Transform your meetings, lectures, and audio into accurate notes with EdNoteAI." />
-        <meta property="og:image" content="https://ednoteai.com/og-image.png" />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://ednoteai.com/" />
-        <meta name="twitter:title" content="EdNoteAI: AI Transcription & Note Taking Service" />
-        <meta name="twitter:description" content="Transform your meetings, lectures, and audio into accurate notes with EdNoteAI." />
-        <meta name="twitter:image" content="https://ednoteai.com/og-image.png" />
-
-        {/* Structured Data (JSON-LD) */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `{
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          "name": "EdNoteAI",
-          "url": "https://ednoteai.com/",
-          "applicationCategory": "Productivity",
-          "operatingSystem": "All",
-          "offers": {
-            "@type": "Offer",
-            "price": "9.99",
-            "priceCurrency": "USD"
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.9",
-            "reviewCount": "120"
-          }
-        }` }} />
-      </Head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>

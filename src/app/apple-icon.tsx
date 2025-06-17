@@ -20,7 +20,7 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '20px',
+          borderRadius: '16px',
         }}
       >
         {/* BookOpen icon from Lucide React */}

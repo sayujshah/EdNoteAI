@@ -22,7 +22,7 @@ export default function Icon() {
           justifyContent: 'center',
         }}
       >
-        {/* Book icon SVG */}
+        {/* BookOpen icon from Lucide React */}
         <svg
           width="20"
           height="20"

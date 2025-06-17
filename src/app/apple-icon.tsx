@@ -23,7 +23,7 @@ export default function AppleIcon() {
           borderRadius: '20px',
         }}
       >
-        {/* Book icon SVG */}
+        {/* BookOpen icon from Lucide React */}
         <svg
           width="100"
           height="100"

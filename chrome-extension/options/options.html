@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EdNoteAI Extension Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>EdNoteAI Extension Settings</h1>
+      <p class="subtitle">Configure your recording and transcription preferences</p>
+    </header>
+
+    <main class="settings-content">
+      <!-- Audio Quality Settings -->
+      <section class="settings-section">
+        <h2>Audio Quality</h2>
+        <p class="section-description">Choose the audio quality for recordings. Higher quality uses more bandwidth.</p>
+        
+        <div class="quality-presets">
+          <div class="preset-card" data-quality="low">
+            <h3>Low Quality</h3>
+            <div class="preset-specs">
+              <span>8 kHz • 1 Channel • 64 kbps</span>
+            </div>
+            <p>Best for voice-only content, minimal bandwidth</p>
+          </div>
+          
+          <div class="preset-card selected" data-quality="medium">
+            <h3>Medium Quality</h3>
+            <div class="preset-specs">
+              <span>16 kHz • 1 Channel • 128 kbps</span>
+            </div>
+            <p>Balanced quality and performance (recommended)</p>
+          </div>
+          
+          <div class="preset-card" data-quality="high">
+            <h3>High Quality</h3>
+            <div class="preset-specs">
+              <span>44.1 kHz • 2 Channels • 256 kbps</span>
+            </div>
+            <p>Best quality for music and detailed audio</p>
+          </div>
+        </div>
+
+        <!-- Advanced Audio Settings -->
+        <div class="advanced-toggle">
+          <label>
+            <input type="checkbox" id="show-advanced-audio">
+            <span>Show advanced audio settings</span>
+          </label>
+        </div>
+
+        <div class="advanced-settings" id="advanced-audio-settings" style="display: none;">
+          <div class="setting-group">
+            <label for="sample-rate">Sample Rate (Hz)</label>
+            <input type="range" id="sample-rate" min="8000" max="48000" step="1000" value="16000">
+            <span class="range-value" id="sample-rate-value">16000</span>
+          </div>
+
+          <div class="setting-group">
+            <label for="bit-rate">Bit Rate (kbps)</label>
+            <input type="range" id="bit-rate" min="32" max="320" step="32" value="128">
+            <span class="range-value" id="bit-rate-value">128</span>
+          </div>
+
+          <div class="setting-group">
+            <label for="channels">Channels</label>
+            <select id="channels">
+              <option value="1">Mono (1 channel)</option>
+              <option value="2">Stereo (2 channels)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- User Interface Settings -->
+      <section class="settings-section">
+        <h2>User Interface</h2>
+        <p class="section-description">Customize how the extension appears and behaves</p>
+        
+        <div class="setting-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="show-overlay">
+            <span class="toggle-switch"></span>
+            <div class="setting-info">
+              <span class="setting-title">Show page overlay</span>
+              <span class="setting-desc">Display recording controls on supported pages</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="auto-save">
+            <span class="toggle-switch"></span>
+            <div class="setting-info">
+              <span class="setting-title">Auto-save notes</span>
+              <span class="setting-desc">Automatically save generated notes to your library</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="show-notifications">
+            <span class="toggle-switch"></span>
+            <div class="setting-info">
+              <span class="setting-title">Show notifications</span>
+              <span class="setting-desc">Display status notifications during recording</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Processing Settings -->
+      <section class="settings-section">
+        <h2>Processing</h2>
+        <p class="section-description">Configure how audio is processed and transmitted</p>
+        
+        <div class="setting-group">
+          <label for="chunk-duration">Processing chunk duration (seconds)</label>
+          <input type="range" id="chunk-duration" min="0.5" max="5" step="0.5" value="1">
+          <span class="range-value" id="chunk-duration-value">1</span>
+          <p class="setting-help">Shorter chunks provide faster transcription, longer chunks are more efficient</p>
+        </div>
+
+        <div class="setting-group">
+          <label for="buffer-size">Audio buffer size</label>
+          <select id="buffer-size">
+            <option value="1024">1024 samples (Low latency)</option>
+            <option value="2048">2048 samples (Balanced)</option>
+            <option value="4096" selected>4096 samples (High quality)</option>
+            <option value="8192">8192 samples (Maximum quality)</option>
+          </select>
+          <p class="setting-help">Larger buffers provide better quality but higher latency</p>
+        </div>
+      </section>
+
+      <!-- Privacy Settings -->
+      <section class="settings-section">
+        <h2>Privacy & Data</h2>
+        <p class="section-description">Control how your data is handled</p>
+        
+        <div class="setting-item">
+          <label class="toggle-label">
+            <input type="checkbox" id="local-processing">
+            <span class="toggle-switch"></span>
+            <div class="setting-info">
+              <span class="setting-title">Enable local processing (when available)</span>
+              <span class="setting-desc">Process audio locally when possible for enhanced privacy</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="setting-group">
+          <label for="data-retention">Data retention period</label>
+          <select id="data-retention">
+            <option value="1">1 day</option>
+            <option value="7">1 week</option>
+            <option value="30" selected>1 month</option>
+            <option value="90">3 months</option>
+            <option value="365">1 year</option>
+          </select>
+          <p class="setting-help">How long temporary data is kept before automatic deletion</p>
+        </div>
+      </section>
+
+      <!-- Connection Status -->
+      <section class="settings-section">
+        <h2>Connection Status</h2>
+        <div class="connection-info">
+          <div class="status-row">
+            <span>EdNoteAI Service:</span>
+            <div class="status-indicator">
+              <span class="status-dot" id="service-status"></span>
+              <span id="service-status-text">Checking...</span>
+            </div>
+          </div>
+          
+          <div class="status-row">
+            <span>WebSocket Connection:</span>
+            <div class="status-indicator">
+              <span class="status-dot" id="websocket-status"></span>
+              <span id="websocket-status-text">Not connected</span>
+            </div>
+          </div>
+          
+          <button type="button" id="test-connection" class="btn-secondary">
+            Test Connection
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Action Buttons -->
+    <footer class="settings-footer">
+      <div class="button-group">
+        <button type="button" id="reset-defaults" class="btn-secondary">Reset to Defaults</button>
+        <button type="button" id="export-settings" class="btn-secondary">Export Settings</button>
+        <button type="button" id="import-settings" class="btn-secondary">Import Settings</button>
+        <button type="button" id="save-settings" class="btn-primary">Save Settings</button>
+      </div>
+      
+      <div class="settings-status" id="settings-status" style="display: none;">
+        Settings saved successfully!
+      </div>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

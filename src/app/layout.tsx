@@ -3,64 +3,54 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import AuthGuard from "@/components/AuthGuard"
+import ExtensionAuthBridge from "@/components/ExtensionAuthBridge"
 
 import Link from "next/link"
 import { BookOpen } from "lucide-react"
 import { HeaderNav } from "@/components/HeaderNav"
 import LayoutWithHeader from "@/components/LayoutWithHeader"
+import type { Metadata } from "next"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "EdNoteAI: AI Transcription & Note Taking Service",
-  description:
-    "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI. Fast, secure, and affordable AI transcription and note taking for students and professionals.",
-  keywords: "ai transcription, ai note taking, automatic transcription, meeting transcription, audio to text, AI note taker, lecture transcription, voice notes AI, transcription service, AI meeting notes, best ai transcription for students, ai note taking for professionals, secure ai transcription, affordable ai transcription, real-time ai transcription",
-  robots: "index, follow",
-  canonical: "https://ednoteai.com/",
+export const metadata: Metadata = {
+  title: "EdNoteAI - AI-Powered Note Taking",
+  description: "Transform your learning with AI-generated notes from videos, lectures, and audio content. Save time and enhance comprehension with intelligent summaries.",
+  keywords: "AI notes, video transcription, lecture notes, study tools, AI-powered learning",
+  authors: [{ name: "EdNoteAI Team" }],
+  creator: "EdNoteAI",
+  publisher: "EdNoteAI",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
+    title: "EdNoteAI - AI-Powered Note Taking",
+    description: "Transform your learning with AI-generated notes from videos, lectures, and audio content.",
+    url: "https://ednoteai.com",
+    siteName: "EdNoteAI",
     type: "website",
-    url: "https://ednoteai.com/",
-    title: "EdNoteAI: AI Transcription & Note Taking Service",
-    description: "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI.",
-    images: [
-      {
-        url: "https://ednoteai.com/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "EdNoteAI - AI Transcription & Note Taking Service",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "EdNoteAI: AI Transcription & Note Taking Service",
-    description: "Transform your meetings, lectures, and audio into accurate notes with EdNoteAI.",
-    images: ["https://ednoteai.com/og-image.png"],
+    title: "EdNoteAI - AI-Powered Note Taking",
+    description: "Transform your learning with AI-generated notes from videos, lectures, and audio content.",
   },
-  icons: {
-    icon: '/favicon.svg',
-    apple: '/apple-icon.png',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
-  other: {
-    'application/ld+json': JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "EdNoteAI",
-      "url": "https://ednoteai.com/",
-      "applicationCategory": "Productivity",
-      "operatingSystem": "All",
-      "offers": {
-        "@type": "Offer",
-        "price": "9.99",
-        "priceCurrency": "USD"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "120"
-      }
-    })
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
   },
 }
 
@@ -102,15 +92,18 @@ function Footer() {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            <LayoutWithHeader>{children}</LayoutWithHeader>
+            <AuthGuard>
+              <LayoutWithHeader>{children}</LayoutWithHeader>
+            </AuthGuard>
+            <ExtensionAuthBridge />
             <Footer />
           </AuthProvider>
         </ThemeProvider>

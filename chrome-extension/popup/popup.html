@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EdNoteAI Extension</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="logo">EdNoteAI</h1>
+        <p class="tagline">Live Note Generation</p>
+      </div>
+    </header>
+
+    <!-- Authentication Section -->
+    <section class="auth-section" id="auth-section">
+      <div class="auth-content">
+        <div class="auth-status" id="auth-status">
+          <button id="sign-in-btn" class="btn-primary">Sign In to EdNoteAI</button>
+          <div id="user-info" class="user-info" style="display: none;">
+            <span>Connected to EdNoteAI</span>
+            <button id="sign-out-btn" class="btn-secondary" style="display: none;">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page Information -->
+    <section class="page-info" id="page-info">
+      <div class="page-header">
+        <img id="page-favicon" class="page-favicon" src="" alt="" style="display: none;">
+        <div class="page-details">
+          <h3 id="page-title" class="page-title">Loading...</h3>
+          <p id="page-url" class="page-url">...</p>
+        </div>
+        <span id="supported-indicator" class="supported-indicator">Checking...</span>
+      </div>
+    </section>
+
+    <!-- Recording Controls -->
+    <section class="recording-section" id="recording-section">
+      <div class="recording-controls">
+        <div class="recording-status">
+          <span class="status-dot" id="recording-dot"></span>
+          <span id="recording-status" class="status-text">Ready</span>
+          <div id="recording-timer" class="recording-timer" style="display: none;">0:00</div>
+        </div>
+        
+        <div class="control-buttons">
+          <button id="start-recording" class="btn-record">
+            <span class="record-icon">●</span>
+            Start Recording
+          </button>
+          <button id="stop-recording" class="btn-stop" style="display: none;">
+            <span class="stop-icon">■</span>
+            Stop Recording
+          </button>
+        </div>
+      </div>
+
+      <!-- Audio Quality Display -->
+      <div class="audio-info" id="audio-info" style="display: none;">
+        <div class="quality-indicator">
+          <span class="quality-label">Quality:</span>
+          <span id="current-quality" class="quality-value">16kHz, 1ch, 128kbps</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transcript Preview -->
+    <section class="transcript-section" id="transcript-section" style="display: none;">
+      <div class="section-header">
+        <h3>Live Transcript</h3>
+        <div class="transcript-actions">
+          <button id="copy-transcript" class="btn-icon" title="Copy transcript">📋</button>
+          <button id="clear-transcript" class="btn-icon" title="Clear transcript">🗑️</button>
+        </div>
+      </div>
+      
+      <div class="transcript-preview" id="transcript-preview">
+        Transcript will appear here...
+      </div>
+      
+      <button id="view-notes-btn" class="btn-secondary" style="display: none;">
+        View Generated Notes
+      </button>
+    </section>
+
+    <!-- Connection Status -->
+    <section class="connection-section">
+      <div class="connection-status">
+        <span class="connection-label">Service:</span>
+        <div class="status-indicator">
+          <span class="status-dot" id="connection-dot"></span>
+          <span id="connection-status" class="status-text">Ready</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings Preview -->
+    <section class="settings-preview" id="settings-preview">
+      <div class="settings-grid">
+        <div class="setting-item">
+          <span class="setting-label">Audio Quality:</span>
+          <select id="audio-quality" class="setting-select">
+            <option value="low">Low (8kHz)</option>
+            <option value="medium" selected>Medium (16kHz)</option>
+            <option value="high">High (44.1kHz)</option>
+          </select>
+        </div>
+        
+        <div class="setting-item">
+          <span class="setting-label">Auto-save:</span>
+          <span id="auto-save-status" class="setting-value">Enabled</span>
+        </div>
+        
+        <div class="setting-item">
+          <span class="setting-label">Page Overlay:</span>
+          <span id="overlay-status" class="setting-value">Enabled</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Navigation -->
+    <footer class="footer">
+      <div class="footer-links">
+        <button id="dashboard-link" class="link-button">Dashboard</button>
+        <button id="settings-link" class="link-button">Settings</button>
+      </div>
+      
+      <div class="footer-info">
+        <span class="version">v1.0.0</span>
+      </div>
+    </footer>
+
+    <!-- Notification -->
+    <div id="notification" class="notification" style="display: none;">
+      Notification message
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 

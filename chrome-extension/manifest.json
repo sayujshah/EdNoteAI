@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "EdNoteAI - Live Note Generator",
+  "version": "1.0.0",
+  "description": "Transform any web content into intelligent, organized notes with real-time transcription",
+  
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "tabCapture",
+    "storage",
+    "webNavigation",
+    "scripting"
+  ],
+  
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*.ednoteai.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.vimeo.com/*",
+        "*://*.coursera.org/*",
+        "*://*.udemy.com/*",
+        "*://*.edx.org/*",
+        "*://*.khanacademy.org/*"
+      ],
+      "js": ["content-script.js"],
+      "css": ["content-script.css"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://*.ednoteai.com/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["auth-bridge.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "EdNoteAI - Start Recording Notes"
+  },
+  
+  "options_page": "options/options.html",
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["content-script.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+} 

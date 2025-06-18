@@ -32,8 +32,16 @@ function AuthPageContent() {
   // Check for URL parameters on page load
   useEffect(() => {
     const message = searchParams.get('message')
+    const auth = searchParams.get('auth')
+    const extension = searchParams.get('extension')
+    
     if (message === 'password_reset_success') {
       setSuccessMessage('Password reset successful! You can now sign in with your new password.')
+    }
+    
+    // If this is a successful auth from extension, show success message
+    if (auth === 'success' && extension === 'true') {
+      setSuccessMessage('Successfully authenticated! Your extension will be connected shortly.')
     }
   }, [searchParams])
 
@@ -131,10 +139,15 @@ function AuthPageContent() {
     setError(null)
 
     try {
+      const extension = searchParams.get('extension')
+      const redirectUrl = extension === 'true' 
+        ? `${window.location.origin}/auth/callback?extension=true`
+        : `${window.location.origin}/auth/callback`
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       })
 

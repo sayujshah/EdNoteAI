@@ -1,78 +1,187 @@
 import { NextResponse } from 'next/server';
-// import { supabase } from '../../../../lib/supabase'; // Client-side client (might not be needed)
-import createClient from '../../../../lib/supabase/server'; // Import server-side client
+import { createClient } from '@/utils/supabase/server';
 
 // API route for managing a specific note by ID
 
+// GET /api/notes/{id} - Get a note
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { data: note, error } = await supabase
+      .from('saved_notes')
+      .select('*')
+      .eq('id', params.id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching note:', error);
+      return NextResponse.json(
+        { error: 'Note not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(note);
+  } catch (error) {
+    console.error('Error in GET /api/notes/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT /api/notes/{id} - Update a note
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // Await the params
-  const { id } = await params;
-  
-  // Get authenticated user
-  const supabaseServer = await createClient(); // Add await
-  const { data: { user } } = await supabaseServer.auth.getUser();
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { content, title, tags } = body;
+
+    // Validate fields only if they are being updated
+    if (content !== undefined && (!content || content.trim() === '')) {
+      return NextResponse.json(
+        { error: 'Content cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    if (title !== undefined && (!title || title.trim() === '')) {
+      return NextResponse.json(
+        { error: 'Title cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    // First, verify the note exists and belongs to the user
+    const { data: existingNote, error: fetchError } = await supabase
+      .from('saved_notes')
+      .select('id, user_id')
+      .eq('id', params.id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError || !existingNote) {
+      return NextResponse.json(
+        { error: 'Note not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // Update the note
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    // Only update fields that are provided
+    if (content !== undefined) {
+      updateData.content = content.trim();
+    }
+
+    if (title !== undefined) {
+      updateData.title = title.trim();
+    }
+
+    if (tags !== undefined) {
+      updateData.tags = Array.isArray(tags) ? tags : [];
+    }
+
+    const { data: updatedNote, error: updateError } = await supabase
+      .from('saved_notes')
+      .update(updateData)
+      .eq('id', params.id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating note:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update note' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      note: updatedNote
+    });
+
+  } catch (error) {
+    console.error('Error in PUT /api/notes/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-
-  console.log('Updating note', id, 'for user:', user.id);
-
-  // TODO: Get user ID from authenticated session and verify ownership
-  // const userId = 'placeholder-user-id'; // Replace with actual user ID
-  const noteId = id;
-
-  const updates: any = await request.json(); // Add type annotation for updates
-
-  const { data, error } = await supabaseServer // Use server-side client
-    .from('notes')
-    .update(updates)
-    .eq('id', noteId)
-    .eq('user_id', user.id) // Ensure user owns the note - Use actual user ID
-    .select();
-
-  if (error) {
-    console.error('Error updating note:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  if (!data || data.length === 0) {
-    return NextResponse.json({ error: 'Note not found or user does not own it' }, { status: 404 });
-  }
-
-  return NextResponse.json(data[0]);
 }
 
 // DELETE /api/notes/{id} - Delete a note
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // Await the params
-  const { id } = await params;
-  
-  // Get authenticated user
-  const supabaseServer = await createClient(); // Add await
-  const { data: { user } } = await supabaseServer.auth.getUser();
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Delete the note (only if it belongs to the user)
+    const { error } = await supabase
+      .from('saved_notes')
+      .delete()
+      .eq('id', params.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting note:', error);
+      return NextResponse.json(
+        { error: 'Failed to delete note' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Note deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error in DELETE /api/notes/[id]:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-
-  console.log('Deleting note', id, 'for user:', user.id);
-
-  const noteId = id;
-
-  const { error } = await supabaseServer // Use server-side client
-    .from('notes')
-    .delete()
-    .eq('id', noteId)
-    .eq('user_id', user.id); // Ensure user owns the note - Use actual user ID
-
-  if (error) {
-    console.error('Error deleting note:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  // Supabase delete does not return data on success, check error instead
-  // If no error, assume success. Could verify by fetching after delete if needed.
-  return NextResponse.json({ message: 'Note deleted successfully' });
 }

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react" // Import useCallback
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Check } from "lucide-react"
+import { BookOpen, Settings, Save, X, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Check, Edit3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { createBrowserClient } from '@supabase/ssr'; // Import createBrowserClient
@@ -12,6 +12,7 @@ import 'katex/dist/katex.min.css'; // Import KaTeX CSS
 import SaveToLibraryModal from '@/components/ui/SaveToLibraryModal'; // Import save modal
 import type { SaveNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer'; // Import shared renderer
+import NoteEditor from '@/components/ui/NoteEditor'; // Import note editor
 import { useS3Cleanup } from '@/hooks/useS3Cleanup'; // Import S3 cleanup hook
 
 // Define types for media data, transcription, and notes
@@ -62,6 +63,10 @@ export default function AnalysisPage() {
   // Save to Library state
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
 
   // Check if processing is complete (transcription and notes are done)
   const isProcessingComplete = media?.transcription_status === 'completed';
@@ -255,15 +260,41 @@ export default function AnalysisPage() {
     );
   };
 
+  // Handle entering edit mode
+  const handleEditStart = () => {
+    const content = getGeneratedContent();
+    if (content) {
+      setEditedContent(content);
+      setIsEditMode(true);
+    }
+  };
+
+  // Handle saving edited content (temporary save during editing)
+  const handleEditSave = async (content: string) => {
+    setEditedContent(content);
+    // For analysis page, this is just a temporary update
+    // The actual save happens when user saves to library
+  };
+
+  // Handle canceling edit mode
+  const handleEditCancel = () => {
+    setIsEditMode(false);
+    setEditedContent('');
+  };
+
   // Save note to library function
   const handleSaveToLibrary = async (noteData: SaveNoteRequest) => {
     try {
+      // Use edited content if available, otherwise use generated content
+      const contentToSave = editedContent || noteData.content;
+      const dataToSave = { ...noteData, content: contentToSave };
+
       const response = await fetch('/api/library', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(noteData),
+        body: JSON.stringify(dataToSave),
       });
 
       if (!response.ok) {
@@ -271,8 +302,10 @@ export default function AnalysisPage() {
         throw new Error(errorData.error || 'Failed to save note');
       }
 
-      // Show success state
+      // Show success state and exit edit mode
       setSaveSuccess(true);
+      setIsEditMode(false);
+      setEditedContent('');
       
     } catch (error: any) {
       throw error; // Re-throw to be handled by the modal
@@ -320,6 +353,19 @@ export default function AnalysisPage() {
           </span>
         </button>
         <div className="flex items-center gap-4">
+          {/* Edit button - only show when notes are available and not in edit mode */}
+          {!isEditMode && getGeneratedContent() && !loading && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleEditStart}
+            >
+              <Edit3 className="h-4 w-4" />
+              <span>Edit Notes</span>
+            </Button>
+          )}
+
           <Button 
             variant="outline" 
             size="sm" 
@@ -446,6 +492,15 @@ export default function AnalysisPage() {
             </div>
           ) : error ? (
             <p className="text-red-500">Error loading notes: {error}</p>
+          ) : isEditMode ? (
+            /* Edit Mode */
+            <NoteEditor
+              initialContent={editedContent}
+              onSave={handleEditSave}
+              onCancel={handleEditCancel}
+              format="Markdown"
+              placeholder="Edit your academic notes..."
+            />
           ) : getMarkdownContent() ? (
             renderNotes()
           ) : getGeneratedContent() ? (
@@ -455,13 +510,13 @@ export default function AnalysisPage() {
       </div>
 
       {/* Save to Library Modal */}
-      {media && getGeneratedContent() && (
+      {media && (getGeneratedContent() || editedContent) && (
         <SaveToLibraryModal
           isOpen={showSaveModal}
           onClose={() => setShowSaveModal(false)}
           onSave={handleSaveToLibrary}
           onSaveSuccess={handleSaveSuccess}
-          content={getGeneratedContent()}
+          content={editedContent || getGeneratedContent()}
           format={'Markdown'}
           mediaId={media.id}
           mediaTitle={`Analysis ${media.id}`} // You could get a better title from media metadata

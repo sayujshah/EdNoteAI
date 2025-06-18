@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import 'katex/dist/katex.min.css';
 import type { SavedNote, UpdateSavedNoteRequest } from '@/lib/types/library';
 import NoteRenderer from '@/components/ui/NoteRenderer';
+import NoteEditor from '@/components/ui/NoteEditor';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function NoteViewerPage() {
@@ -23,7 +24,9 @@ export default function NoteViewerPage() {
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingContent, setIsEditingContent] = useState(false);
   const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
   const [editTags, setEditTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [saving, setSaving] = useState(false);
@@ -46,6 +49,7 @@ export default function NoteViewerPage() {
       const noteData: SavedNote = await response.json();
       setNote(noteData);
       setEditTitle(noteData.title);
+      setEditContent(noteData.content);
       setEditTags([...noteData.tags]);
     } catch (err: any) {
       setError(err.message);
@@ -67,10 +71,11 @@ export default function NoteViewerPage() {
     try {
       const updates: UpdateSavedNoteRequest = {
         title: editTitle.trim(),
+        content: editContent,
         tags: editTags
       };
       
-      const response = await fetch(`/api/library/${id}`, {
+      const response = await fetch(`/api/notes/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -83,9 +88,11 @@ export default function NoteViewerPage() {
         throw new Error(errorData.error || 'Failed to update note');
       }
       
-      const updatedNote: SavedNote = await response.json();
+      const result = await response.json();
+      const updatedNote: SavedNote = result.note;
       setNote(updatedNote);
       setIsEditing(false);
+      setIsEditingContent(false);
       
     } catch (err: any) {
       setSaveError(err.message);
@@ -137,6 +144,58 @@ export default function NoteViewerPage() {
     }
   };
 
+  // Content editing handlers
+  const handleEditContent = () => {
+    setIsEditingContent(true);
+  };
+
+  const handleSaveContent = async (content: string) => {
+    if (!note) return;
+    
+    setSaving(true);
+    setSaveError(null);
+    
+    try {
+      const updates: UpdateSavedNoteRequest = {
+        content: content
+      };
+      
+      const response = await fetch(`/api/notes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update note');
+      }
+      
+      const result = await response.json();
+      const updatedNote: SavedNote = result.note;
+      
+      // Update the note state and exit edit mode
+      setNote(updatedNote);
+      setEditContent(content);
+      setIsEditingContent(false);
+      
+    } catch (err: any) {
+      setSaveError(err.message);
+      throw err; // Re-throw so NoteEditor can handle the error
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelContentEdit = () => {
+    if (note) {
+      setEditContent(note.content); // Reset to original content
+    }
+    setIsEditingContent(false);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -150,6 +209,19 @@ export default function NoteViewerPage() {
   const renderNoteContent = () => {
     if (!note) return null;
 
+    if (isEditingContent) {
+      return (
+        <NoteEditor
+          initialContent={editContent}
+          onSave={handleSaveContent}
+          onCancel={handleCancelContentEdit}
+          format={note.format}
+          placeholder="Edit your note content..."
+          isLoading={saving}
+        />
+      );
+    }
+
     return (
       <NoteRenderer 
         content={note.content} 
@@ -158,30 +230,8 @@ export default function NoteViewerPage() {
     );
   };
 
-  const handleSignOut = async () => {
-    try {
-      await auth.signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="relative flex items-center gap-8">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">EdNoteAI</span>
-              <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
-                BETA
-              </span>
-            </div>
-          </div>
-        </header>
-        
         <main className="flex-1 container mx-auto py-8 max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-6">
             <Skeleton className="h-8 w-16" />
@@ -197,7 +247,6 @@ export default function NoteViewerPage() {
             </div>
           </div>
         </main>
-      </div>
     );
   }
 
@@ -241,30 +290,6 @@ export default function NoteViewerPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="relative flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">EdNoteAI</span>
-              <span className="absolute -top-1 left-full ml-1 inline-flex items-center px-1 py-0 text-[8px] font-medium text-gray-600 bg-gray-200 dark:text-gray-400 dark:bg-gray-700 rounded-sm">
-                BETA
-              </span>
-            </Link>
-            <span className="text-sm text-muted-foreground">/ Note</span>
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link href="/dashboard/library" className="text-sm font-medium hover:text-primary">
-              Library
-            </Link>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              Sign Out
-            </Button>
-          </nav>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="flex-1 container mx-auto py-8 max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
@@ -352,7 +377,9 @@ export default function NoteViewerPage() {
                     </Button>
                     <Button variant="outline" onClick={() => {
                       setIsEditing(false);
+                      setIsEditingContent(false);
                       setEditTitle(note.title);
+                      setEditContent(note.content);
                       setEditTags([...note.tags]);
                       setSaveError(null);
                     }} disabled={saving}>
@@ -414,8 +441,28 @@ export default function NoteViewerPage() {
 
             {/* Content Section */}
             {!isEditing && (
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8">
-                {renderNoteContent()}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                {/* Content Header with Edit Button */}
+                {!isEditingContent && (
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Note Content</h2>
+                    <Button variant="outline" size="sm" onClick={handleEditContent}>
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit Content
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Content Body */}
+                <div className="p-8">
+                  {/* Show save error if there is one during content editing */}
+                  {saveError && isEditingContent && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded">
+                      {saveError}
+                    </div>
+                  )}
+                  {renderNoteContent()}
+                </div>
               </div>
             )}
           </div>

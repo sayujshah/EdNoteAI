@@ -6,9 +6,10 @@ import { createClient } from '@/utils/supabase/server';
 // GET /api/notes/{id} - Get a note
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params Promise
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -22,7 +23,7 @@ export async function GET(
     const { data: note, error } = await supabase
       .from('saved_notes')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -47,9 +48,10 @@ export async function GET(
 // PUT /api/notes/{id} - Update a note
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params Promise
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -82,7 +84,7 @@ export async function PUT(
     const { data: existingNote, error: fetchError } = await supabase
       .from('saved_notes')
       .select('id, user_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -114,7 +116,7 @@ export async function PUT(
     const { data: updatedNote, error: updateError } = await supabase
       .from('saved_notes')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single();
@@ -144,9 +146,10 @@ export async function PUT(
 // DELETE /api/notes/{id} - Delete a note
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params Promise
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -161,7 +164,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('saved_notes')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id);
 
     if (error) {

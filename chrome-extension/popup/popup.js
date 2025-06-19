@@ -214,6 +214,10 @@ function setupEventListeners() {
   if (dashboardLink) dashboardLink.addEventListener('click', openDashboard);
   if (settingsLink) settingsLink.addEventListener('click', openSettings);
   
+  // Debug button (temporary)
+  const debugBtn = document.getElementById('debug-tabcapture');
+  if (debugBtn) debugBtn.addEventListener('click', debugTabCapture);
+  
   if (dismissError) {
     dismissError.addEventListener('click', hideError);
   }
@@ -352,6 +356,21 @@ async function startRecording() {
   
   try {
     updateRecordingUI({ loading: true });
+    
+    // Check extension capabilities first
+    const capabilities = await sendMessageToBackground({ type: 'CHECK_CAPABILITIES' });
+    
+    if (!capabilities.tabCapture) {
+      throw new Error('Tab capture API is not available in this browser. Please ensure you\'re using Chrome or another Chromium-based browser.');
+    }
+    
+    if (!capabilities.permissions) {
+      throw new Error('Missing required permissions. Please reload the extension or reinstall it.');
+    }
+    
+    if (capabilities.error) {
+      throw new Error(`Extension error: ${capabilities.error}`);
+    }
     
     const result = await sendMessageToBackground({
       type: 'START_RECORDING',
@@ -805,6 +824,31 @@ function showNotification(message, type = 'info') {
     }, 3000);
   } else {
     console.log(`Notification [${type}]: ${message}`);
+  }
+}
+
+// Debug function (temporary)
+async function debugTabCapture() {
+  const debugResult = document.getElementById('debug-result');
+  
+  try {
+    debugResult.textContent = 'Testing...';
+    
+    const result = await sendMessageToBackground({ type: 'DEBUG_TABCAPTURE' });
+    
+    if (result.success) {
+      debugResult.textContent = `✅ ${result.message}`;
+      debugResult.style.color = 'green';
+    } else {
+      debugResult.textContent = `❌ ${result.message}`;
+      debugResult.style.color = 'red';
+      console.log('Debug details:', result);
+    }
+    
+  } catch (error) {
+    debugResult.textContent = `❌ Error: ${error.message}`;
+    debugResult.style.color = 'red';
+    console.error('Debug error:', error);
   }
 }
 

@@ -271,6 +271,58 @@ class AudioProcessor {
   }
 }
 
+// Check extension permissions and capabilities
+async function checkExtensionCapabilities() {
+  const capabilities = {
+    tabCapture: false,
+    permissions: false,
+    activeTab: false,
+    error: null
+  };
+
+  try {
+    // Check if tabCapture API exists
+    capabilities.tabCapture = !!(chrome.tabCapture && chrome.tabCapture.capture);
+    
+    // Log debugging information
+    console.log('Extension capabilities check:', {
+      chromeTabCaptureExists: !!chrome.tabCapture,
+      captureMethodExists: !!(chrome.tabCapture && chrome.tabCapture.capture),
+      fullAPI: chrome.tabCapture
+    });
+    
+    // Check permissions - wrap in try/catch as permissions API might not be available
+    try {
+      if (chrome.permissions && chrome.permissions.contains) {
+        const hasTabCapture = await new Promise((resolve) => {
+          chrome.permissions.contains({ permissions: ['tabCapture'] }, resolve);
+        });
+        
+        const hasActiveTab = await new Promise((resolve) => {
+          chrome.permissions.contains({ permissions: ['activeTab'] }, resolve);
+        });
+        
+        capabilities.permissions = hasTabCapture;
+        capabilities.activeTab = hasActiveTab;
+      } else {
+        // Fallback: assume permissions are granted if API exists
+        capabilities.permissions = capabilities.tabCapture;
+        capabilities.activeTab = true;
+      }
+    } catch (permError) {
+      console.warn('Permission check failed:', permError);
+      // Assume permissions are granted if we can't check them
+      capabilities.permissions = capabilities.tabCapture;
+      capabilities.activeTab = true;
+    }
+    
+  } catch (error) {
+    capabilities.error = error.message;
+  }
+  
+  return capabilities;
+}
+
 // Enhanced tab audio capture
 async function startTabCapture(tabId) {
   try {
@@ -292,36 +344,52 @@ async function startTabCapture(tabId) {
       throw new Error('Authentication required. Please sign in first.');
     }
     
+    // Check if tabCapture API is available
+    if (!chrome.tabCapture || !chrome.tabCapture.capture) {
+      throw new Error('Tab capture API is not available. Please ensure the extension has proper permissions.');
+    }
+
+    // Verify tab exists and is audible
+    const tab = await new Promise((resolve, reject) => {
+      chrome.tabs.get(tabId, (tab) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(`Tab not found: ${chrome.runtime.lastError.message}`));
+        } else {
+          resolve(tab);
+        }
+      });
+    });
+
+    if (!tab) {
+      throw new Error('Target tab not found');
+    }
+
+    // Check if tab has audio (optional, but good UX)
+    if (!tab.audible && !tab.mutedInfo?.muted) {
+      console.warn('Tab may not have audio content');
+    }
+
     // Capture tab audio with enhanced options
     const stream = await new Promise((resolve, reject) => {
-      chrome.tabCapture.capture(
-        {
-          audio: true,
-          video: false,
-          audioConstraints: {
-            mandatory: {
-              chromeMediaSource: 'tab',
-              chromeMediaSourceId: tabId.toString()
-            },
-            optional: [
-              { sampleRate: audioConfig.sampleRate },
-              { channelCount: audioConfig.channels },
-              { echoCancellation: false },
-              { noiseSuppression: false },
-              { autoGainControl: false }
-            ]
+      try {
+        chrome.tabCapture.capture(
+          {
+            audio: true,
+            video: false
+          },
+          (stream) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(`Tab capture failed: ${chrome.runtime.lastError.message}`));
+            } else if (stream) {
+              resolve(stream);
+            } else {
+              reject(new Error('Failed to capture audio stream - no stream returned'));
+            }
           }
-        },
-        (stream) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else if (stream) {
-            resolve(stream);
-          } else {
-            reject(new Error('Failed to capture audio stream'));
-          }
-        }
-      );
+        );
+      } catch (error) {
+        reject(new Error(`Exception in tabCapture.capture: ${error.message}`));
+      }
     });
     
     // Create WebSocket connection
@@ -442,6 +510,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
     
+    case 'CHECK_CAPABILITIES':
+      checkExtensionCapabilities().then(capabilities => {
+        sendResponse(capabilities);
+      });
+      return true;
+
+    case 'DEBUG_TABCAPTURE':
+      // Direct test of tabCapture API
+      try {
+        console.log('Testing tabCapture API directly...');
+        console.log('chrome.tabCapture:', chrome.tabCapture);
+        console.log('chrome.tabCapture.capture:', chrome.tabCapture ? chrome.tabCapture.capture : 'undefined');
+        
+        if (chrome.tabCapture && chrome.tabCapture.capture) {
+          sendResponse({ 
+            success: true, 
+            message: 'TabCapture API is available',
+            api: 'Available'
+          });
+        } else {
+          sendResponse({ 
+            success: false, 
+            message: 'TabCapture API is not available',
+            chromeTabCapture: !!chrome.tabCapture,
+            captureMethod: chrome.tabCapture ? !!chrome.tabCapture.capture : false
+          });
+        }
+      } catch (error) {
+        sendResponse({ 
+          success: false, 
+          message: `Error testing tabCapture: ${error.message}`,
+          error: error.toString()
+        });
+      }
+      return false;
+
     case 'START_RECORDING':
       startTabCapture(message.tabId).then(result => {
         sendResponse(result);

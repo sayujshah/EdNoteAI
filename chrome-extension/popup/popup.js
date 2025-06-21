@@ -393,7 +393,28 @@ async function startRecording() {
       
       showNotification('Recording started successfully!', 'success');
     } else {
-      throw new Error(result.error || 'Failed to start recording');
+      // Handle specific error scenarios with actions
+      if (result.action === 'reload_extension') {
+        showErrorWithAction(
+          result.error,
+          'Reload Extension',
+          () => {
+            chrome.runtime.reload();
+          },
+          result.guidance || 'The extension needs to be reloaded to function properly.'
+        );
+      } else if (result.action === 'check_browser') {
+        showErrorWithAction(
+          result.error,
+          'Open Chrome Extensions',
+          () => {
+            chrome.tabs.create({ url: 'chrome://extensions/' });
+          },
+          result.guidance || 'Please check your browser compatibility and extension permissions.'
+        );
+      } else {
+        throw new Error(result.error || 'Failed to start recording');
+      }
     }
     
   } catch (error) {
@@ -810,6 +831,65 @@ function hideError() {
   if (errorMessage) {
     errorMessage.style.display = 'none';
   }
+}
+
+function showErrorWithAction(message, actionText, actionCallback, guidance = null) {
+  // Create error modal or use enhanced error display
+  const errorHTML = `
+    <div style="background: #fee; border: 1px solid #fcc; border-radius: 8px; padding: 16px; margin: 8px 0; color: #c33;">
+      <div style="font-weight: bold; margin-bottom: 8px;">⚠️ ${message}</div>
+      ${guidance ? `<div style="font-size: 0.9em; margin-bottom: 12px; color: #666;">${guidance}</div>` : ''}
+      <div style="display: flex; gap: 8px;">
+        <button id="error-action-btn" style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+          ${actionText}
+        </button>
+        <button id="error-dismiss-btn" style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Find or create error container
+  let container = document.getElementById('error-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'error-container';
+    container.style.position = 'relative';
+    container.style.margin = '8px 0';
+    document.querySelector('.popup-container')?.prepend(container) || document.body.prepend(container);
+  }
+  
+  container.innerHTML = errorHTML;
+  container.style.display = 'block';
+  
+  // Add event listeners
+  const actionBtn = document.getElementById('error-action-btn');
+  const dismissBtn = document.getElementById('error-dismiss-btn');
+  
+  if (actionBtn) {
+    actionBtn.addEventListener('click', () => {
+      try {
+        actionCallback();
+      } catch (error) {
+        console.error('Error executing action:', error);
+      }
+      container.style.display = 'none';
+    });
+  }
+  
+  if (dismissBtn) {
+    dismissBtn.addEventListener('click', () => {
+      container.style.display = 'none';
+    });
+  }
+  
+  // Auto-dismiss after 30 seconds
+  setTimeout(() => {
+    if (container.style.display !== 'none') {
+      container.style.display = 'none';
+    }
+  }, 30000);
 }
 
 function showNotification(message, type = 'info') {

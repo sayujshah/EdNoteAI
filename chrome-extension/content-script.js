@@ -186,7 +186,16 @@ async function startRecording() {
     
   } catch (error) {
     console.error('Error starting recording:', error);
-    showNotification(`Error: ${error.message}`, 'error');
+    
+    // Handle specific context invalidation errors
+    if (error.message.includes('Extension context invalidated') || 
+        error.message.includes('Extension was reloaded') ||
+        error.message.includes('refresh this page')) {
+      showExtensionReloadNotification();
+    } else {
+      showNotification(`Error: ${error.message}`, 'error');
+    }
+    
     updateStatusInfo('Error starting recording');
   }
 }
@@ -227,7 +236,16 @@ async function stopRecording() {
     
   } catch (error) {
     console.error('Error stopping recording:', error);
-    showNotification(`Error: ${error.message}`, 'error');
+    
+    // Handle specific context invalidation errors
+    if (error.message.includes('Extension context invalidated') || 
+        error.message.includes('Extension was reloaded') ||
+        error.message.includes('refresh this page')) {
+      showExtensionReloadNotification();
+    } else {
+      showNotification(`Error: ${error.message}`, 'error');
+    }
+    
     updateStatusInfo('Error stopping recording');
   }
 }
@@ -409,6 +427,82 @@ function showNotification(message, type = 'info') {
   }, 4000);
 }
 
+// Special notification for extension reload scenarios
+function showExtensionReloadNotification() {
+  const notification = document.createElement('div');
+  notification.className = 'ednoteai-notification ednoteai-notification-warning ednoteai-notification-enhanced ednoteai-notification-persistent';
+  notification.innerHTML = `
+    <div class="ednoteai-notification-content">
+      <div class="ednoteai-notification-header">
+        <span class="ednoteai-notification-icon">🔄</span>
+        <span class="ednoteai-notification-title">Extension Needs Reload</span>
+      </div>
+      <div class="ednoteai-notification-text">
+        The EdNoteAI extension was updated. Please refresh this page to continue recording.
+      </div>
+      <div class="ednoteai-notification-actions">
+        <button class="ednoteai-reload-page-btn">Refresh Page</button>
+        <button class="ednoteai-notification-close">Dismiss</button>
+      </div>
+    </div>
+  `;
+  
+  // Style the notification to be more prominent
+  notification.style.cssText = `
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 10000 !important;
+    max-width: 350px !important;
+    background: #fff3cd !important;
+    border: 2px solid #ffc107 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Add event listeners
+  const reloadBtn = notification.querySelector('.ednoteai-reload-page-btn');
+  const closeBtn = notification.querySelector('.ednoteai-notification-close');
+  
+  if (reloadBtn) {
+    reloadBtn.style.cssText = `
+      background: #007cba !important;
+      color: white !important;
+      border: none !important;
+      padding: 8px 16px !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+      margin-right: 8px !important;
+    `;
+    
+    reloadBtn.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+  
+  if (closeBtn) {
+    closeBtn.style.cssText = `
+      background: #6c757d !important;
+      color: white !important;
+      border: none !important;
+      padding: 8px 16px !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+    `;
+    
+    closeBtn.addEventListener('click', () => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    });
+  }
+  
+  // Don't auto-remove this notification since it requires user action
+}
+
 // Setup video detection for enhanced hints
 function setupVideoDetection() {
   const videos = document.querySelectorAll('video');
@@ -434,21 +528,46 @@ function setupVideoDetection() {
   });
 }
 
-// Send messages to background
+// Send messages to background with context validation
 function sendMessageToBackground(message) {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage(message, (response) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve(response);
-      }
-    });
+    // Check if extension context is valid
+    if (!chrome.runtime || !chrome.runtime.id) {
+      reject(new Error('Extension context invalidated. Please reload the page and extension.'));
+      return;
+    }
+    
+    try {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          const error = chrome.runtime.lastError.message;
+          
+          // Handle specific context invalidation errors
+          if (error.includes('Extension context invalidated') || 
+              error.includes('Receiving end does not exist') ||
+              error.includes('The message port closed before a response was received')) {
+            reject(new Error('Extension was reloaded. Please refresh this page to continue.'));
+          } else {
+            reject(new Error(error));
+          }
+        } else {
+          resolve(response);
+        }
+      });
+    } catch (error) {
+      reject(new Error(`Failed to send message: ${error.message}`));
+    }
   });
 }
 
 // Enhanced message handling from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Validate extension context before processing messages
+  if (!chrome.runtime || !chrome.runtime.id) {
+    console.warn('Extension context invalidated, ignoring message:', message);
+    return false;
+  }
+  
   console.log('Content script received message:', message);
   
   switch (message.type) {
@@ -529,6 +648,26 @@ if (document.readyState === 'loading') {
 } else {
   initialize();
 }
+
+// Periodic extension context check
+let contextCheckInterval = null;
+
+function startContextCheck() {
+  if (contextCheckInterval) {
+    clearInterval(contextCheckInterval);
+  }
+  
+  contextCheckInterval = setInterval(() => {
+    if (!chrome.runtime || !chrome.runtime.id) {
+      console.warn('Extension context lost, showing reload notification');
+      showExtensionReloadNotification();
+      clearInterval(contextCheckInterval);
+    }
+  }, 5000); // Check every 5 seconds
+}
+
+// Start context monitoring
+startContextCheck();
 
 // Handle page navigation
 window.addEventListener('beforeunload', () => {

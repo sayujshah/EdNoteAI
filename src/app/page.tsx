@@ -64,6 +64,7 @@ export default function LandingPage() {
       "@type": "Product",
       "name": "EdNoteAI",
       "description": "AI-powered transcription and note taking for students and professionals.",
+      "image": "https://ednoteai.com/favicon.svg",
       "brand": {
         "@type": "Brand",
         "name": "EdNoteAI"
@@ -71,7 +72,38 @@ export default function LandingPage() {
       "offers": {
         "@type": "Offer",
         "price": "9.99",
-        "priceCurrency": "USD"
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": 30,
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/FreeReturn"
+        },
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": {
+            "@type": "MonetaryAmount",
+            "value": "0",
+            "currency": "USD"
+          },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 0,
+              "maxValue": 0,
+              "unitCode": "DAY"
+            },
+            "transitTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 0,
+              "maxValue": 0,
+              "unitCode": "DAY"
+            }
+          }
+        }
       },
       "aggregateRating": {
         "@type": "AggregateRating",

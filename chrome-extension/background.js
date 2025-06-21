@@ -1,9 +1,88 @@
 // EdNoteAI Chrome Extension - Background Service Worker
 // Phase 2: Real Audio Capture & Recording
 
+console.log('EdNoteAI Background Service Worker starting...');
+
+// Service worker keep-alive mechanism for Manifest V3
+let keepAliveInterval;
+
+function keepServiceWorkerAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+  }
+  
+  keepAliveInterval = setInterval(() => {
+    // Simple ping to keep service worker alive
+    if (chrome.runtime?.id) {
+      chrome.storage.local.set({ lastPing: Date.now() });
+    }
+  }, 25000); // Ping every 25 seconds (before 30s timeout)
+}
+
+// Validate APIs are available with detailed debugging
+function validateAPIs() {
+  console.log('=== Detailed API Validation ===');
+  console.log('Chrome object:', typeof chrome);
+  console.log('Chrome version:', chrome.runtime?.getManifest()?.version);
+  console.log('Runtime ID:', chrome.runtime?.id);
+  
+  const apis = {
+    tabCapture: !!chrome.tabCapture,
+    tabs: !!chrome.tabs,
+    storage: !!chrome.storage,
+    runtime: !!chrome.runtime
+  };
+  
+  console.log('Basic API availability:', apis);
+  
+  // More detailed TabCapture inspection
+  console.log('chrome.tabCapture object:', chrome.tabCapture);
+  console.log('chrome.tabCapture type:', typeof chrome.tabCapture);
+  
+  if (chrome.tabCapture) {
+    console.log('chrome.tabCapture.capture:', chrome.tabCapture.capture);
+    console.log('chrome.tabCapture.capture type:', typeof chrome.tabCapture.capture);
+    console.log('TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
+  }
+  
+  // Check specific browser
+  const userAgent = navigator.userAgent;
+  console.log('User Agent:', userAgent);
+  
+  const isChrome = userAgent.includes('Chrome/');
+  const isEdge = userAgent.includes('Edg/');
+  const isBrave = userAgent.includes('Brave');
+  
+  console.log('Browser detection:', { isChrome, isEdge, isBrave });
+  
+  if (!apis.tabCapture) {
+    console.error('❌ chrome.tabCapture API is not available!');
+    console.error('This might be due to:');
+    console.error('1. Using an unsupported browser');
+    console.error('2. Extension manifest issues');
+    console.error('3. Permissions not granted');
+    return false;
+  }
+  
+  if (!chrome.tabCapture.capture) {
+    console.error('❌ chrome.tabCapture.capture method is not available!');
+    console.error('TabCapture object exists but capture method is missing');
+    return false;
+  }
+  
+  console.log('✅ All required APIs are available and functional');
+  return true;
+}
+
 // Extension lifecycle
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('EdNoteAI Extension installed:', details);
+  
+  // Validate APIs on install
+  validateAPIs();
+  
+  // Start keep-alive
+  keepServiceWorkerAlive();
   
   // Set default options
   chrome.storage.sync.set({
@@ -14,6 +93,16 @@ chrome.runtime.onInstalled.addListener((details) => {
     sampleRate: 16000 // Default sample rate
   });
 });
+
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Extension startup detected');
+  validateAPIs();
+  keepServiceWorkerAlive();
+});
+
+// Validate APIs on service worker start
+validateAPIs();
+keepServiceWorkerAlive();
 
 // EdNoteAI Production Configuration
 const EDNOTEAI_CONFIG = {
@@ -271,53 +360,144 @@ class AudioProcessor {
   }
 }
 
-// Check extension permissions and capabilities
+// Check extension permissions and capabilities with enhanced debugging
 async function checkExtensionCapabilities() {
+  console.log('=== Checking Extension Capabilities ===');
+  
   const capabilities = {
     tabCapture: false,
     permissions: false,
     activeTab: false,
-    error: null
+    serviceWorkerActive: false,
+    browser: 'unknown',
+    manifestVersion: null,
+    error: null,
+    debug: {}
   };
 
   try {
-    // Check if tabCapture API exists
-    capabilities.tabCapture = !!(chrome.tabCapture && chrome.tabCapture.capture);
+    // Check if service worker context is valid
+    capabilities.serviceWorkerActive = !!(chrome.runtime && chrome.runtime.id);
+    console.log('Service worker active:', capabilities.serviceWorkerActive);
     
-    // Log debugging information
-    console.log('Extension capabilities check:', {
-      chromeTabCaptureExists: !!chrome.tabCapture,
-      captureMethodExists: !!(chrome.tabCapture && chrome.tabCapture.capture),
-      fullAPI: chrome.tabCapture
-    });
+    if (!capabilities.serviceWorkerActive) {
+      capabilities.error = 'Service worker context invalidated. Extension needs to be reloaded.';
+      return capabilities;
+    }
     
-    // Check permissions - wrap in try/catch as permissions API might not be available
+    // Get manifest info
+    try {
+      const manifest = chrome.runtime.getManifest();
+      capabilities.manifestVersion = manifest.manifest_version;
+      console.log('Manifest version:', capabilities.manifestVersion);
+      console.log('Extension permissions in manifest:', manifest.permissions);
+    } catch (manifestError) {
+      console.warn('Could not read manifest:', manifestError);
+    }
+    
+    // Enhanced browser detection
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome/')) {
+      const chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+      capabilities.browser = `Chrome ${chromeMatch ? chromeMatch[1] : 'unknown'}`;
+    } else if (userAgent.includes('Edg/')) {
+      capabilities.browser = 'Edge Chromium';
+    } else if (userAgent.includes('Brave')) {
+      capabilities.browser = 'Brave';
+    } else {
+      capabilities.browser = 'Unknown/Unsupported';
+    }
+    console.log('Detected browser:', capabilities.browser);
+    
+    // Detailed API validation
+    console.log('Performing detailed API validation...');
+    const apiValid = validateAPIs();
+    
+    // Check if tabCapture API exists with more detailed checking
+    const tabCaptureExists = !!(chrome.tabCapture);
+    const captureMethodExists = !!(chrome.tabCapture && chrome.tabCapture.capture);
+    
+    capabilities.tabCapture = tabCaptureExists && captureMethodExists;
+    
+    capabilities.debug = {
+      tabCaptureExists,
+      captureMethodExists,
+      tabCaptureType: typeof chrome.tabCapture,
+      captureMethodType: chrome.tabCapture ? typeof chrome.tabCapture.capture : 'undefined',
+      apiValidationResult: apiValid
+    };
+    
+    console.log('TabCapture API detailed check:', capabilities.debug);
+    
+    if (!apiValid) {
+      capabilities.error = 'Required APIs are not available in this context.';
+      return capabilities;
+    }
+    
+    // Check permissions with enhanced error handling
+    console.log('Checking permissions...');
     try {
       if (chrome.permissions && chrome.permissions.contains) {
-        const hasTabCapture = await new Promise((resolve) => {
-          chrome.permissions.contains({ permissions: ['tabCapture'] }, resolve);
+        console.log('Using chrome.permissions.contains API');
+        
+        const hasTabCapture = await new Promise((resolve, reject) => {
+          chrome.permissions.contains({ permissions: ['tabCapture'] }, (result) => {
+            if (chrome.runtime.lastError) {
+              console.error('TabCapture permission check error:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+            } else {
+              console.log('TabCapture permission result:', result);
+              resolve(result);
+            }
+          });
         });
         
-        const hasActiveTab = await new Promise((resolve) => {
-          chrome.permissions.contains({ permissions: ['activeTab'] }, resolve);
+        const hasActiveTab = await new Promise((resolve, reject) => {
+          chrome.permissions.contains({ permissions: ['activeTab'] }, (result) => {
+            if (chrome.runtime.lastError) {
+              console.error('ActiveTab permission check error:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+            } else {
+              console.log('ActiveTab permission result:', result);
+              resolve(result);
+            }
+          });
         });
         
         capabilities.permissions = hasTabCapture;
         capabilities.activeTab = hasActiveTab;
+        
+        console.log('Permission check results:', {
+          tabCapture: hasTabCapture,
+          activeTab: hasActiveTab
+        });
+        
       } else {
+        console.log('chrome.permissions API not available, assuming permissions granted');
         // Fallback: assume permissions are granted if API exists
         capabilities.permissions = capabilities.tabCapture;
         capabilities.activeTab = true;
       }
     } catch (permError) {
       console.warn('Permission check failed:', permError);
-      // Assume permissions are granted if we can't check them
-      capabilities.permissions = capabilities.tabCapture;
-      capabilities.activeTab = true;
+      // If we can't check permissions but API exists, assume they're granted
+      // This handles cases where permissions API is buggy but extension works
+      if (capabilities.tabCapture) {
+        console.log('TabCapture API exists, assuming permissions are granted despite check failure');
+        capabilities.permissions = true;
+        capabilities.activeTab = true;
+      } else {
+        capabilities.permissions = false;
+        capabilities.activeTab = false;
+        capabilities.error = `Permission check failed and TabCapture API unavailable: ${permError.message}`;
+      }
     }
+    
+    console.log('Final capabilities:', capabilities);
     
   } catch (error) {
     capabilities.error = error.message;
+    console.error('Capability check error:', error);
   }
   
   return capabilities;
@@ -327,6 +507,20 @@ async function checkExtensionCapabilities() {
 async function startTabCapture(tabId) {
   try {
     console.log('Starting enhanced tab capture for tab:', tabId);
+    
+    // Ensure service worker is alive
+    keepServiceWorkerAlive();
+    
+    // Check if context is still valid
+    if (!chrome.runtime?.id) {
+      throw new Error('Extension context invalidated. Please reload the extension.');
+    }
+    
+    // Re-validate APIs
+    const apiValid = validateAPIs();
+    if (!apiValid) {
+      throw new Error('Required APIs are not available. Extension may need to be reloaded.');
+    }
     
     // Check if we already have an active session for this tab
     if (activeRecordingSessions.has(tabId)) {
@@ -344,9 +538,13 @@ async function startTabCapture(tabId) {
       throw new Error('Authentication required. Please sign in first.');
     }
     
-    // Check if tabCapture API is available
-    if (!chrome.tabCapture || !chrome.tabCapture.capture) {
-      throw new Error('Tab capture API is not available. Please ensure the extension has proper permissions.');
+    // Check if tabCapture API is available with detailed validation
+    if (!chrome.tabCapture) {
+      throw new Error('chrome.tabCapture API is not available. This browser may not support tab capture.');
+    }
+    
+    if (typeof chrome.tabCapture.capture !== 'function') {
+      throw new Error('chrome.tabCapture.capture method is not available. Extension may need to be reloaded.');
     }
 
     // Verify tab exists and is audible
@@ -372,22 +570,36 @@ async function startTabCapture(tabId) {
     // Capture tab audio with enhanced options
     const stream = await new Promise((resolve, reject) => {
       try {
+        console.log('Calling chrome.tabCapture.capture...');
+        
+        // Double-check the API is still available before calling
+        if (!chrome.tabCapture || typeof chrome.tabCapture.capture !== 'function') {
+          reject(new Error('TabCapture API became unavailable during execution'));
+          return;
+        }
+        
         chrome.tabCapture.capture(
           {
             audio: true,
             video: false
           },
           (stream) => {
+            console.log('TabCapture callback called');
+            
             if (chrome.runtime.lastError) {
+              console.error('TabCapture runtime error:', chrome.runtime.lastError);
               reject(new Error(`Tab capture failed: ${chrome.runtime.lastError.message}`));
             } else if (stream) {
+              console.log('Successfully got stream from tabCapture');
               resolve(stream);
             } else {
+              console.error('TabCapture returned no stream and no error');
               reject(new Error('Failed to capture audio stream - no stream returned'));
             }
           }
         );
       } catch (error) {
+        console.error('Exception calling tabCapture.capture:', error);
         reject(new Error(`Exception in tabCapture.capture: ${error.message}`));
       }
     });
@@ -430,7 +642,22 @@ async function startTabCapture(tabId) {
     
   } catch (error) {
     console.error('Error starting enhanced tab capture:', error);
-    return { success: false, error: error.message };
+    
+    // Provide specific guidance based on error type
+    let errorResponse = { success: false, error: error.message };
+    
+    if (error.message.includes('context invalidated') || error.message.includes('Extension context')) {
+      errorResponse.action = 'reload_extension';
+      errorResponse.guidance = 'The extension service worker was terminated. Please reload the extension from chrome://extensions/';
+    } else if (error.message.includes('TabCapture API') || error.message.includes('chrome.tabCapture')) {
+      errorResponse.action = 'check_browser';
+      errorResponse.guidance = 'Tab capture is not available. Please ensure you are using Chrome/Chromium browser and the extension has proper permissions.';
+    } else if (error.message.includes('not available') || error.message.includes('reloaded')) {
+      errorResponse.action = 'reload_extension';
+      errorResponse.guidance = 'Extension APIs are not available. Please reload the extension.';
+    }
+    
+    return errorResponse;
   }
 }
 
@@ -517,34 +744,54 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'DEBUG_TABCAPTURE':
-      // Direct test of tabCapture API
-      try {
-        console.log('Testing tabCapture API directly...');
-        console.log('chrome.tabCapture:', chrome.tabCapture);
-        console.log('chrome.tabCapture.capture:', chrome.tabCapture ? chrome.tabCapture.capture : 'undefined');
-        
-        if (chrome.tabCapture && chrome.tabCapture.capture) {
-          sendResponse({ 
-            success: true, 
-            message: 'TabCapture API is available',
-            api: 'Available'
-          });
-        } else {
+      // Enhanced direct test of tabCapture API
+      (async () => {
+        try {
+          console.log('=== Enhanced TabCapture Debug Test ===');
+          
+          // Re-run full validation
+          const apiValid = validateAPIs();
+          const capabilities = await checkExtensionCapabilities();
+          
+          const debugInfo = {
+            apiValidation: apiValid,
+            capabilities: capabilities,
+            chromeTabCapture: !!chrome.tabCapture,
+            captureMethod: chrome.tabCapture ? !!chrome.tabCapture.capture : false,
+            tabCaptureObject: chrome.tabCapture ? 'exists' : 'missing',
+            captureMethodType: chrome.tabCapture ? typeof chrome.tabCapture.capture : 'undefined',
+            browser: capabilities.browser,
+            manifestVersion: capabilities.manifestVersion,
+            userAgent: navigator.userAgent
+          };
+          
+          console.log('Complete debug info:', debugInfo);
+          
+          if (chrome.tabCapture && chrome.tabCapture.capture) {
+            sendResponse({ 
+              success: true, 
+              message: 'TabCapture API is fully available',
+              debugInfo
+            });
+          } else {
+            sendResponse({ 
+              success: false, 
+              message: 'TabCapture API is not available',
+              reason: !chrome.tabCapture ? 'chrome.tabCapture object missing' : 'chrome.tabCapture.capture method missing',
+              debugInfo
+            });
+          }
+        } catch (error) {
+          console.error('Debug test error:', error);
           sendResponse({ 
             success: false, 
-            message: 'TabCapture API is not available',
-            chromeTabCapture: !!chrome.tabCapture,
-            captureMethod: chrome.tabCapture ? !!chrome.tabCapture.capture : false
+            message: `Error during debug test: ${error.message}`,
+            error: error.toString(),
+            stack: error.stack
           });
         }
-      } catch (error) {
-        sendResponse({ 
-          success: false, 
-          message: `Error testing tabCapture: ${error.message}`,
-          error: error.toString()
-        });
-      }
-      return false;
+      })();
+      return true; // Keep message channel open for async response
 
     case 'START_RECORDING':
       startTabCapture(message.tabId).then(result => {

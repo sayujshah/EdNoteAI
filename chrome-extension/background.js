@@ -40,9 +40,20 @@ function validateAPIs() {
   console.log('chrome.tabCapture type:', typeof chrome.tabCapture);
   
   if (chrome.tabCapture) {
-    console.log('chrome.tabCapture.capture:', chrome.tabCapture.capture);
-    console.log('chrome.tabCapture.capture type:', typeof chrome.tabCapture.capture);
+    // Check for both old and new API methods
+    const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
+    console.log('chrome.tabCapture.capture (deprecated):', chrome.tabCapture.capture);
+    console.log('chrome.tabCapture.captureStream (new):', chrome.tabCapture.captureStream);
+    console.log('Available capture method:', captureMethod);
     console.log('TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
+    
+    console.log('TabCapture API detailed check:', {
+      tabCaptureExists: !!chrome.tabCapture,
+      captureMethodExists: !!captureMethod,
+      tabCaptureType: typeof chrome.tabCapture,
+      captureMethodType: typeof captureMethod,
+      apiValidationResult: !!captureMethod
+    });
   }
   
   // Check specific browser
@@ -64,9 +75,12 @@ function validateAPIs() {
     return false;
   }
   
-  if (!chrome.tabCapture.capture) {
-    console.error('❌ chrome.tabCapture.capture method is not available!');
-    console.error('TabCapture object exists but capture method is missing');
+  // Check for either the old capture method or new captureStream method
+  const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
+  if (!captureMethod) {
+    console.error('❌ chrome.tabCapture capture methods are not available!');
+    console.error('Neither chrome.tabCapture.capture nor chrome.tabCapture.captureStream found');
+    console.error('Available TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
     return false;
   }
   
@@ -543,8 +557,10 @@ async function startTabCapture(tabId) {
       throw new Error('chrome.tabCapture API is not available. This browser may not support tab capture.');
     }
     
-    if (typeof chrome.tabCapture.capture !== 'function') {
-      throw new Error('chrome.tabCapture.capture method is not available. Extension may need to be reloaded.');
+    // Check for either the old capture method or new captureStream method
+    const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
+    if (typeof captureMethod !== 'function') {
+      throw new Error('chrome.tabCapture methods are not available. Available methods: ' + Object.getOwnPropertyNames(chrome.tabCapture).join(', '));
     }
 
     // Verify tab exists and is audible
@@ -567,40 +583,65 @@ async function startTabCapture(tabId) {
       console.warn('Tab may not have audio content');
     }
 
-    // Capture tab audio with enhanced options
+    // Capture tab audio with enhanced options using the correct API
     const stream = await new Promise((resolve, reject) => {
       try {
-        console.log('Calling chrome.tabCapture.capture...');
+        // Use the correct capture method (newer API uses captureStream)
+        const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
+        
+        console.log('Calling tabCapture method...', captureMethod ? 'available' : 'not available');
         
         // Double-check the API is still available before calling
-        if (!chrome.tabCapture || typeof chrome.tabCapture.capture !== 'function') {
+        if (!chrome.tabCapture || typeof captureMethod !== 'function') {
           reject(new Error('TabCapture API became unavailable during execution'));
           return;
         }
         
-        chrome.tabCapture.capture(
-          {
+        // Use the appropriate API call
+        if (chrome.tabCapture.captureStream) {
+          // New API - returns a promise
+          console.log('Using chrome.tabCapture.captureStream (new API)');
+          chrome.tabCapture.captureStream({
             audio: true,
             video: false
-          },
-          (stream) => {
-            console.log('TabCapture callback called');
-            
-            if (chrome.runtime.lastError) {
-              console.error('TabCapture runtime error:', chrome.runtime.lastError);
-              reject(new Error(`Tab capture failed: ${chrome.runtime.lastError.message}`));
-            } else if (stream) {
-              console.log('Successfully got stream from tabCapture');
+          }).then(stream => {
+            console.log('Successfully got stream from captureStream');
+            if (stream) {
               resolve(stream);
             } else {
-              console.error('TabCapture returned no stream and no error');
               reject(new Error('Failed to capture audio stream - no stream returned'));
             }
-          }
-        );
+          }).catch(error => {
+            console.error('CaptureStream error:', error);
+            reject(new Error(`Tab capture failed: ${error.message}`));
+          });
+        } else {
+          // Legacy API - uses callback
+          console.log('Using chrome.tabCapture.capture (legacy API)');
+          chrome.tabCapture.capture(
+            {
+              audio: true,
+              video: false
+            },
+            (stream) => {
+              console.log('TabCapture callback called');
+              
+              if (chrome.runtime.lastError) {
+                console.error('TabCapture runtime error:', chrome.runtime.lastError);
+                reject(new Error(`Tab capture failed: ${chrome.runtime.lastError.message}`));
+              } else if (stream) {
+                console.log('Successfully got stream from tabCapture');
+                resolve(stream);
+              } else {
+                console.error('TabCapture returned no stream and no error');
+                reject(new Error('Failed to capture audio stream - no stream returned'));
+              }
+            }
+          );
+        }
       } catch (error) {
-        console.error('Exception calling tabCapture.capture:', error);
-        reject(new Error(`Exception in tabCapture.capture: ${error.message}`));
+        console.error('Exception calling tabCapture method:', error);
+        reject(new Error(`Exception in tabCapture: ${error.message}`));
       }
     });
     
@@ -753,13 +794,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const apiValid = validateAPIs();
           const capabilities = await checkExtensionCapabilities();
           
+          const captureMethod = chrome.tabCapture ? (chrome.tabCapture.capture || chrome.tabCapture.captureStream) : null;
           const debugInfo = {
             apiValidation: apiValid,
             capabilities: capabilities,
             chromeTabCapture: !!chrome.tabCapture,
-            captureMethod: chrome.tabCapture ? !!chrome.tabCapture.capture : false,
+            captureMethod: !!captureMethod,
             tabCaptureObject: chrome.tabCapture ? 'exists' : 'missing',
-            captureMethodType: chrome.tabCapture ? typeof chrome.tabCapture.capture : 'undefined',
+            captureMethodType: captureMethod ? typeof captureMethod : 'undefined',
+            availableMethods: chrome.tabCapture ? Object.getOwnPropertyNames(chrome.tabCapture) : [],
+            legacyCapture: chrome.tabCapture ? !!chrome.tabCapture.capture : false,
+            newCaptureStream: chrome.tabCapture ? !!chrome.tabCapture.captureStream : false,
             browser: capabilities.browser,
             manifestVersion: capabilities.manifestVersion,
             userAgent: navigator.userAgent
@@ -767,17 +812,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           
           console.log('Complete debug info:', debugInfo);
           
-          if (chrome.tabCapture && chrome.tabCapture.capture) {
+          if (chrome.tabCapture && captureMethod) {
             sendResponse({ 
               success: true, 
-              message: 'TabCapture API is fully available',
+              message: `TabCapture API is available (using ${chrome.tabCapture.captureStream ? 'captureStream' : 'capture'})`,
               debugInfo
             });
           } else {
             sendResponse({ 
               success: false, 
               message: 'TabCapture API is not available',
-              reason: !chrome.tabCapture ? 'chrome.tabCapture object missing' : 'chrome.tabCapture.capture method missing',
+              reason: !chrome.tabCapture ? 'chrome.tabCapture object missing' : 'No capture methods available',
               debugInfo
             });
           }

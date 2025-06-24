@@ -304,6 +304,10 @@ class AudioProcessor {
       this.audioContext = new AudioContext({
         sampleRate: this.audioConfig.sampleRate
       });
+
+      // Continue audio playback for the user
+      const source = this.audioContext.createMediaStreamSource(stream);
+      source.connect(this.audioContext.destination);
       
       // Create media recorder
       const options = {

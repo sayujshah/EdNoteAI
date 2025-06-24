@@ -17,12 +17,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return notFound();
+  
   return (
     <main className="max-w-3xl mx-auto py-12 px-4">
       <Link href="/blog" className="text-primary hover:underline mb-4 inline-block">&larr; Back to Blog</Link>
       <h1 className="text-4xl font-bold mb-2">{post.title}</h1>
       <div className="text-sm text-muted-foreground mb-6">{new Date(post.date).toLocaleDateString()} &middot; {post.author}</div>
-      <article className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+      
+
+      
+      <article 
+        className="blog-content prose dark:prose-invert max-w-none"
+        dangerouslySetInnerHTML={{ __html: post.content }} 
+      />
     </main>
   );
 } 

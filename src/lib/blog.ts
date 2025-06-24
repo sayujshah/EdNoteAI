@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import html from 'remark-html';
+import { marked } from 'marked';
 
 const postsDirectory = path.join(process.cwd(), 'src/content/blog');
 
@@ -38,11 +37,32 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   if (!fs.existsSync(fullPath)) return null;
   const fileContents = fs.readFileSync(fullPath, 'utf8');
   const { data, content } = matter(fileContents);
-  const processedContent = await remark().use(html).process(content);
-  const contentHtml = processedContent.toString();
+  
+  // Configure marked for better markdown processing
+  marked.setOptions({
+    gfm: true, // GitHub Flavored Markdown
+    breaks: true, // Convert line breaks to <br>
+  });
+  
+  // Process content with marked (ensure it's a string)
+  let htmlContent = await marked.parse(content);
+  
+  // Post-process to handle emojis with proper styling
+  htmlContent = htmlContent
+    .replace(/✅/g, '<span style="color: #16a34a; font-size: 1.1em;">✅</span>')
+    .replace(/❌/g, '<span style="color: #dc2626; font-size: 1.1em;">❌</span>')
+    .replace(/🎯/g, '<span style="font-size: 1.1em;">🎯</span>')
+    .replace(/📚/g, '<span style="font-size: 1.1em;">📚</span>')
+    .replace(/🎓/g, '<span style="font-size: 1.1em;">🎓</span>')
+    .replace(/💡/g, '<span style="font-size: 1.1em;">💡</span>')
+    .replace(/📊/g, '<span style="font-size: 1.1em;">📊</span>')
+    .replace(/💰/g, '<span style="font-size: 1.1em;">💰</span>')
+    .replace(/🚀/g, '<span style="font-size: 1.1em;">🚀</span>')
+    .replace(/🔍/g, '<span style="font-size: 1.1em;">🔍</span>');
+  
   return {
     ...(data as BlogPostMeta),
     slug,
-    content: contentHtml,
+    content: htmlContent,
   };
 } 

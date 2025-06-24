@@ -40,19 +40,23 @@ function validateAPIs() {
   console.log('chrome.tabCapture type:', typeof chrome.tabCapture);
   
   if (chrome.tabCapture) {
-    // Check for both old and new API methods
-    const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
-    console.log('chrome.tabCapture.capture (deprecated):', chrome.tabCapture.capture);
-    console.log('chrome.tabCapture.captureStream (new):', chrome.tabCapture.captureStream);
-    console.log('Available capture method:', captureMethod);
+    // Check for available API methods
+    const hasGetMediaStreamId = chrome.tabCapture.getMediaStreamId && typeof chrome.tabCapture.getMediaStreamId === 'function';
+    const hasLegacyCapture = chrome.tabCapture.capture && typeof chrome.tabCapture.capture === 'function';
+    const hasAnyMethod = hasGetMediaStreamId || hasLegacyCapture;
+    
+    console.log('chrome.tabCapture.getMediaStreamId (modern):', !!hasGetMediaStreamId);
+    console.log('chrome.tabCapture.capture (legacy):', !!hasLegacyCapture);
     console.log('TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
     
     console.log('TabCapture API detailed check:', {
       tabCaptureExists: !!chrome.tabCapture,
-      captureMethodExists: !!captureMethod,
+      captureMethodExists: hasAnyMethod,
       tabCaptureType: typeof chrome.tabCapture,
-      captureMethodType: typeof captureMethod,
-      apiValidationResult: !!captureMethod
+      captureMethodType: hasGetMediaStreamId ? 'getMediaStreamId' : (hasLegacyCapture ? 'capture' : 'undefined'),
+      apiValidationResult: hasAnyMethod,
+      modernAPI: hasGetMediaStreamId,
+      legacyAPI: hasLegacyCapture
     });
   }
   
@@ -75,11 +79,13 @@ function validateAPIs() {
     return false;
   }
   
-  // Check for either the old capture method or new captureStream method
-  const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
-  if (!captureMethod) {
-    console.error('❌ chrome.tabCapture capture methods are not available!');
-    console.error('Neither chrome.tabCapture.capture nor chrome.tabCapture.captureStream found');
+  // Check for available TabCapture methods
+  const hasGetMediaStreamId = chrome.tabCapture.getMediaStreamId && typeof chrome.tabCapture.getMediaStreamId === 'function';
+  const hasLegacyCapture = chrome.tabCapture.capture && typeof chrome.tabCapture.capture === 'function';
+  
+  if (!hasGetMediaStreamId && !hasLegacyCapture) {
+    console.error('❌ chrome.tabCapture methods are not available!');
+    console.error('Neither chrome.tabCapture.getMediaStreamId nor chrome.tabCapture.capture found');
     console.error('Available TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
     return false;
   }
@@ -517,6 +523,150 @@ async function checkExtensionCapabilities() {
   return capabilities;
 }
 
+// Modern TabCapture implementation using getMediaStreamId and offscreen document
+async function getModernTabCaptureStream(tabId) {
+  console.log('=== Modern TabCapture Approach ===');
+  console.log('Available TabCapture methods:', Object.getOwnPropertyNames(chrome.tabCapture));
+  
+  // Check if we have the modern API
+  if (!chrome.tabCapture.getMediaStreamId) {
+    throw new Error('chrome.tabCapture.getMediaStreamId is not available');
+  }
+  
+  try {
+    // Step 0: Clean up any existing captures
+    await cleanupExistingCaptures();
+    
+    // Step 1: Get a stream ID
+    console.log('Getting stream ID for tab:', tabId);
+    const streamId = await chrome.tabCapture.getMediaStreamId({
+      targetTabId: tabId
+    });
+    
+    if (!streamId) {
+      throw new Error('Failed to get stream ID from getMediaStreamId');
+    }
+    
+    console.log('Got stream ID:', streamId);
+    
+    // Step 2: Create offscreen document if needed
+    await ensureOffscreenDocument();
+    
+    // Step 3: Start audio capture in offscreen document
+    const captureResult = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        type: 'START_TAB_CAPTURE',
+        streamId: streamId,
+        tabId: tabId
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(`Message failed: ${chrome.runtime.lastError.message}`));
+        } else if (!response) {
+          reject(new Error('No response from offscreen document'));
+        } else if (!response.success) {
+          reject(new Error(`Failed to start capture: ${response.error}`));
+        } else {
+          resolve(response);
+        }
+      });
+    });
+    
+    console.log('Tab capture started in offscreen document');
+    
+    // Step 4: Create a mock stream object for compatibility with existing code
+    // Since we can't transfer the actual MediaStream, we'll create a proxy object
+    const mockStream = {
+      id: `tab-capture-${tabId}`,
+      active: true,
+      getTracks: () => [{
+        id: `audio-track-${tabId}`,
+        kind: 'audio',
+        enabled: true,
+        readyState: 'live',
+        stop: () => {
+          console.log('Stopping tab capture stream');
+          chrome.runtime.sendMessage({
+            type: 'STOP_TAB_CAPTURE',
+            tabId: tabId
+          });
+        }
+      }],
+      getAudioTracks: function() { return this.getTracks().filter(t => t.kind === 'audio'); },
+      getVideoTracks: () => [],
+      addTrack: () => {},
+      removeTrack: () => {},
+      clone: () => mockStream
+    };
+    
+    console.log('Created mock stream for tab capture');
+    return mockStream;
+    
+  } catch (error) {
+    console.error('Modern TabCapture failed:', error);
+    throw new Error(`Modern TabCapture failed: ${error.message}`);
+  }
+}
+
+// Clean up any existing tab captures
+async function cleanupExistingCaptures() {
+  try {
+    console.log('Cleaning up any existing tab captures...');
+    
+    // Get all currently captured tabs
+    const capturedTabs = await chrome.tabCapture.getCapturedTabs();
+    console.log('Found captured tabs:', capturedTabs);
+    
+    // Stop all active captures
+    for (const capture of capturedTabs) {
+      console.log('Stopping capture for tab:', capture.tabId);
+      try {
+        await new Promise((resolve) => {
+          chrome.runtime.sendMessage({
+            type: 'STOP_TAB_CAPTURE',
+            tabId: capture.tabId
+          }, (response) => {
+            // Don't worry about the response, just resolve
+            resolve();
+          });
+        });
+      } catch (error) {
+        console.log('Could not stop capture for tab', capture.tabId, ':', error.message);
+      }
+    }
+    
+    // Wait for cleanup
+    if (capturedTabs.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+  } catch (error) {
+    console.log('Error during cleanup:', error);
+  }
+}
+
+async function ensureOffscreenDocument() {
+  // Check if offscreen document already exists
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [chrome.runtime.getURL('offscreen.html')]
+  });
+  
+  if (existingContexts.length > 0) {
+    console.log('Offscreen document already exists');
+    return;
+  }
+  
+  // Create offscreen document
+  console.log('Creating offscreen document...');
+  await chrome.offscreen.createDocument({
+    url: chrome.runtime.getURL('offscreen.html'),
+    reasons: ['USER_MEDIA'],
+    justification: 'Required for tab audio capture using getUserMedia'
+  });
+  
+  console.log('Offscreen document created');
+}
+
 // Enhanced tab audio capture
 async function startTabCapture(tabId) {
   try {
@@ -538,7 +688,10 @@ async function startTabCapture(tabId) {
     
     // Check if we already have an active session for this tab
     if (activeRecordingSessions.has(tabId)) {
-      throw new Error('Recording already active for this tab');
+      console.log('Recording already active for this tab, stopping existing session first...');
+      await stopTabCapture(tabId);
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     // Get audio quality settings
@@ -557,10 +710,12 @@ async function startTabCapture(tabId) {
       throw new Error('chrome.tabCapture API is not available. This browser may not support tab capture.');
     }
     
-    // Check for either the old capture method or new captureStream method
-    const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
-    if (typeof captureMethod !== 'function') {
-      throw new Error('chrome.tabCapture methods are not available. Available methods: ' + Object.getOwnPropertyNames(chrome.tabCapture).join(', '));
+    // Check for the modern getMediaStreamId method or legacy capture method
+    const hasModernAPI = chrome.tabCapture.getMediaStreamId && typeof chrome.tabCapture.getMediaStreamId === 'function';
+    const hasLegacyAPI = chrome.tabCapture.capture && typeof chrome.tabCapture.capture === 'function';
+    
+    if (!hasModernAPI && !hasLegacyAPI) {
+      throw new Error('No chrome.tabCapture methods are available. Available methods: ' + Object.getOwnPropertyNames(chrome.tabCapture).join(', '));
     }
 
     // Verify tab exists and is audible
@@ -583,67 +738,9 @@ async function startTabCapture(tabId) {
       console.warn('Tab may not have audio content');
     }
 
-    // Capture tab audio with enhanced options using the correct API
-    const stream = await new Promise((resolve, reject) => {
-      try {
-        // Use the correct capture method (newer API uses captureStream)
-        const captureMethod = chrome.tabCapture.capture || chrome.tabCapture.captureStream;
-        
-        console.log('Calling tabCapture method...', captureMethod ? 'available' : 'not available');
-        
-        // Double-check the API is still available before calling
-        if (!chrome.tabCapture || typeof captureMethod !== 'function') {
-          reject(new Error('TabCapture API became unavailable during execution'));
-          return;
-        }
-        
-        // Use the appropriate API call
-        if (chrome.tabCapture.captureStream) {
-          // New API - returns a promise
-          console.log('Using chrome.tabCapture.captureStream (new API)');
-          chrome.tabCapture.captureStream({
-            audio: true,
-            video: false
-          }).then(stream => {
-            console.log('Successfully got stream from captureStream');
-            if (stream) {
-              resolve(stream);
-            } else {
-              reject(new Error('Failed to capture audio stream - no stream returned'));
-            }
-          }).catch(error => {
-            console.error('CaptureStream error:', error);
-            reject(new Error(`Tab capture failed: ${error.message}`));
-          });
-        } else {
-          // Legacy API - uses callback
-          console.log('Using chrome.tabCapture.capture (legacy API)');
-          chrome.tabCapture.capture(
-            {
-              audio: true,
-              video: false
-            },
-            (stream) => {
-              console.log('TabCapture callback called');
-              
-              if (chrome.runtime.lastError) {
-                console.error('TabCapture runtime error:', chrome.runtime.lastError);
-                reject(new Error(`Tab capture failed: ${chrome.runtime.lastError.message}`));
-              } else if (stream) {
-                console.log('Successfully got stream from tabCapture');
-                resolve(stream);
-              } else {
-                console.error('TabCapture returned no stream and no error');
-                reject(new Error('Failed to capture audio stream - no stream returned'));
-              }
-            }
-          );
-        }
-      } catch (error) {
-        console.error('Exception calling tabCapture method:', error);
-        reject(new Error(`Exception in tabCapture: ${error.message}`));
-      }
-    });
+    // Use modern TabCapture approach with getMediaStreamId and offscreen document
+    console.log('Using modern TabCapture approach...');
+    const stream = await getModernTabCaptureStream(tabId);
     
     // Create WebSocket connection
     const websocket = await createWebSocketConnection(tabId);
@@ -702,6 +799,40 @@ async function startTabCapture(tabId) {
   }
 }
 
+// Handle audio data from offscreen document
+function handleAudioData(tabId, audioData, sampleRate, timestamp) {
+  const session = activeRecordingSessions.get(tabId);
+  if (!session) {
+    return; // No active session for this tab
+  }
+  
+  // Simple logging instead of processing (for now)
+  console.log(`Audio data received for tab ${tabId}: ${audioData.length} samples`);
+  
+  // Update session with latest data
+  session.lastAudioTimestamp = timestamp;
+  
+  // For now, just accumulate the transcript buffer with a placeholder
+  // In a full implementation, this would be sent to the transcription service
+  if (!session.transcriptBuffer) {
+    session.transcriptBuffer = '';
+  }
+  
+  // Simulate transcript update every few seconds
+  if (timestamp - (session.lastTranscriptUpdate || session.startTime) > 5000) {
+    session.transcriptBuffer += `[Audio captured at ${new Date(timestamp).toLocaleTimeString()}] `;
+    session.lastTranscriptUpdate = timestamp;
+    
+    // Broadcast transcript update
+    broadcastToSession(tabId, {
+      type: 'TRANSCRIPT_UPDATE',
+      transcript: session.transcriptBuffer,
+      isPartial: false,
+      timestamp: timestamp
+    });
+  }
+}
+
 // Enhanced stop recording
 async function stopTabCapture(tabId) {
   try {
@@ -717,9 +848,27 @@ async function stopTabCapture(tabId) {
       session.audioProcessor.stop();
     }
     
-    // Stop the media stream
+    // Stop the media stream (this will also stop offscreen capture for modern approach)
     if (session.stream) {
       session.stream.getTracks().forEach(track => track.stop());
+    }
+    
+    // If using modern TabCapture, also stop the offscreen capture
+    try {
+      await new Promise((resolve) => {
+        chrome.runtime.sendMessage({
+          type: 'STOP_TAB_CAPTURE',
+          tabId: tabId
+        }, (response) => {
+          // Don't worry about the response, just resolve
+          resolve();
+        });
+        // Also resolve after a timeout in case offscreen document doesn't respond
+        setTimeout(resolve, 1000);
+      });
+    } catch (error) {
+      // Offscreen document might not be available, that's ok
+      console.log('Could not stop offscreen capture (document may not exist):', error.message);
     }
     
     // Close WebSocket connection
@@ -794,17 +943,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const apiValid = validateAPIs();
           const capabilities = await checkExtensionCapabilities();
           
-          const captureMethod = chrome.tabCapture ? (chrome.tabCapture.capture || chrome.tabCapture.captureStream) : null;
+          const hasGetMediaStreamId = chrome.tabCapture ? (chrome.tabCapture.getMediaStreamId && typeof chrome.tabCapture.getMediaStreamId === 'function') : false;
+          const hasLegacyCapture = chrome.tabCapture ? (chrome.tabCapture.capture && typeof chrome.tabCapture.capture === 'function') : false;
+          const hasAnyMethod = hasGetMediaStreamId || hasLegacyCapture;
+          
           const debugInfo = {
             apiValidation: apiValid,
             capabilities: capabilities,
             chromeTabCapture: !!chrome.tabCapture,
-            captureMethod: !!captureMethod,
+            captureMethod: hasAnyMethod,
             tabCaptureObject: chrome.tabCapture ? 'exists' : 'missing',
-            captureMethodType: captureMethod ? typeof captureMethod : 'undefined',
+            captureMethodType: hasGetMediaStreamId ? 'getMediaStreamId' : (hasLegacyCapture ? 'capture' : 'undefined'),
             availableMethods: chrome.tabCapture ? Object.getOwnPropertyNames(chrome.tabCapture) : [],
-            legacyCapture: chrome.tabCapture ? !!chrome.tabCapture.capture : false,
-            newCaptureStream: chrome.tabCapture ? !!chrome.tabCapture.captureStream : false,
+            modernAPI: hasGetMediaStreamId,
+            legacyCapture: hasLegacyCapture,
             browser: capabilities.browser,
             manifestVersion: capabilities.manifestVersion,
             userAgent: navigator.userAgent
@@ -812,10 +964,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           
           console.log('Complete debug info:', debugInfo);
           
-          if (chrome.tabCapture && captureMethod) {
+          if (chrome.tabCapture && hasAnyMethod) {
+            const method = hasGetMediaStreamId ? 'getMediaStreamId (modern)' : 'capture (legacy)';
             sendResponse({ 
               success: true, 
-              message: `TabCapture API is available (using ${chrome.tabCapture.captureStream ? 'captureStream' : 'capture'})`,
+              message: `TabCapture API is available (using ${method})`,
               debugInfo
             });
           } else {
@@ -849,6 +1002,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse(result);
       });
       return true;
+    
+    case 'AUDIO_DATA':
+      // Handle audio data from offscreen document
+      handleAudioData(message.tabId, message.audioData, message.sampleRate, message.timestamp);
+      return false;
     
     case 'GET_RECORDING_STATUS':
       const session = activeRecordingSessions.get(message.tabId);

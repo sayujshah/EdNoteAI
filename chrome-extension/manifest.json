@@ -10,7 +10,8 @@
     "tabCapture",
     "storage",
     "webNavigation",
-    "scripting"
+    "scripting",
+    "offscreen"
   ],
   
   "host_permissions": [

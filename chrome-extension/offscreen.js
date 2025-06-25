@@ -1,37 +1,51 @@
-// Offscreen document for handling getUserMedia calls
+// Offscreen document for modern Chrome tab capture
 console.log('EdNoteAI Offscreen document loaded');
 
 // Global state for active captures
 let activeCaptureStreams = new Map();
 let activeAudioProcessors = new Map();
 
-// Listen for messages from the service worker
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Offscreen received message:', message);
+// Listen for messages from the service worker following Chrome documentation pattern
+chrome.runtime.onMessage.addListener(async (message) => {
+  if (message.target !== 'offscreen') return;
   
-  if (message.type === 'START_TAB_CAPTURE') {
-    startTabCapture(message.streamId, message.tabId)
-      .then(result => {
-        sendResponse(result);
-      })
-      .catch(error => {
-        console.error('Tab capture failed in offscreen:', error);
-        sendResponse({ 
-          success: false, 
-          error: error.message 
-        });
+  console.log('Offscreen received message:', message.type);
+  
+  if (message.type === 'start-recording') {
+    try {
+      const result = await startTabCapture(message.data, message.tabId);
+      // Send response back to service worker
+      chrome.runtime.sendMessage({
+        type: 'start-recording-response',
+        target: 'background',
+        tabId: message.tabId,
+        success: true,
+        ...result
       });
-    
-    return true; // Keep message channel open for async response
+    } catch (error) {
+      console.error('Tab capture failed in offscreen:', error);
+      chrome.runtime.sendMessage({
+        type: 'start-recording-response',
+        target: 'background',
+        tabId: message.tabId,
+        success: false,
+        error: error.message
+      });
+    }
   }
   
-  if (message.type === 'STOP_TAB_CAPTURE') {
+  if (message.type === 'stop-recording') {
     stopTabCapture(message.tabId);
-    sendResponse({ success: true });
-    return false;
+    chrome.runtime.sendMessage({
+      type: 'stop-recording-response',
+      target: 'background',
+      tabId: message.tabId,
+      success: true
+    });
   }
 });
 
+// Modern tab capture implementation following Chrome documentation
 async function startTabCapture(streamId, tabId) {
   console.log('Starting tab capture in offscreen:', { streamId, tabId });
   
@@ -44,7 +58,7 @@ async function startTabCapture(streamId, tabId) {
   }
   
   try {
-    // Use getUserMedia with the stream ID to get the actual stream
+    // Use getUserMedia with the stream ID following Chrome documentation pattern
     const constraints = {
       audio: {
         mandatory: {
@@ -52,7 +66,7 @@ async function startTabCapture(streamId, tabId) {
           chromeMediaSourceId: streamId,
         },
       },
-      video: false // We only want audio
+      video: false // Audio only for EdNoteAI
     };
     
     console.log('Calling getUserMedia with constraints:', constraints);
@@ -62,18 +76,21 @@ async function startTabCapture(streamId, tabId) {
     // Store the stream
     activeCaptureStreams.set(tabId, stream);
     
-    // Set up audio processing with throttling
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    // Continue to play the captured audio to the user (as per Chrome docs)
+    const output = new AudioContext();
+    const source = output.createMediaStreamSource(stream);
+    source.connect(output.destination);
+    
+    // Set up audio processing for transcription
+    const processor = output.createScriptProcessor(4096, 1, 1);
     
     let lastSentTime = 0;
-    const SEND_INTERVAL = 100; // Send audio data every 100ms instead of continuously
+    const SEND_INTERVAL = 100; // Send audio data every 100ms
     
     processor.onaudioprocess = (event) => {
       const now = Date.now();
       
-      // Throttle audio data sending to prevent overwhelming the service worker
+      // Throttle audio data sending
       if (now - lastSentTime < SEND_INTERVAL) {
         return;
       }
@@ -84,7 +101,7 @@ async function startTabCapture(streamId, tabId) {
       const inputBuffer = event.inputBuffer;
       const channelData = inputBuffer.getChannelData(0);
       
-      // Convert to array buffer for transfer
+      // Convert to array for transfer
       const audioData = new Float32Array(channelData);
       
       // Send audio data to service worker (non-blocking)
@@ -92,7 +109,7 @@ async function startTabCapture(streamId, tabId) {
         type: 'AUDIO_DATA',
         tabId: tabId,
         audioData: Array.from(audioData),
-        sampleRate: audioContext.sampleRate,
+        sampleRate: output.sampleRate,
         timestamp: now
       }).catch(() => {
         // Service worker might not be listening, that's ok
@@ -100,16 +117,16 @@ async function startTabCapture(streamId, tabId) {
     };
     
     source.connect(processor);
-    processor.connect(audioContext.destination);
+    processor.connect(output.destination);
     
     // Store the processor for cleanup
-    activeAudioProcessors.set(tabId, { audioContext, source, processor });
+    activeAudioProcessors.set(tabId, { audioContext: output, source, processor });
     
     console.log('Tab capture and audio processing started successfully');
     
     return { 
-      success: true, 
       message: 'Tab capture stream created and audio processing started',
+      streamActive: true
     };
     
   } catch (error) {

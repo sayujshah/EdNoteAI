@@ -187,6 +187,28 @@ function setupEventListeners() {
   if (startBtn) startBtn.addEventListener('click', startRecording);
   if (stopBtn) stopBtn.addEventListener('click', stopRecording);
   
+  // Listen for recording updates from background script
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'RECORDING_STARTED' && message.tabId === currentTab?.id) {
+      isRecording = true;
+      recordingSession = { tabId: message.tabId, startTime: message.startTime };
+      updateRecordingUI();
+      startRecordingTimer();
+      showNotification('Recording started!', 'success');
+    } else if (message.type === 'RECORDING_STOPPED' && message.tabId === currentTab?.id) {
+      isRecording = false;
+      recordingSession = null;
+      updateRecordingUI();
+      stopRecordingTimer();
+      const duration = Math.round(message.duration / 1000);
+      showNotification(`Recording stopped! Duration: ${duration}s`, 'success');
+    } else if (message.type === 'CAPTURE_ERROR' && message.tabId === currentTab?.id) {
+      showNotification(`Recording error: ${message.error}`, 'error');
+      isRecording = false;
+      updateRecordingUI();
+    }
+  });
+  
   // Authentication
   const signInBtn = document.getElementById('sign-in-btn');
   const signOutBtn = document.getElementById('sign-out-btn');
@@ -308,16 +330,6 @@ function setupPeriodicUpdates() {
       
       case 'AUTH_STATUS_CHANGED':
         // Handle authentication status changes from background
-        authToken = message.authenticated ? 'authenticated' : null;
-        updateAuthUI(message.authenticated);
-        updateRecordingUI();
-        
-        if (message.authenticated) {
-          showNotification('Successfully signed in to EdNoteAI!', 'success');
-        } else {
-          showNotification('Signed out from EdNoteAI', 'info');
-        }
-        break;
         authToken = message.authenticated ? 'authenticated' : null;
         updateAuthUI(message.authenticated);
         updateRecordingUI();

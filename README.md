@@ -1,79 +1,115 @@
 # EdNoteAI
 
-EdNoteAI is an AI-powered web application (and planned Chrome extension) designed to help students and professionals transform video and audio lectures into structured, academic-grade notes. The platform leverages state-of-the-art speech-to-text and language models to generate transcriptions, summaries, and key points, making learning and review more efficient.
+EdNoteAI is an AI-powered web application and Chrome extension that helps students and professionals transform video and audio lectures into structured, academic-grade notes. The platform uses speech-to-text and language models to generate transcriptions, summaries, and key points.
 
 ---
 
-## 🚀 What Has Been Built
+## Features
 
-### Core Features
+### Web Application
 
-- **User Authentication:** Secure sign-up, login, and account management using Supabase Auth.
-- **File Upload:** Upload audio/video files via a dedicated dashboard page. Files are stored in AWS S3.
-- **Automated Transcription:** Uploaded media is transcribed using an AWS Lambda function powered by OpenAI Whisper.
-- **AI Note Generation:** Transcripts are processed by another Lambda function (using GPT-4o-mini) to generate segmented notes and markdown content.
-- **Realtime Updates:** The analysis page uses Supabase Realtime to update the UI as soon as processing is complete.
-- **Media Playback:** Users can play back uploaded audio and video files directly in the browser.
-- **Notes Display:** Transcriptions and AI-generated notes are rendered in markdown, with support for LaTeX formatting. Users can view summaries and key points.
-- **Library:** Users can view and manage all their uploaded media and generated notes in a searchable, filterable library.
-- **Pricing & Subscription UI:** Static pricing plans are displayed, with Stripe integration in progress.
-- **Modern UI:** Built with Next.js, React, Tailwind CSS, and a custom UI component library.
+- **User authentication:** Sign-up, login, and account management with Supabase Auth (including password reset, change password, and account deletion).
+- **File upload:** Upload audio/video via the dashboard. Files are stored in AWS S3 with presigned URLs.
+- **Transcription:** Uploaded media is transcribed by an AWS Lambda function using OpenAI Whisper.
+- **AI note generation:** Transcripts are processed by a Lambda function (Google Gemini) to produce Markdown notes with LaTeX math.
+- **Real-time updates:** The analysis page uses Supabase Realtime so the UI updates as soon as processing finishes.
+- **Media playback:** Playback of uploaded audio and video in the browser.
+- **Notes display:** Transcriptions and AI notes are rendered in Markdown with LaTeX (KaTeX). Summaries and key points are shown.
+- **Library:** Searchable, filterable library of media and generated notes.
+- **Subscriptions & billing:** Stripe integration for plans, checkout, billing portal, webhooks, and usage-based limits.
+- **Export:** Export notes/transcripts in multiple formats (e.g. Markdown, plain text).
+- **Chrome extension integration:** The extension can receive auth from the web app for recording and saving notes to the library.
 
-### Technical Stack
+### Chrome Extension
 
-- **Frontend:** Next.js (App Router), React, Tailwind CSS, Supabase Client, `react-markdown`, `react-katex`
-- **Backend:** Next.js API Routes, Supabase (PostgreSQL, Auth, Realtime), AWS Lambda, AWS S3, OpenAI API
-- **Database:** Videos, transcripts, notes, and user settings are all managed in a relational schema with proper relationships and RLS (Row Level Security) policies.
+- **Tab audio capture:** Capture audio from browser tabs via Chrome’s `getMediaStreamId` and offscreen documents.
+- **Real-time transcription:** Live transcription with streaming to the EdNoteAI backend.
+- **Note generation:** AI-generated notes from captured audio.
+- **Integration:** Auth bridge so signed-in web users can use the extension and save to their EdNoteAI library.
 
----
-
-## 🛠️ What's Left To Be Built
-
-### High Priority
-
-- **Chrome Extension:** Build and integrate a Chrome extension that allows users to transcribe audio directly from any video playing in their browser and save notes to their EdNoteAI library. This will enable seamless capture from platforms like YouTube, Coursera, Zoom, and more.
-- **Note Editing:** Add UI and backend logic for users to edit and customize generated notes directly in the app.
-
-### Additional Features (Planned)
-
-- **Segment Boundary Adjustment:** Enable users to manually adjust concept segment boundaries in notes.
-- **Metadata Management:** Add, edit, and display metadata (course title, professor, date, tags) for each media item.
-- **Export Formats:** Complete backend logic for exporting notes in LaTeX, Markdown, Word (.docx), and plain text.
-- **Video Capture:** Add the ability to capture video directly from the browser (not just file uploads).
-- **Visual Context Extraction:** Analyze on-screen visuals and integrate descriptions into notes.
-- **Stripe Integration:** Complete payment processing for subscriptions and one-time billing.
-- **Granular Progress Feedback:** Add more detailed real-time progress indicators during upload and processing.
-- **Comprehensive Testing:** Implement thorough testing for all features.
-- **Automated Deployment:** Set up CI/CD and automated deployment (e.g., with AWS Amplify).
-- **Monitoring:** Add monitoring for the application and Lambda functions.
+See `chrome-extension/README.md` for installation and usage.
 
 ---
 
-## 📝 Project Structure
+## Tech Stack
 
-- `src/app/`: Next.js app directory (pages, API routes, dashboard, analysis, upload, etc.)
-- `src/components/`: Reusable UI components (buttons, cards, modals, etc.)
-- `src/lib/`: Utility functions and service integrations (Supabase, Stripe, etc.)
-- `lambda_function-audio_tran.py`: AWS Lambda for transcription (Python, managed in AWS)
-- `lambda_function-note_gen.py`: AWS Lambda for note generation (Python, managed in AWS)
+- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS, `react-markdown`, `react-katex`
+- **Backend:** Next.js API routes, Supabase (PostgreSQL, Auth, Realtime), AWS Lambda, AWS S3, OpenAI API, Google Gemini API, Stripe, Resend
+- **Database:** Relational schema for videos, transcripts, notes, library, subscriptions, and user settings, with RLS.
 
 ---
 
-## 🧭 Next Steps
+## Project Structure
 
-1. **Build and launch the Chrome Extension for browser-based video/audio capture and note saving.**
-2. **Add note editing and customization features to the web app.**
-3. **Continue to expand export, metadata, and progress feedback features.**
-4. **Complete Stripe integration and expand testing, deployment, and monitoring.**
-
----
-
-## 🙌 Contributing
-
-Contributions are welcome! Please open issues or pull requests for bugs, feature requests, or improvements.
+- `src/app/` — Next.js app (pages, API routes, dashboard, analysis, upload, library, subscription, etc.)
+- `src/components/` — Reusable UI (buttons, cards, modals, etc.)
+- `src/lib/` — Services and utilities (Supabase, Stripe, subscription, email, auth)
+- `src/utils/` — Supabase client helpers and shared utilities
+- `chrome-extension/` — Chrome extension (popup, background, content script, auth bridge, options)
+- `lambda_function-audio_trans.py` — AWS Lambda for transcription (OpenAI Whisper)
+- `lambda_function-note_gen.py` — AWS Lambda for note generation (Google Gemini)
 
 ---
 
-## 📄 License
+## Environment Variables
+
+Create a `.env.local` file (never commit it). Example variables:
+
+**Next.js app**
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
+| `NEXT_PUBLIC_APP_URL` | App URL (e.g. `https://example.com`) |
+| `NEXT_PUBLIC_SITE_URL` | Site URL for emails/links |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `RESEND_API_KEY` | Resend API key for transactional email |
+| `REGION_AWS` | AWS region |
+| `ACCESS_KEY_ID_AWS` | AWS access key ID |
+| `SECRET_ACCESS_KEY_AWS` | AWS secret access key |
+| `S3_BUCKET_NAME_AWS` | S3 bucket name |
+| `TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS` | Transcription Lambda name |
+| `CLEANUP_SERVICE_KEY` | Optional; for batch S3 cleanup service |
+
+**Transcription Lambda** (`lambda_function-audio_trans.py`)
+
+- `SUPABASE_URL`, `SUPABASE_KEY` — Supabase (service role)
+- `OPENAI_API_KEY` — OpenAI API key
+- `NOTE_GENERATOR_LAMBDA_ARN` — ARN of the note-generation Lambda
+
+**Note-generation Lambda** (`lambda_function-note_gen.py`)
+
+- `SUPABASE_URL`, `SUPABASE_KEY` — Supabase (service role)
+- `GEMINI_API_KEY` — Google Gemini API key
+
+---
+
+## Running Locally
+
+1. Clone the repo and install dependencies:
+   ```bash
+   npm install
+   ```
+2. Configure `.env.local` with the variables above.
+3. Run the dev server:
+   ```bash
+   npm run dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000).
+
+Deploy the Lambda functions to AWS with the appropriate env vars and wire S3/upload/transcription/note-generation as in the API routes.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please open issues or pull requests for bugs, features, or improvements.
+
+---
+
+## License
 
 [MIT](LICENSE)

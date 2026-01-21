@@ -1,115 +1,204 @@
-# EdNoteAI
+# 🎵 EdNoteAI Chrome Extension
 
-EdNoteAI is an AI-powered web application and Chrome extension that helps students and professionals transform video and audio lectures into structured, academic-grade notes. The platform uses speech-to-text and language models to generate transcriptions, summaries, and key points.
+Transform any web content into intelligent, organized notes with real-time transcription using modern Chrome APIs.
 
----
+## 🌟 Features
 
-## Features
+- **Modern Tab Audio Capture**: Uses Chrome's latest `getMediaStreamId` API with offscreen documents
+- **Real-time Transcription**: Live audio processing and transcription 
+- **Smart Note Generation**: AI-powered note organization
+- **Privacy-First**: Audio processing happens locally with secure transmission
 
-### Web Application
+## 🚀 **New in Phase 2**
 
-- **User authentication:** Sign-up, login, and account management with Supabase Auth (including password reset, change password, and account deletion).
-- **File upload:** Upload audio/video via the dashboard. Files are stored in AWS S3 with presigned URLs.
-- **Transcription:** Uploaded media is transcribed by an AWS Lambda function using OpenAI Whisper.
-- **AI note generation:** Transcripts are processed by a Lambda function (Google Gemini) to produce Markdown notes with LaTeX math.
-- **Real-time updates:** The analysis page uses Supabase Realtime so the UI updates as soon as processing finishes.
-- **Media playback:** Playback of uploaded audio and video in the browser.
-- **Notes display:** Transcriptions and AI notes are rendered in Markdown with LaTeX (KaTeX). Summaries and key points are shown.
-- **Library:** Searchable, filterable library of media and generated notes.
-- **Subscriptions & billing:** Stripe integration for plans, checkout, billing portal, webhooks, and usage-based limits.
-- **Export:** Export notes/transcripts in multiple formats (e.g. Markdown, plain text).
-- **Chrome extension integration:** The extension can receive auth from the web app for recording and saving notes to the library.
+### ✨ **Real-time Features**
+- **Live Audio Capture**: High-quality tab audio recording with configurable quality settings
+- **Real-time Transcription**: Instant speech-to-text with live preview
+- **WebSocket Streaming**: Efficient real-time communication with EdNoteAI backend
+- **Audio Processing**: Advanced audio chunking and compression for optimal streaming
 
-### Chrome Extension
+### 🎵 **Enhanced Audio Quality**
+- **Quality Presets**: Low, Medium, High quality options with automatic configuration
+- **Advanced Settings**: Custom sample rates (8kHz - 48kHz), bit rates, and chunk sizes
+- **Audio Controls**: Noise suppression, echo cancellation, and channel configuration
+- **Format Support**: WebM/Opus encoding for optimal compression and quality
 
-- **Tab audio capture:** Capture audio from browser tabs via Chrome’s `getMediaStreamId` and offscreen documents.
-- **Real-time transcription:** Live transcription with streaming to the EdNoteAI backend.
-- **Note generation:** AI-generated notes from captured audio.
-- **Integration:** Auth bridge so signed-in web users can use the extension and save to their EdNoteAI library.
+### 📝 **Live Transcript Experience**
+- **Expandable Transcript Panel**: Collapsible real-time transcript view with copy functionality
+- **Auto-scrolling Display**: Smooth transcript updates with automatic scroll-to-bottom
+- **Partial/Final Updates**: Instant partial results with final transcript corrections
+- **Multi-language Support**: Auto-detection and manual language selection
 
-See `chrome-extension/README.md` for installation and usage.
+### ⚙️ **Advanced Configuration**
+- **Enhanced Settings Page**: Comprehensive options with real-time validation
+- **Connection Testing**: WebSocket connection health checks and diagnostics
+- **Privacy Controls**: Local processing preferences and data retention settings
+- **Export/Import**: Settings backup and restoration capabilities
 
----
+## 📋 **Features Overview**
 
-## Tech Stack
+### 🎯 **Core Functionality**
+- **Smart Site Detection**: Automatically detects video platforms and audio content
+- **One-click Recording**: Simple start/stop controls with visual feedback
+- **Live Processing**: Real-time audio streaming to EdNoteAI servers
+- **Intelligent Notes**: AI-powered note generation and summarization
+- **Seamless Integration**: Direct save to EdNoteAI library
 
-- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS, `react-markdown`, `react-katex`
-- **Backend:** Next.js API routes, Supabase (PostgreSQL, Auth, Realtime), AWS Lambda, AWS S3, OpenAI API, Google Gemini API, Stripe, Resend
-- **Database:** Relational schema for videos, transcripts, notes, library, subscriptions, and user settings, with RLS.
+### 🌐 **Supported Platforms**
+- **Video Platforms**: YouTube, Vimeo, Coursera, Udemy, edX, Khan Academy
+- **General Audio**: Any webpage with audio/video content
+- **Local Development**: localhost support for testing
 
----
+### 📱 **User Interface**
+- **Modern Design**: Glassmorphism effects with responsive layout
+- **Dark Mode Support**: Automatic system theme detection
+- **Mobile Responsive**: Optimized for all screen sizes
+- **Accessibility**: ARIA compliance and keyboard navigation
+- **Animations**: Smooth transitions and visual feedback
 
-## Project Structure
+## 🚀 Installation
 
-- `src/app/` — Next.js app (pages, API routes, dashboard, analysis, upload, library, subscription, etc.)
-- `src/components/` — Reusable UI (buttons, cards, modals, etc.)
-- `src/lib/` — Services and utilities (Supabase, Stripe, subscription, email, auth)
-- `src/utils/` — Supabase client helpers and shared utilities
-- `chrome-extension/` — Chrome extension (popup, background, content script, auth bridge, options)
-- `lambda_function-audio_trans.py` — AWS Lambda for transcription (OpenAI Whisper)
-- `lambda_function-note_gen.py` — AWS Lambda for note generation (Google Gemini)
+### Development Installation
 
----
+1. **Clone/Download** this extension code
+2. **Open Chrome** and navigate to `chrome://extensions/`
+3. **Enable Developer Mode** (toggle in top-right)
+4. **Click "Load unpacked"** and select the `chrome-extension` folder
+5. **Configure settings** by clicking the extension icon and going to Settings
 
-## Environment Variables
+### Production Installation
+*Coming soon to Chrome Web Store*
 
-Create a `.env.local` file (never commit it). Example variables:
+## ⚙️ Setup
 
-**Next.js app**
+1. **Authentication**: Click the extension icon and sign in to your EdNoteAI account
+2. **Permissions**: Grant tab capture permissions when prompted
+3. **Ready to Go**: Visit any video site and start recording!
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
-| `NEXT_PUBLIC_APP_URL` | App URL (e.g. `https://example.com`) |
-| `NEXT_PUBLIC_SITE_URL` | Site URL for emails/links |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `RESEND_API_KEY` | Resend API key for transactional email |
-| `REGION_AWS` | AWS region |
-| `ACCESS_KEY_ID_AWS` | AWS access key ID |
-| `SECRET_ACCESS_KEY_AWS` | AWS secret access key |
-| `S3_BUCKET_NAME_AWS` | S3 bucket name |
-| `TRANSCRIPTION_LAMBDA_FUNCTION_NAME_AWS` | Transcription Lambda name |
-| `CLEANUP_SERVICE_KEY` | Optional; for batch S3 cleanup service |
+## 🎯 Usage
 
-**Transcription Lambda** (`lambda_function-audio_trans.py`)
+### Quick Start
+1. **Visit a video site** (YouTube, Vimeo, etc.)
+2. **Click the extension icon** in the toolbar
+3. **Hit "Start Recording"** to begin capturing audio
+4. **Watch the live transcript** appear in real-time
+5. **Stop recording** when done - notes auto-save to your library
 
-- `SUPABASE_URL`, `SUPABASE_KEY` — Supabase (service role)
-- `OPENAI_API_KEY` — OpenAI API key
-- `NOTE_GENERATOR_LAMBDA_ARN` — ARN of the note-generation Lambda
+### Advanced Features
+- **Overlay Controls**: Use the floating overlay on video pages for quick control
+- **Quality Settings**: Adjust audio quality based on your needs
+- **Auto-Save**: Toggle automatic saving to library
+- **Live Preview**: View transcription as it happens
 
-**Note-generation Lambda** (`lambda_function-note_gen.py`)
+## 📁 File Structure
 
-- `SUPABASE_URL`, `SUPABASE_KEY` — Supabase (service role)
-- `GEMINI_API_KEY` — Google Gemini API key
+```
+chrome-extension/
+├── manifest.json           # Extension configuration
+├── background.js           # Service worker (core logic)
+├── content-script.js       # Page overlay functionality
+├── content-script.css      # Overlay styling
+├── popup/
+│   ├── popup.html         # Extension popup interface
+│   ├── popup.css          # Popup styling
+│   └── popup.js           # Popup logic
+├── options/
+│   └── options.html       # Settings page
+├── icons/
+│   └── README.md          # Icon requirements
+└── README.md              # This file
+```
 
----
+## 🛠️ Technical Architecture
 
-## Running Locally
+### Modern Chrome Tab Capture Implementation
 
-1. Clone the repo and install dependencies:
-   ```bash
-   npm install
-   ```
-2. Configure `.env.local` with the variables above.
-3. Run the dev server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000).
+This extension follows Chrome's latest best practices for tab audio capture:
 
-Deploy the Lambda functions to AWS with the appropriate env vars and wire S3/upload/transcription/note-generation as in the API routes.
+1. **User Gesture Requirement**: Audio capture is initiated through the extension action button click, which provides the required user gesture
+2. **Modern API Usage**: Uses `chrome.tabCapture.getMediaStreamId()` instead of legacy methods
+3. **Offscreen Document Pattern**: Audio processing happens in an offscreen document to handle `getUserMedia` calls
+4. **Proper Cleanup**: Comprehensive cleanup of audio streams and contexts
 
----
+### Components
 
-## Contributing
+#### Background Service Worker (`background.js`)
+- Handles extension lifecycle and keeps service worker alive
+- Manages tab capture using modern Chrome APIs
+- Coordinates between popup, offscreen document, and content scripts
+- Handles authentication and WebSocket connections
 
-Contributions are welcome. Please open issues or pull requests for bugs, features, or improvements.
+#### Offscreen Document (`offscreen.js` + `offscreen.html`)
+- Processes audio capture using `getUserMedia` with stream IDs
+- Continues audio playback to user (as per Chrome requirements)
+- Sends audio data to background script for transcription
+- Handles proper cleanup of audio resources
 
----
+#### Popup Interface (`popup/`)
+- User interface for starting/stopping recording
+- Authentication management
+- Real-time transcript display
+- Settings and preferences
 
-## License
+#### Content Scripts (`content-script.js`)
+- Site-specific integrations (YouTube, Coursera, etc.)
+- Enhanced UI overlays for supported platforms
+- Real-time transcript injection
 
-[MIT](LICENSE)
+### Communication Flow
+
+```
+Video Page → Content Script → Background Worker → EdNoteAI API
+     ↓              ↓              ↓               ↓
+  Overlay UI → Popup Interface → Service Worker → WebSocket
+```
+
+## 🔧 Development
+
+### Prerequisites
+- Chrome browser
+- EdNoteAI backend running (localhost:3000 or deployed)
+- Basic understanding of Chrome extension development
+
+### Local Development
+1. Make changes to the extension files
+2. Go to `chrome://extensions/` and click the refresh icon on your extension
+3. Test functionality on video sites
+4. Check console logs in the extension's inspect panel
+
+**Note**: The extension connects to the production EdNoteAI service at https://ednoteai.com. For local backend development, you'll need to modify the `EDNOTEAI_CONFIG` in the background script.
+
+### Debugging
+- **Background Script**: Right-click extension → "Inspect popup" → Console
+- **Content Script**: F12 on video page → Console
+- **Popup**: Right-click extension icon → "Inspect popup"
+
+## 🎛️ Configuration
+
+### Settings Available
+- **Audio Quality**: Low/Medium/High (affects transcription accuracy)
+- **Auto-Save**: Automatically save notes to library
+- **Show Overlay**: Display recording controls on video pages
+- **Live Transcript**: Show real-time transcription preview
+- **Privacy Controls**: Local processing and data retention preferences
+
+### Supported Sites
+- YouTube (youtube.com)
+- Vimeo (vimeo.com)
+- Coursera (coursera.org)
+- Udemy (udemy.com)
+- edX (edx.org)
+- Khan Academy (khanacademy.org)
+- Any site with `<video>` elements
+- Local development servers
+
+## 🔒 Permissions
+
+The extension requires these permissions:
+
+- **`activeTab`**: Access current tab information
+- **`tabs`**: Query tab details
+- **`tabCapture`**: Record audio from browser tabs
+- **`offscreen`**: For offscreen document creation
+- **`storage`**: For settings and authentication
+- **`scripting`**: For content script injection
